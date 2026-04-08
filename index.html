@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GroundControl Nodal Series — Bass Modal Treatment · Integer Audio</title>
+<meta name="description" content="Tuned panel absorbers targeting 42–109 Hz. Up to 51% RT60 reduction. 7 inches deep. Designed for home studios.">
+<style>
+  :root {
+    --navy:   #0D1B2A;
+    --navy2:  #102030;
+    --cyan:   #00D4E8;
+    --orange: #FF6B35;
+    --ply:    #C8A96E;
+    --white:  #FFFFFF;
+    --off:    #F4F6F8;
+    --muted:  #778899;
+    --dgrey:  #445566;
+    --border: rgba(0,212,232,0.15);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Arial', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    line-height: 1.65;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 40px;
+    background: rgba(13,27,42,0.95);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+  }
+  .nav-brand { font-family: 'Courier New', monospace; font-size: 13px; letter-spacing: 0.08em; }
+  .nav-brand span { color: var(--cyan); font-weight: 700; }
+  .nav-brand small { color: var(--muted); font-size: 11px; margin-left: 8px; }
+  .nav-cta {
+    background: var(--cyan); color: var(--navy);
+    padding: 8px 20px; border-radius: 4px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+    text-decoration: none; text-transform: uppercase;
+    transition: opacity 0.2s;
+  }
+  .nav-cta:hover { opacity: 0.85; }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 120px 40px 80px;
+    max-width: 1100px; margin: 0 auto;
+  }
+  .hero-eyebrow {
+    font-family: 'Courier New', monospace;
+    font-size: 11px; letter-spacing: 0.14em;
+    color: var(--cyan); text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: clamp(36px, 6vw, 72px);
+    font-weight: 700; line-height: 1.05;
+    color: var(--white);
+    margin-bottom: 12px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--cyan);
+  }
+  .hero-sub {
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--muted); max-width: 560px;
+    margin-bottom: 48px; line-height: 1.6;
+  }
+  .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 64px; }
+  .btn-primary {
+    background: var(--cyan); color: var(--navy);
+    padding: 14px 32px; border-radius: 4px;
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    text-decoration: none; border: none; cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-secondary {
+    background: transparent; color: var(--cyan);
+    padding: 14px 32px; border-radius: 4px;
+    font-size: 14px; font-weight: 600;
+    letter-spacing: 0.04em;
+    text-decoration: none; border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--cyan); }
+
+  /* ── STAT STRIP ── */
+  .stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border); border-radius: 6px;
+    overflow: hidden; max-width: 700px;
+  }
+  .stat {
+    padding: 24px 20px; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat:nth-child(2) { background: var(--cyan); }
+  .stat:nth-child(2) .stat-value { color: var(--navy); }
+  .stat:nth-child(2) .stat-label { color: var(--navy); }
+  .stat:nth-child(2) .stat-sub { color: rgba(13,27,42,0.6); }
+  .stat-value { font-size: clamp(18px, 3vw, 26px); font-weight: 700; color: var(--white); line-height: 1.1; }
+  .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--white); margin-top: 4px; }
+  .stat-sub { font-size: 10px; color: var(--muted); margin-top: 2px; font-style: italic; }
+
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+
+  /* ── SECTION ── */
+  section { padding: 80px 40px; max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    font-family: 'Courier New', monospace;
+    font-size: 10px; letter-spacing: 0.14em;
+    color: var(--cyan); text-transform: uppercase;
+    margin-bottom: 16px; display: block;
+  }
+  h2 { font-size: clamp(24px, 3.5vw, 36px); font-weight: 700; line-height: 1.2; margin-bottom: 20px; }
+  h3 { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: var(--white); }
+  p { color: #BBCCD8; font-size: 16px; line-height: 1.7; margin-bottom: 16px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── PROBLEM SECTION ── */
+  .problem { background: var(--navy2); }
+  .problem-wrap { padding: 80px 40px; max-width: 1100px; margin: 0 auto; }
+  .pullquote {
+    border-left: 4px solid var(--orange);
+    padding: 20px 28px;
+    background: rgba(255,107,53,0.06);
+    border-radius: 0 6px 6px 0;
+    margin: 32px 0;
+  }
+  .pullquote p { font-size: 18px; font-style: italic; color: var(--white); margin: 0; line-height: 1.6; }
+
+  /* ── PRODUCT CARDS ── */
+  .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-top: 48px; }
+  .product-card {
+    background: var(--navy2);
+    border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  .product-card-header {
+    padding: 24px 28px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .product-card-header .tag {
+    font-family: 'Courier New', monospace;
+    font-size: 10px; letter-spacing: 0.10em;
+    color: var(--cyan); text-transform: uppercase;
+    display: block; margin-bottom: 8px;
+  }
+  .product-card-header h3 { font-size: 22px; margin-bottom: 6px; }
+  .product-card-header p { font-size: 14px; color: var(--muted); margin: 0; }
+  .product-card-body { padding: 20px 28px; }
+  .spec-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .spec-row:last-child { border-bottom: none; }
+  .spec-key { font-size: 12px; color: var(--muted); }
+  .spec-val { font-size: 13px; font-weight: 600; color: var(--white); font-family: 'Courier New', monospace; }
+  .reduction { color: var(--cyan); }
+
+  /* ── SIMULATION SECTION ── */
+  .sim-section { background: var(--navy2); }
+  .sim-wrap { padding: 80px 40px; max-width: 1100px; margin: 0 auto; }
+  .sim-card {
+    background: var(--navy);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 40px;
+    display: flex; gap: 40px; align-items: center; flex-wrap: wrap;
+  }
+  .sim-card-text { flex: 1; min-width: 260px; }
+  .sim-card-action { text-align: center; min-width: 200px; }
+  .sim-card-action .sim-icon {
+    width: 80px; height: 80px;
+    background: rgba(0,212,232,0.08);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 28px;
+  }
+
+  /* ── FINISH SECTION ── */
+  .finish-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 40px; }
+  .finish-item {
+    border-left: 3px solid var(--ply);
+    padding: 16px 20px;
+    background: rgba(200,169,110,0.06);
+    border-radius: 0 6px 6px 0;
+  }
+  .finish-item .fi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ply); margin-bottom: 4px; }
+  .finish-item .fi-detail { font-size: 14px; color: #BBCCD8; }
+
+  /* ── REGISTER SECTION ── */
+  .register { background: var(--navy2); }
+  .register-wrap {
+    padding: 80px 40px; max-width: 700px; margin: 0 auto; text-align: center;
+  }
+  .register-wrap h2 { margin-bottom: 16px; }
+  .register-wrap p { margin-bottom: 32px; }
+  .form-row { display: flex; gap: 12px; max-width: 480px; margin: 0 auto 16px; flex-wrap: wrap; }
+  .form-row input[type="email"] {
+    flex: 1; min-width: 220px;
+    background: var(--navy);
+    border: 1px solid var(--border);
+    border-radius: 4px; padding: 13px 16px;
+    font-size: 14px; color: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-row input[type="email"]:focus { border-color: var(--cyan); }
+  .form-row input[type="email"]::placeholder { color: var(--muted); }
+  .form-note { font-size: 12px; color: var(--muted); }
+  .download-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 24px; color: var(--cyan);
+    font-size: 13px; text-decoration: none;
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 10px 20px;
+    transition: border-color 0.2s;
+  }
+  .download-link:hover { border-color: var(--cyan); }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 40px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px; max-width: 1100px; margin: 0 auto;
+  }
+  .footer-brand { font-family: 'Courier New', monospace; font-size: 12px; color: var(--muted); }
+  .footer-brand span { color: var(--cyan); }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a { font-size: 12px; color: var(--muted); text-decoration: none; }
+  .footer-links a:hover { color: var(--white); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    nav { padding: 14px 20px; }
+    .hero { padding: 100px 20px 60px; }
+    section { padding: 60px 20px; }
+    .problem-wrap, .sim-wrap, .register-wrap { padding: 60px 20px; }
+    .stats { grid-template-columns: 1fr; }
+    .stat { border-right: none; border-bottom: 1px solid var(--border); }
+    .stat:last-child { border-bottom: none; }
+    footer { padding: 30px 20px; flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-brand">
+    <span>GroundControl</span>
+    <small>by Integer Audio</small>
+  </div>
+  <a href="#register" class="nav-cta">Register Interest</a>
+</nav>
+
+<!-- ── HERO ── -->
+<div style="max-width:1100px;margin:0 auto;">
+  <div class="hero">
+    <p class="hero-eyebrow">Integer Audio · GroundControl Nodal Series</p>
+    <h1>Your room is<br><em>lying to you.</em></h1>
+    <p class="hero-sub">The bass that sounds right in your studio isn't the bass in the recording — it's your room's resonances added on top. The Nodal Series removes them.</p>
+    <div class="hero-actions">
+      <a href="#register" class="btn-primary">Register Interest</a>
+      <a href="#simulation" class="btn-secondary">Model Your Room →</a>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value">42–109 Hz</div>
+        <div class="stat-label">Continuous Coverage</div>
+        <div class="stat-sub">the full home studio problem range</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">Up to −51%</div>
+        <div class="stat-label">Decay Reduction</div>
+        <div class="stat-sub">at 55 Hz · reference room</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">7 inches</div>
+        <div class="stat-label">Total Depth</div>
+        <div class="stat-sub">fits standard stud wall bays</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ── PROBLEM ── -->
+<div class="problem">
+  <div class="problem-wrap">
+    <span class="section-label">The Problem</span>
+    <h2>Why mixes made at home don't travel</h2>
+    <p>Every rectangular room resonates at specific bass frequencies. Sound bounces between parallel walls and builds up into standing waves — room modes — that make certain notes ring for a second or more after the music stops. Other notes are artificially quiet. The result is that every mixing decision you make in the bass is filtered through your room's own frequency response.</p>
+    <p>Standard acoustic treatment — foam panels, hanging baffles, rockwool corner traps — works above 200 Hz. Below 100 Hz, these materials need to be impractically thick to have any effect. A 4-inch foam panel does almost nothing at 55 Hz. Most home studios are completely untreated in the one frequency range that matters most for mixing.</p>
+    <div class="pullquote">
+      <p>In a typical untreated home studio, the room is still ringing audibly at 55 Hz for over a second after the music stops. Your monitors go silent. The room keeps playing.</p>
+    </div>
+    <p>The Nodal Series uses a different mechanism — tuned resonant absorption — to address bass modes efficiently at 179 mm total depth, without filling your corners with thick absorbers.</p>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ── PRODUCTS ── -->
+<section id="products">
+  <span class="section-label">The Products</span>
+  <h2>Two products. Three frequencies.<br>42 to 109 Hz — continuous.</h2>
+  <p style="max-width:600px;">Each unit contains thin membrane panels mounted in front of a sealed cavity. When bass at the target frequency strikes the membrane, it converts that acoustic energy into heat through internal damping. Tuned absorption. Minimal depth. Corner placement where modal energy is highest.</p>
+
+  <div class="products">
+    <div class="product-card">
+      <div class="product-card-header">
+        <span class="tag">Nodal 55/70</span>
+        <h3>Dual-Chamber Absorber</h3>
+        <p>Two independently tuned chambers · one enclosure · natural birch ply frame · satin black membranes</p>
+      </div>
+      <div class="product-card-body">
+        <div class="spec-row"><span class="spec-key">Chamber A tuning</span><span class="spec-val">54.6 Hz</span></div>
+        <div class="spec-row"><span class="spec-key">Chamber A coverage</span><span class="spec-val">42–67 Hz</span></div>
+        <div class="spec-row"><span class="spec-key">RT60 reduction at 55 Hz</span><span class="spec-val reduction">−51%</span></div>
+        <div class="spec-row"><span class="spec-key">Chamber B tuning</span><span class="spec-val">70.7 Hz</span></div>
+        <div class="spec-row"><span class="spec-key">Chamber B coverage</span><span class="spec-val">55–86 Hz</span></div>
+        <div class="spec-row"><span class="spec-key">RT60 reduction at 70 Hz</span><span class="spec-val reduction">−43%</span></div>
+        <div class="spec-row"><span class="spec-key">Dimensions (W×H×D)</span><span class="spec-val">630×762×179 mm</span></div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-card-header">
+        <span class="tag">Nodal 85</span>
+        <h3>Single-Chamber Absorber</h3>
+        <p>Completes the system · two units side by side match the Nodal 55/70 width · same depth · same frame profile</p>
+      </div>
+      <div class="product-card-body">
+        <div class="spec-row"><span class="spec-key">Tuning frequency</span><span class="spec-val">88.9 Hz</span></div>
+        <div class="spec-row"><span class="spec-key">Coverage</span><span class="spec-val">69–109 Hz</span></div>
+        <div class="spec-row"><span class="spec-key">RT60 reduction at 85 Hz</span><span class="spec-val reduction">−49%</span></div>
+        <div class="spec-row"><span class="spec-key">Dimensions (W×H×D)</span><span class="spec-val">315×762×179 mm</span></div>
+        <div class="spec-row"><span class="spec-key">System coverage</span><span class="spec-val">42–109 Hz</span></div>
+        <div class="spec-row"><span class="spec-key">Full stack height</span><span class="spec-val">2286 mm</span></div>
+        <div class="spec-row"><span class="spec-key">Fits standard 8ft ceiling</span><span class="spec-val">✓</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── 3D RENDER ── -->
+<div style="background:#0D1B2A;">
+<div style="max-width:1100px;margin:0 auto;padding:80px 40px;">
+  <span style="font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.14em;color:#00D4E8;text-transform:uppercase;display:block;margin-bottom:16px;">Corner Stack</span>
+  <h2 style="font-size:clamp(24px,3.5vw,36px);font-weight:700;margin-bottom:16px;">See how it goes together</h2>
+  <p style="color:#BBCCD8;font-size:16px;max-width:580px;margin-bottom:32px;">Two Nodal 55/70 units stacked, two Nodal 85 units on top — a single 630 mm wide column from floor to ceiling. Step through the assembly and drag to inspect from any angle.</p>
+
+  <!-- 3D render container -->
+  <div style="background:#0D1B2A;border:1px solid rgba(0,212,232,0.15);border-radius:8px;overflow:hidden;">
+    <div style="padding:12px 20px 6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+      <span style="font-family:'Courier New',monospace;font-size:11px;color:#00D4E8;font-weight:500;letter-spacing:0.06em;">GROUNDCONTROL — Nodal Series assembly</span>
+      <span id="r3d-lbl" style="font-family:'Courier New',monospace;font-size:10px;color:#FF6B35;">step 1 of 3</span>
+    </div>
+    <canvas id="r3d-cv" style="width:100%;display:block;"></canvas>
+    <div style="padding:8px 20px 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button id="r3d-bp" style="font-family:'Courier New',monospace;font-size:11px;color:#00D4E8;background:none;border:1px solid rgba(0,212,232,0.25);border-radius:4px;padding:4px 12px;cursor:pointer;">← prev</button>
+      <button id="r3d-bn" style="font-family:'Courier New',monospace;font-size:11px;color:#00D4E8;background:none;border:1px solid rgba(0,212,232,0.25);border-radius:4px;padding:4px 12px;cursor:pointer;">next →</button>
+      <button id="r3d-bz" style="font-family:'Courier New',monospace;font-size:11px;color:#445566;background:none;border:1px solid rgba(68,85,102,0.4);border-radius:4px;padding:4px 12px;cursor:pointer;">reset</button>
+      <span id="r3d-dsc" style="font-family:'Courier New',monospace;font-size:10px;color:#556677;flex:1;"></span>
+    </div>
+    <div style="padding:2px 20px 12px;display:flex;gap:12px;flex-wrap:wrap;">
+      <span style="font-size:10px;font-family:'Courier New',monospace;color:#C8A96E;">&#9632; birch ply</span>
+      <span style="font-size:10px;font-family:'Courier New',monospace;color:#8B6520;">&#9632; 6mm rebate lip</span>
+      <span style="font-size:10px;font-family:'Courier New',monospace;color:#FF6B35;">&#9632; mem A 55Hz</span>
+      <span style="font-size:10px;font-family:'Courier New',monospace;color:#00D4E8;">&#9632; mem B 70Hz</span>
+      <span style="font-size:10px;font-family:'Courier New',monospace;color:#006070;">&#9632; Nodal 85</span>
+      <span style="font-size:10px;font-family:'Courier New',monospace;color:#334455;margin-left:auto;">scroll=zoom · drag=rotate</span>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+  (function(){
+    var cv=document.getElementById('r3d-cv');
+    var W=cv.parentElement.offsetWidth||600, H=Math.round(W*0.72);
+    cv.width=W; cv.height=H;
+    var renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+    renderer.setSize(W,H); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    renderer.setClearColor(0x0D1B2A,1); renderer.shadowMap.enabled=true;
+    var scene=new THREE.Scene();
+    var cam=new THREE.PerspectiveCamera(38,W/H,0.01,50);
+    var dist=2.2,ry=-0.28,rx=0.12,AUTO=true;
+    function uc(){cam.position.set(dist*Math.sin(ry)*Math.cos(rx),dist*Math.sin(rx),dist*Math.cos(ry)*Math.cos(rx));cam.lookAt(0,0,0);}
+    uc();
+    scene.add(new THREE.AmbientLight(0xffffff,0.55));
+    var d1=new THREE.DirectionalLight(0xffffff,0.75);d1.position.set(2,3,2);d1.castShadow=true;scene.add(d1);
+    var d2=new THREE.DirectionalLight(0x88aaff,0.25);d2.position.set(-2,1,-1);scene.add(d2);
+    var S=1/1300,FW=630*S,FH=762*S,FD=179*S,WL=12*S,MT=5.5*S,N8=315*S;
+    var RL=6*S,RD=7*S,XV=6*S,XT=18*S,CH=(FH-2*WL-XT)/2,MW=FW-2*WL;
+    function bx(w,h,d,c){var m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color:c}));m.castShadow=true;return m;}
+    function addLips(parent,ow,oh,col,cy,zf){
+      var zc=zf+RD/2;
+      var t=bx(ow+2*RL,RL,RD,col);t.position.set(0,cy+oh/2+RL/2,zc);parent.add(t);
+      var b=bx(ow+2*RL,RL,RD,col);b.position.set(0,cy-oh/2-RL/2,zc);parent.add(b);
+      var l=bx(RL,oh,RD,col);l.position.set(-ow/2-RL/2,cy,zc);parent.add(l);
+      var r=bx(RL,oh,RD,col);r.position.set(ow/2+RL/2,cy,zc);parent.add(r);
+    }
+    function make5570(){
+      var g=new THREE.Group(),P=0xC8A96E,P2=0xA07830,LP=0x8B6520,BK=0x100C06;
+      var zf=FD/2-MT,mz=FD/2-MT/2,ay=-(XT/2+CH/2),by=XT/2+CH/2;
+      var lw=bx(WL,FH,FD,P);lw.position.set(-FW/2+WL/2,0,0);g.add(lw);
+      var rw=bx(WL,FH,FD,P);rw.position.set(FW/2-WL/2,0,0);g.add(rw);
+      var tw=bx(FW,WL,FD,P);tw.position.set(0,FH/2-WL/2,0);g.add(tw);
+      var bw=bx(FW,WL,FD,P);bw.position.set(0,-FH/2+WL/2,0);g.add(bw);
+      var xbd=FD-MT-RD;
+      var xb=bx(MW,XT,xbd,P2);xb.position.set(0,0,-FD/2+xbd/2);g.add(xb);
+      var xf=bx(MW,XV,RD,P2);xf.position.set(0,0,FD/2-MT-RD/2);g.add(xf);
+      var xt=bx(MW,RL,RD,LP);xt.position.set(0,XV/2+RL/2,FD/2-MT-RD/2);g.add(xt);
+      var xbb=bx(MW,RL,RD,LP);xbb.position.set(0,-XV/2-RL/2,FD/2-MT-RD/2);g.add(xbb);
+      var bp=bx(MW,FH-2*WL,3*S,BK);bp.position.set(0,0,-FD/2+1.5*S);g.add(bp);
+      var ma=bx(MW,CH,MT,0x1C1C1C);ma.position.set(0,ay,mz);g.add(ma);
+      addLips(g,MW,CH,LP,ay,zf);
+      var mb=bx(MW,CH,MT,0x2A2A2A);mb.position.set(0,by,mz);g.add(mb);
+      addLips(g,MW,CH,LP,by,zf);
+      var sa=bx(4*S,12*S,RD,0xFF6B35);sa.position.set(-FW/2+WL+2*S,ay,zf+RD/2);g.add(sa);
+      var sb=bx(4*S,12*S,RD,0x00D4E8);sb.position.set(-FW/2+WL+2*S,by,zf+RD/2);g.add(sb);
+      return g;
+    }
+    function make85(xo){
+      var g=new THREE.Group(),P=0xA8803A,LP=0x7A5818,BK=0x100C06;
+      var mw=N8-2*WL,mh=FH-2*WL,mz=FD/2-MT/2,zf=FD/2-MT;
+      var lw=bx(WL,FH,FD,P);lw.position.set(-N8/2+WL/2,0,0);g.add(lw);
+      var rw=bx(WL,FH,FD,P);rw.position.set(N8/2-WL/2,0,0);g.add(rw);
+      var tw=bx(N8,WL,FD,P);tw.position.set(0,FH/2-WL/2,0);g.add(tw);
+      var bw=bx(N8,WL,FD,P);bw.position.set(0,-FH/2+WL/2,0);g.add(bw);
+      var bp=bx(mw,mh,3*S,BK);bp.position.set(0,0,-FD/2+1.5*S);g.add(bp);
+      var mm=bx(mw,mh,MT,0x003D47);mm.position.set(0,0,mz);g.add(mm);
+      addLips(g,mw,mh,LP,0,zf);
+      g.position.x=xo; return g;
+    }
+    var u1=make5570(),u2=make5570(),l8=make85(-N8/2),r8=make85(N8/2);
+    var rg=new THREE.Group();rg.add(u1,u2,l8,r8);scene.add(rg);
+    var Y0=-FH,Y1=0,Y2=FH,FAR=FH*4;
+    u1.position.y=Y0;
+    u2.position.y=FAR;u2.visible=false;
+    l8.position.y=FAR;l8.visible=false;
+    r8.position.y=FAR;r8.visible=false;
+    var steps=[
+      {l:'step 1 of 3',d:'Nodal 55/70 · unit 1 · 18mm crossmember · 6mm rebate lip each membrane',y1:Y0,y2:FAR,yl:FAR,yr:FAR},
+      {l:'step 2 of 3',d:'Nodal 55/70 · unit 2 slides down on top',y1:Y0,y2:Y1,yl:FAR,yr:FAR},
+      {l:'step 3 of 3',d:'Nodal 85 pair descends — stack complete · 2286mm total height',y1:Y0,y2:Y1,yl:Y2,yr:Y2}
+    ];
+    var cur=0,anim=false,as=0,DUR=900;
+    var fy1=Y0,fy2=FAR,fyl=FAR,fyr=FAR,ty1=Y0,ty2=FAR,tyl=FAR,tyr=FAR;
+    function sd(s){document.getElementById('r3d-lbl').textContent=s.l;document.getElementById('r3d-dsc').textContent=s.d;}
+    sd(steps[0]);
+    function goTo(i){
+      if(anim)return;
+      var s=steps[i];
+      fy1=u1.position.y;fy2=u2.position.y;fyl=l8.position.y;fyr=r8.position.y;
+      ty1=s.y1;ty2=s.y2;tyl=s.yl;tyr=s.yr;
+      u2.visible=true;l8.visible=true;r8.visible=true;
+      as=performance.now();anim=true;sd(s);
+    }
+    document.getElementById('r3d-bn').onclick=function(){if(!anim&&cur<2){cur++;goTo(cur);}};
+    document.getElementById('r3d-bp').onclick=function(){if(!anim&&cur>0){cur--;goTo(cur);}};
+    document.getElementById('r3d-bz').onclick=function(){dist=2.2;ry=-0.28;rx=0.12;uc();};
+    function lp(a,b,t){return a+(b-a)*t;}
+    function ez(t){return t<0.5?2*t*t:-1+(4-2*t)*t;}
+    var drag=false,px=0,py=0,ltd=0;
+    cv.addEventListener('mousedown',function(e){drag=true;px=e.clientX;py=e.clientY;AUTO=false;});
+    window.addEventListener('mouseup',function(){drag=false;});
+    cv.addEventListener('mousemove',function(e){
+      if(!drag)return;
+      ry+=(e.clientX-px)*0.008;rx+=(e.clientY-py)*0.005;
+      rx=Math.max(-0.6,Math.min(0.6,rx));px=e.clientX;py=e.clientY;uc();
+    });
+    cv.addEventListener('wheel',function(e){
+      e.preventDefault();dist+=e.deltaY*0.001;dist=Math.max(0.5,Math.min(5,dist));uc();
+    },{passive:false});
+    cv.addEventListener('touchstart',function(e){
+      AUTO=false;
+      if(e.touches.length===1){drag=true;px=e.touches[0].clientX;py=e.touches[0].clientY;}
+      else{drag=false;var dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;ltd=Math.sqrt(dx*dx+dy*dy);}
+    },{passive:true});
+    window.addEventListener('touchend',function(){drag=false;});
+    cv.addEventListener('touchmove',function(e){
+      if(e.touches.length===1&&drag){ry+=(e.touches[0].clientX-px)*0.008;rx+=(e.touches[0].clientY-py)*0.005;rx=Math.max(-0.6,Math.min(0.6,rx));px=e.touches[0].clientX;py=e.touches[0].clientY;uc();}
+      else if(e.touches.length===2){var dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY,d=Math.sqrt(dx*dx+dy*dy);dist-=(d-ltd)*0.003;dist=Math.max(0.5,Math.min(5,dist));ltd=d;uc();}
+    },{passive:true});
+    function loop(now){
+      requestAnimationFrame(loop);
+      if(AUTO){ry+=0.004;uc();}
+      if(anim){var t=Math.min((now-as)/DUR,1),e=ez(t);u1.position.y=lp(fy1,ty1,e);u2.position.y=lp(fy2,ty2,e);l8.position.y=lp(fyl,tyl,e);r8.position.y=lp(fyr,tyr,e);if(t>=1)anim=false;}
+      renderer.render(scene,cam);
+    }
+    loop(performance.now());
+  })();
+  </script>
+</div>
+</div>
+
+<hr class="divider">
+
+<!-- ── SIMULATION ── -->
+<div class="sim-section" id="simulation">
+  <div class="sim-wrap">
+    <span class="section-label">Room Simulation</span>
+    <h2>Model your room before you buy anything</h2>
+    <p style="max-width:620px;margin-bottom:40px;">Enter your room dimensions and see the predicted RT60 reduction at each tuning frequency with different Nodal configurations. The simulation uses the Eyring acoustic model with the Nodal Series absorption parameters.</p>
+    <div class="sim-card">
+      <div class="sim-card-text">
+        <h3>Interactive Room Simulator</h3>
+        <p>Enter your room dimensions, wall materials, and number of units. The simulator shows predicted RT60 curves before and after treatment — so you know what to expect before spending anything.</p>
+        <p style="font-size:14px;color:#778899;">Free to use. No registration required.</p>
+      </div>
+      <div class="sim-card-action">
+        <div class="sim-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <rect x="4" y="8" width="24" height="16" rx="2" stroke="#00D4E8" stroke-width="1.5"/>
+            <path d="M8 20 L12 14 L16 17 L20 11 L24 15" stroke="#00D4E8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <a href="simulator.html" target="_blank" class="btn-primary" style="display:inline-block;">Open Simulator</a>
+        <p style="font-size:12px;color:#556677;margin-top:12px;">Opens in a new tab</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ── FINISH ── -->
+<section id="finish">
+  <span class="section-label">Finish &amp; Construction</span>
+  <h2>Built to look as considered<br>as it performs</h2>
+  <p style="max-width:620px;">CNC-cut 12 mm Baltic birch plywood frame with a clear hardwax oil finish. Satin black painted MDF membrane panels. A consistent 6 mm birch ply reveal borders every membrane on all four sides — the same width on the outer edges as on the 18 mm centre crossmember between chambers.</p>
+  <div class="finish-grid">
+    <div class="finish-item">
+      <div class="fi-label">Frame &amp; Lip</div>
+      <div class="fi-detail">12 mm Baltic birch ply · clear hardwax oil · natural grain visible · CNC precision cut</div>
+    </div>
+    <div class="finish-item">
+      <div class="fi-label">Membrane Panels</div>
+      <div class="fi-detail">MDF · satin black water-based paint · two coats over shellac primer</div>
+    </div>
+    <div class="finish-item">
+      <div class="fi-label">6mm Reveal</div>
+      <div class="fi-detail">Consistent birch ply lip all four sides of every membrane · same on crossmember</div>
+    </div>
+    <div class="finish-item">
+      <div class="fi-label">Depth</div>
+      <div class="fi-detail">179 mm total · 7 inches · fits standard stud wall bay width</div>
+    </div>
+    <div class="finish-item">
+      <div class="fi-label">Internal Seal</div>
+      <div class="fi-detail">3M 4200 flexible polyurethane adhesive · airtight cavity seal</div>
+    </div>
+    <div class="finish-item">
+      <div class="fi-label">Corner Stack</div>
+      <div class="fi-detail">2 × Nodal 55/70 + 2 × Nodal 85 per corner · 2286 mm total · fits 8 ft ceiling</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── REGISTER ── -->
+<div class="register" id="register">
+  <div class="register-wrap">
+    <span class="section-label">Register Interest</span>
+    <h2>Be the first to know</h2>
+    <p>The Nodal Series is currently in pre-production. Register your interest to be notified when units are available, receive pricing information first, and get access to the full technical guide.</p>
+
+    <!-- Replace action with your form handler (Formspree, Mailchimp, etc.) -->
+    <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+      <div class="form-row">
+        <input type="email" name="email" placeholder="your@email.com" required>
+        <button type="submit" class="btn-primary">Notify Me</button>
+      </div>
+      <p class="form-note">No spam. One email when the product is available. Unsubscribe any time.</p>
+    </form>
+
+    <a href="groundcontrol_nodal_marketing_guide.pdf" class="download-link" download>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="#00D4E8" stroke-width="1.4" stroke-linecap="round"/></svg>
+      Download full technical guide (PDF)
+    </a>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<div style="background:var(--navy);">
+  <footer>
+    <div class="footer-brand">
+      <span>Integer Audio</span> · Rochester, New York · integeraudio.com
+    </div>
+    <div class="footer-links">
+      <a href="https://www.integeraudio.com">RMP2 Preamp</a>
+      <a href="/contact">Contact</a>
+      <a href="groundcontrol_nodal_marketing_guide.pdf">Technical Guide</a>
+    </div>
+  </footer>
+  <p style="text-align:center;font-size:14px;color:#334455;padding:0 40px 24px;font-family:'Courier New',monospace;">
+    © 2026 Integer Audio LLC · Specifications subject to change pending prototype validation
+  </p>
+</div>
+
+</body>
+</html>
