@@ -806,6 +806,29 @@
     display: flex;
     justify-content: space-between;
   }
+  .model-disclaimer {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(255,107,53,0.06);
+    border-left: 3px solid #FF6B35;
+    border-radius: 0 4px 4px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-dim);
+  }
+  .model-disclaimer strong {
+    color: #FF6B35;
+    font-weight: 500;
+  }
+  .model-disclaimer .disc-title {
+    font-family: var(--mono);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #FF6B35;
+    display: block;
+    margin-bottom: 6px;
+  }
 </style>
 </head>
 <body>
@@ -1130,9 +1153,18 @@
   </div>
 </div>
 
+<div class="model-disclaimer">
+  <span class="disc-title">Model limitations — please read</span>
+  The RT60 predictions shown use the <strong>Eyring acoustic model</strong>, which assumes a statistically diffuse sound field. In small rooms (typically below the Schroeder frequency shown above), the bass range is governed by <strong>discrete room modes</strong> rather than a diffuse field — the Eyring model is technically outside its strict domain of validity in this regime.
+  <br><br>
+  In practice this means: the <strong>predicted RT60 reductions are indicative, not precise</strong>. The actual reduction in your room may be higher or lower than predicted depending on your specific room dimensions, construction, and measurement position. The model is most reliable as a <strong>comparative tool</strong> — the difference between untreated and treated predictions is more meaningful than the absolute values.
+  <br><br>
+  The <strong>modal frequency calculations are exact</strong> — the simulation correctly identifies which frequencies are most likely to be problematic in your room. For accurate RT60 measurements, use <strong>REW (Room EQ Wizard)</strong> with a calibrated microphone before and after treatment. Prototype performance will be published once measured.
+</div>
+
 <footer>
-  <span>Simulation based on rectangular room modal theory. Absorption modelled via Q≈3 resonant system with α_peak≈0.95.</span>
-  <span>NOT FOR ENGINEERING CERTIFICATION — Indicative only</span>
+  <span>Eyring model · rectangular room axial modes · absorption Q≈2.25 · α_peak≈0.92–0.95</span>
+  <span>Indicative predictions only — validate all results with REW measurement · not for engineering certification</span>
 </footer>
 
 <script>
@@ -2516,7 +2548,7 @@ function exportReport() {
   // Watermark
   ctx.fillStyle = 'rgba(74,90,106,0.5)';
   ctx.font = '10px monospace';
-  ctx.fillText('Simulation based on rectangular room axial mode theory. NOT FOR ENGINEERING CERTIFICATION.', margin, totalH - 6);
+  ctx.fillText('Eyring model · indicative predictions only · validate with REW measurement · not for engineering certification', margin, totalH - 6);
 
   // Download
   const a = document.createElement('a');
