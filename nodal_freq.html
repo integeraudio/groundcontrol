@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GroundControl Nodal Series — Frequency Response</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black:   #0a0a0a;
+    --off:     #111111;
+    --panel:   #161616;
+    --border:  rgba(255,255,255,0.07);
+    --text:    #e8e4de;
+    --dim:     rgba(232,228,222,0.42);
+    --dimmer:  rgba(232,228,222,0.22);
+    --cyan:    #00c8e0;
+    --purple:  #b06ac4;
+    --green:   #3dba6a;
+    --gold:    rgba(210,170,55,0.90);
+    --richlite: #1a1a1a;
+  }
+
+  html { background: var(--black); color: var(--text); scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(0,200,224,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 85% 110%, rgba(61,186,106,0.04) 0%, transparent 60%),
+      var(--black);
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 3.5rem 2rem 2.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+    border-bottom: 0.5px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    font-weight: 400;
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 300;
+    letter-spacing: 0.02em;
+    line-height: 1.05;
+    color: var(--text);
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--dimmer);
+  }
+
+  .tagline {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+    line-height: 1.7;
+    max-width: 520px;
+    font-weight: 300;
+  }
+
+  /* ── MODEL CHIPS ── */
+  .chips {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+  }
+
+  .chip {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 2px;
+    border: 0.5px solid;
+    font-weight: 400;
+  }
+
+  .chip-40  { border-color: rgba(0,200,224,0.35);  color: var(--cyan);   background: rgba(0,200,224,0.06); }
+  .chip-55  { border-color: rgba(176,106,196,0.35); color: var(--purple); background: rgba(176,106,196,0.06); }
+  .chip-70  { border-color: rgba(61,186,106,0.35);  color: var(--green);  background: rgba(61,186,106,0.06); }
+
+  /* ── MAIN CONTENT ── */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 4rem;
+  }
+
+  /* ── CHART SECTION ── */
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--dimmer);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: var(--border);
+  }
+
+  .chart-card {
+    background: var(--panel);
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    padding: 2rem 2rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .chart-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.15rem;
+    font-weight: 300;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+  }
+
+  .chart-sub {
+    font-size: 10px;
+    color: var(--dimmer);
+    letter-spacing: 0.06em;
+    margin-bottom: 1.75rem;
+  }
+
+  .chart-wrap { position: relative; height: 300px; }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    color: var(--dim);
+  }
+
+  .ld { width: 20px; height: 1.5px; border-radius: 1px; }
+  .ldot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── SPEC TABLE ── */
+  .spec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+  }
+
+  .spec-cell {
+    background: var(--panel);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .spec-model {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .spec-model-40 { color: var(--cyan); }
+  .spec-model-55 { color: var(--purple); }
+  .spec-model-70 { color: var(--green); }
+
+  .spec-freq {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 2.2rem;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .spec-rows { margin-top: 4px; display: flex; flex-direction: column; gap: 5px; }
+
+  .spec-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--dimmer);
+    letter-spacing: 0.04em;
+  }
+
+  .spec-row span:last-child { color: var(--dim); }
+
+  /* ── TECH NOTE ── */
+  .tech-note {
+    font-size: 10px;
+    color: var(--dimmer);
+    line-height: 1.8;
+    letter-spacing: 0.03em;
+    border-left: 1.5px solid var(--border);
+    padding-left: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  /* ── CTA ── */
+  .cta-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 11px 22px;
+    border-radius: 2px;
+    border: 0.5px solid;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    background: var(--cyan);
+    border-color: var(--cyan);
+    color: var(--black);
+    font-weight: 500;
+  }
+
+  .btn-primary:hover { background: #33d4e8; border-color: #33d4e8; }
+
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--dim);
+  }
+
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 0.5px solid var(--border);
+    padding: 1.5rem 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .footer-brand {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 13px;
+    color: var(--dimmer);
+    font-weight: 300;
+    letter-spacing: 0.06em;
+  }
+
+  .footer-note {
+    font-size: 9px;
+    color: var(--dimmer);
+    letter-spacing: 0.06em;
+  }
+
+  /* ── RICHLITE TEXTURE DETAIL ── */
+  .richlite-bar {
+    height: 3px;
+    background: linear-gradient(90deg,
+      var(--cyan) 0%, var(--cyan) 33%,
+      var(--purple) 33%, var(--purple) 66%,
+      var(--green) 66%, var(--green) 100%);
+    opacity: 0.5;
+  }
+
+  @media (max-width: 600px) {
+    .spec-grid { grid-template-columns: 1fr; }
+    .chart-card { padding: 1.25rem 1rem 1rem; }
+    header { padding: 2rem 1.25rem 1.75rem; }
+    main { padding: 2rem 1.25rem 3rem; }
+    footer { padding: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="richlite-bar"></div>
+
+<header>
+  <p class="eyebrow">GroundControl — Acoustic Engineering</p>
+  <h1>Nodal <em>Series</em></h1>
+  <p class="tagline">
+    Tuned Diaphragmatic Absorbers precision-engineered for the 20–120 Hz modal spectrum.
+    Three independently tuned units. One system.
+  </p>
+  <div class="chips">
+    <span class="chip chip-40">Nodal 40 — 40 Hz</span>
+    <span class="chip chip-55">Nodal 55 — 54 Hz</span>
+    <span class="chip chip-70">Nodal 70 — 70 Hz</span>
+  </div>
+</header>
+
+<main>
+
+  <p class="section-label">Frequency Response</p>
+
+  <div class="chart-card">
+    <p class="chart-title">Absorption coefficient vs frequency</p>
+    <p class="chart-sub">Individual and combined response — corner placement, per unit</p>
+    <div class="chart-wrap">
+      <canvas id="nc" role="img"
+        aria-label="Absorption curves for Nodal 40 (cyan, peaks at 40Hz), Nodal 55 (purple, peaks at 54Hz), Nodal 70 (green, peaks at 70Hz) and their combined response (gold dashed line) showing overlapping coverage from 20 to 120Hz">
+      </canvas>
+    </div>
+    <div class="legend">
+      <div class="li">
+        <div class="ldot" style="background:#00c8e0"></div>
+        <div class="ld" style="background:#00c8e0"></div>
+        <span>Nodal 40 &nbsp;·&nbsp; 40 Hz &nbsp;·&nbsp; Q 1.1</span>
+      </div>
+      <div class="li">
+        <div class="ldot" style="background:#b06ac4"></div>
+        <div class="ld" style="background:#b06ac4"></div>
+        <span>Nodal 55 &nbsp;·&nbsp; 54 Hz &nbsp;·&nbsp; Q 1.5</span>
+      </div>
+      <div class="li">
+        <div class="ldot" style="background:#3dba6a"></div>
+        <div class="ld" style="background:#3dba6a"></div>
+        <span>Nodal 70 &nbsp;·&nbsp; 70 Hz &nbsp;·&nbsp; Q 1.9</span>
+      </div>
+      <div class="li">
+        <div class="ldot" style="background:rgba(210,170,55,0.9)"></div>
+        <div class="ld" style="background:rgba(210,170,55,0.7); border-top: 1.5px dashed rgba(210,170,55,0.9); height:0"></div>
+        <span>Combined</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Unit Specifications</p>
+
+  <div class="spec-grid">
+    <div class="spec-cell">
+      <span class="spec-model spec-model-40">Nodal 40</span>
+      <span class="spec-freq">40 Hz</span>
+      <div class="spec-rows">
+        <div class="spec-row"><span>Q factor</span><span>1.1</span></div>
+        <div class="spec-row"><span>−3 dB bandwidth</span><span>±18 Hz</span></div>
+      </div>
+    </div>
+    <div class="spec-cell">
+      <span class="spec-model spec-model-55">Nodal 55</span>
+      <span class="spec-freq">54 Hz</span>
+      <div class="spec-rows">
+        <div class="spec-row"><span>Q factor</span><span>1.5</span></div>
+        <div class="spec-row"><span>−3 dB bandwidth</span><span>±18 Hz</span></div>
+      </div>
+    </div>
+    <div class="spec-cell">
+      <span class="spec-model spec-model-70">Nodal 70</span>
+      <span class="spec-freq">70 Hz</span>
+      <div class="spec-rows">
+        <div class="spec-row"><span>Q factor</span><span>1.9</span></div>
+        <div class="spec-row"><span>−3 dB bandwidth</span><span>±18 Hz</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Technical Notes</p>
+
+  <p class="tech-note">
+    Each unit operates as a sealed-cavity, resistively-damped diaphragmatic absorber — a decoupled piston resonator where the air column provides the restoring spring and OC 705 rigid fibreboard controls the Q factor through viscous flow resistance. The Richlite membrane is mechanically decoupled from the Baltic Birch frame, suppressing plate-bending modes so the panel behaves as a rigid translating mass. All three units share a common 6.47" exterior depth and 24" × 29" Richlite face. Frequency tuning is achieved by varying membrane surface mass density (MLV addition for Nodal 40) and active cavity depth (false back for Nodal 70).
+  </p>
+
+  <p class="section-label">Room Simulation</p>
+
+  <p class="tech-note" style="margin-bottom:1.5rem;">
+    The interactive modal simulation models RT60 decay times, pressure heatmaps, and frequency response for any rectangular room geometry. Place units in corners or on walls, adjust Q factors, and observe treatment effectiveness across the full modal spectrum.
+  </p>
+
+  <div class="cta-row">
+    <a href="https://nodal.integeraudio.com" class="btn btn-ghost">groundcontrol.nodal</a>
+  </div>
+
+</main>
+
+<footer>
+  <span class="footer-brand">GroundControl — Nodal Series</span>
+  <span class="footer-note">Tuned Diaphragmatic Absorbers &nbsp;·&nbsp; Engineering Specification v2</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+(function() {
+  const Q_REF = 3.0, SKEW = 0.18;
+  function alpha(f, f0, Q, amax) {
+    const ap = amax * (1 - Math.exp(-Q / Q_REF));
+    const x = f/f0 - f0/f;
+    const xs = x * (1 + SKEW * x);
+    return ap / (1 + Math.pow(Q * xs, 2));
+  }
+
+  const freqs = [];
+  for (let f = 20; f <= 120; f += 0.5) freqs.push(f);
+
+  const a40  = freqs.map(f => alpha(f, 40,  1.1, 0.95));
+  const a55  = freqs.map(f => alpha(f, 54,  1.5, 0.95));
+  const a70  = freqs.map(f => alpha(f, 70,  1.9, 0.95));
+  const comb = freqs.map((f,i) => 1 - (1-a40[i])*(1-a55[i])*(1-a70[i]));
+
+  new Chart(document.getElementById('nc'), {
+    type: 'line',
+    data: {
+      labels: freqs,
+      datasets: [
+        { label:'Combined',  data:comb, borderColor:'rgba(210,170,55,0.80)', borderWidth:2, borderDash:[5,3], backgroundColor:'rgba(210,170,55,0.06)', fill:true, pointRadius:0, tension:0.4, order:4 },
+        { label:'Nodal 40',  data:a40,  borderColor:'#00c8e0', borderWidth:1.5, backgroundColor:'rgba(0,200,224,0.06)', fill:true, pointRadius:0, tension:0.4, order:1 },
+        { label:'Nodal 55',  data:a55,  borderColor:'#b06ac4', borderWidth:1.5, backgroundColor:'rgba(176,106,196,0.06)', fill:true, pointRadius:0, tension:0.4, order:2 },
+        { label:'Nodal 70',  data:a70,  borderColor:'#3dba6a', borderWidth:1.5, backgroundColor:'rgba(61,186,106,0.06)', fill:true, pointRadius:0, tension:0.4, order:3 },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { display:false },
+        tooltip: {
+          backgroundColor: '#161616',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+          titleColor: '#e8e4de',
+          bodyColor: 'rgba(232,228,222,0.5)',
+          titleFont: { family:"'DM Mono',monospace", size:10 },
+          bodyFont: { family:"'DM Mono',monospace", size:10 },
+          padding: 10,
+          callbacks: {
+            title: ctx => `${ctx[0].label} Hz`,
+            label: ctx => `  ${ctx.dataset.label}  α = ${ctx.parsed.y.toFixed(3)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          type:'linear', min:20, max:120,
+          grid: { color:'rgba(255,255,255,0.05)', drawTicks:false },
+          border: { color:'rgba(255,255,255,0.10)' },
+          ticks: { color:'rgba(232,228,222,0.30)', font:{family:"'DM Mono',monospace",size:9}, maxTicksLimit:11, callback:v=>v+'Hz', maxRotation:0 }
+        },
+        y: {
+          min:0, max:0.70,
+          grid: { color:'rgba(255,255,255,0.05)', drawTicks:false },
+          border: { color:'rgba(255,255,255,0.10)' },
+          ticks: { color:'rgba(232,228,222,0.30)', font:{family:"'DM Mono',monospace",size:9}, stepSize:0.10, callback:v=>v.toFixed(2) },
+          title: { display:true, text:'Absorption coefficient α', color:'rgba(232,228,222,0.25)', font:{family:"'DM Mono',monospace",size:9} }
+        }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
