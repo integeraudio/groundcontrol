@@ -719,6 +719,16 @@
     border-color: #81c784;
     color: #81c784;
   }
+  .active-55-corner {
+    background: rgba(186,104,200,0.22);
+    border-color: #ba68c8;
+    color: #ba68c8;
+  }
+  .active-55-wall {
+    background: rgba(206,147,216,0.18);
+    border-color: #ce93d8;
+    color: #ce93d8;
+  }
   .pos-btn.active-corner {
     border-color: var(--accent);
     background: rgba(0,229,255,0.18);
@@ -853,18 +863,13 @@
   </div>
   <div class="ctrl-group">
     <label>Frequency</label>
-    <input type="range" id="freqSlider" min="30" max="120" value="55" step="1">
+    <input type="range" id="freqSlider" min="25" max="120" value="55" step="1">
     <span class="val-display" id="freqVal">55 Hz</span>
   </div>
   <div class="ctrl-group">
     <label>Height / Depth</label>
     <input type="range" id="sliceSlider" min="0" max="100" value="50" step="1">
     <span class="val-display" id="sliceVal">50%</span>
-  </div>
-  <div class="ctrl-group">
-    <label>Units</label>
-    <input type="range" id="unitsSlider" min="1" max="8" value="4" step="1">
-    <span class="val-display" id="unitsVal">4</span>
   </div>
   <div class="treatment-toggle">
     <button class="btn btn-primary" id="btnUntreated">Untreated</button>
@@ -1020,120 +1025,127 @@
       </div>
     </div>
 
+    <!-- ═══ Nodal 40 Panel ═══ -->
     <div class="placement-panel">
-      <h3>Nodal-55/70 Placement — <span id="budgetLabel" style="color:var(--accent);">4 of 4 placed</span></h3>
-
-      <div class="placement-diagram" id="placementDiagram">
+      <h3><span style="color:var(--accent);">Nodal 40</span> — <span id="budget40" style="color:var(--accent);">0 of 4 placed</span></h3>
+      <div class="placement-diagram" id="diag40">
         <div class="room-outline"></div>
         <span class="room-outline-label" style="top:4px;left:50%;transform:translateX(-50%);">FRONT</span>
         <span class="room-outline-label" style="bottom:4px;left:50%;transform:translateX(-50%);">REAR</span>
         <span class="room-outline-label" style="top:50%;left:4px;transform:translateY(-50%);">L</span>
         <span class="room-outline-label" style="top:50%;right:4px;transform:translateY(-50%);">R</span>
       </div>
-
       <div class="placement-budget">
-        <span>Corner <span style="color:var(--accent);" id="cornerCount">4</span> &nbsp;|&nbsp; Wall <span style="color:#ff9800;" id="wallCount">0</span></span>
-        <span id="unitsRemaining" style="color:var(--text-dim);">0 unplaced</span>
+        <span>Corner <span style="color:var(--accent);" id="corner40">0</span> &nbsp;|&nbsp; Wall <span style="color:#ff9800;" id="wall40">0</span></span>
+        <span id="remain40" style="color:var(--text-dim);">0 unplaced</span>
       </div>
-
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px;">
+        <label style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">Units:</label>
+        <input type="range" id="units40" min="0" max="12" value="4" step="1" style="flex:1;accent-color:var(--accent);">
+        <span class="val-display" id="units40Val">4</span>
+      </div>
       <div class="preset-btns">
         <button class="preset-btn" onclick="applyPreset('allCorners')">All Corners</button>
         <button class="preset-btn" onclick="applyPreset('allWalls')">All Walls</button>
         <button class="preset-btn" onclick="applyPreset('mixed')">2+2 Mixed</button>
         <button class="preset-btn" onclick="applyPreset('clear')">Clear</button>
       </div>
-
-      <div class="placement-hint">
-        Click to place · Click again to stack 2 · Click a third time to remove<br>
-        Cyan = corner &nbsp;|&nbsp; Orange = mid-wall
-      </div>
-
-      <div class="stats-grid" style="margin-top:12px;">
-        <div class="stat-cell">
-          <span class="val">55 Hz</span>
-          <span class="lbl">Chamber A · Bottom</span>
-        </div>
-        <div class="stat-cell">
-          <span class="val" style="color:#ff6b35;">70 Hz</span>
-          <span class="lbl">Chamber B · Top</span>
-        </div>
-        <div class="stat-cell">
-          <span class="val" id="effCornerUnits">4</span>
-          <span class="lbl">Corner Units</span>
-        </div>
-        <div class="stat-cell">
-          <span class="val" id="effWallUnits">0</span>
-          <span class="lbl">Wall Units</span>
-        </div>
-      </div>
-
-      <div style="margin-top:12px; border-top:1px solid var(--border); padding-top:10px;">
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em;">Absorber Q Factor</div>
+      <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Q Factor &nbsp;<span id="bw40" style="color:var(--accent);">±18.2 Hz</span></div>
         <div class="room-dim-row">
-          <label style="width:20px;color:var(--accent);">A</label>
-          <input type="range" id="qA" min="0.5" max="8" step="0.1" value="2.25">
-          <span class="dim-val" id="qAVal">Q = 2.25</span>
-        </div>
-        <div class="room-dim-row">
-          <label style="width:20px;color:#ff6b35;">B</label>
-          <input type="range" id="qB" min="0.5" max="8" step="0.1" value="2.25">
-          <span class="dim-val" id="qBVal">Q = 2.25</span>
-        </div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-top:4px;line-height:1.6;">
-          BW<sub>A</sub>: <span id="bwA" style="color:var(--accent);">±12 Hz</span> &nbsp;|&nbsp;
-          BW<sub>B</sub>: <span id="bwB" style="color:#ff6b35;">±16 Hz</span>
+          <label style="width:20px;color:var(--accent);">Q</label>
+          <input type="range" id="q40Slider" min="0.5" max="8" step="0.1" value="1.1" style="flex:1;accent-color:var(--accent);">
+          <span class="dim-val" id="q40Val">Q = 1.1</span>
         </div>
       </div>
+      <div class="stats-grid" style="margin-top:8px;">
+        <div class="stat-cell"><span class="val">40 Hz</span><span class="lbl">Target</span></div>
+        <div class="stat-cell"><span class="val">Q = 1.1</span><span class="lbl">Bandwidth</span></div>
+      </div>
+      <div class="placement-hint">Up to 3 units per corner &nbsp;|&nbsp; Cyan = corner &nbsp;|&nbsp; Orange = wall</div>
     </div>
 
-    <div class="placement-panel" style="margin-top:8px; border-top: 2px solid rgba(76,175,80,0.3);">
-      <h3 style="color:#4caf50;">Nodal-85 Placement — <span id="assistBudgetLabel" style="color:#4caf50;">0 of 0 placed</span></h3>
+    <!-- ═══ Nodal 55 Panel ═══ -->
+    <div class="placement-panel" style="margin-top:8px;border-top:2px solid rgba(186,104,200,0.3);">
+      <h3><span style="color:#ba68c8;">Nodal 55</span> <span style="font-size:10px;color:var(--text-dim);">(54 Hz)</span> — <span id="budget55" style="color:#ba68c8;">0 of 0 placed</span></h3>
+      <div class="placement-diagram" id="diag55">
+        <div class="room-outline"></div>
+        <span class="room-outline-label" style="top:4px;left:50%;transform:translateX(-50%);">FRONT</span>
+        <span class="room-outline-label" style="bottom:4px;left:50%;transform:translateX(-50%);">REAR</span>
+        <span class="room-outline-label" style="top:50%;left:4px;transform:translateY(-50%);">L</span>
+        <span class="room-outline-label" style="top:50%;right:4px;transform:translateY(-50%);">R</span>
+      </div>
+      <div class="placement-budget">
+        <span>Corner <span style="color:#ba68c8;" id="corner55">0</span> &nbsp;|&nbsp; Wall <span style="color:#ce93d8;" id="wall55">0</span></span>
+        <span id="remain55" style="color:var(--text-dim);">—</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px;">
+        <label style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">Units:</label>
+        <input type="range" id="units55" min="0" max="12" value="0" step="1" style="flex:1;accent-color:#ba68c8;">
+        <span class="val-display" id="units55Val">0</span>
+      </div>
+      <div class="preset-btns">
+        <button class="preset-btn" onclick="applyPreset55('allCorners')" style="border-color:rgba(186,104,200,0.4);color:#ba68c8;">All Corners</button>
+        <button class="preset-btn" onclick="applyPreset55('allWalls')" style="border-color:rgba(186,104,200,0.4);color:#ba68c8;">All Walls</button>
+        <button class="preset-btn" onclick="applyPreset55('mixed')" style="border-color:rgba(186,104,200,0.4);color:#ba68c8;">2+2 Mixed</button>
+        <button class="preset-btn" onclick="applyPreset55('clear')" style="border-color:rgba(186,104,200,0.4);color:#ba68c8;">Clear</button>
+      </div>
+      <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Q Factor &nbsp;<span id="bw55" style="color:#ba68c8;">±18.3 Hz</span></div>
+        <div class="room-dim-row">
+          <label style="width:20px;color:#ba68c8;">Q</label>
+          <input type="range" id="q55Slider" min="0.5" max="8" step="0.1" value="1.5" style="flex:1;accent-color:#ba68c8;">
+          <span class="dim-val" id="q55Val" style="color:#ba68c8;">Q = 1.5</span>
+        </div>
+      </div>
+      <div class="stats-grid" style="margin-top:8px;">
+        <div class="stat-cell"><span class="val" style="color:#ba68c8;">54 Hz</span><span class="lbl">Resonance</span></div>
+        <div class="stat-cell"><span class="val" style="color:#ba68c8;">Q = 1.5</span><span class="lbl">Bandwidth</span></div>
+      </div>
+      <div class="placement-hint">Up to 3 units per corner &nbsp;|&nbsp; Cyan = corner &nbsp;|&nbsp; Orange = wall</div>
+    </div>
 
-      <div class="placement-diagram" id="assistDiagram">
+    <!-- ═══ Nodal 70 Panel ═══ -->
+    <div class="placement-panel" style="margin-top:8px; border-top: 2px solid rgba(76,175,80,0.3);">
+      <h3 style="color:#4caf50;">Nodal 70 — <span id="budget70" style="color:#4caf50;">0 of 0 placed</span></h3>
+      <div class="placement-diagram" id="diag70">
         <div class="room-outline" style="border-color:rgba(76,175,80,0.4);"></div>
         <span class="room-outline-label" style="top:4px;left:50%;transform:translateX(-50%);">FRONT</span>
         <span class="room-outline-label" style="bottom:4px;left:50%;transform:translateX(-50%);">REAR</span>
         <span class="room-outline-label" style="top:50%;left:4px;transform:translateY(-50%);">L</span>
         <span class="room-outline-label" style="top:50%;right:4px;transform:translateY(-50%);">R</span>
       </div>
-
       <div class="placement-budget">
-        <span>Corner <span style="color:#4caf50;" id="assistCornerCount">0</span> &nbsp;|&nbsp; Wall <span style="color:#81c784;" id="assistWallCount">0</span></span>
-        <span id="assistUnitsRemaining" style="color:var(--text-dim);">0 unplaced</span>
+        <span>Corner <span style="color:#4caf50;" id="corner70">0</span> &nbsp;|&nbsp; Wall <span style="color:#81c784;" id="wall70">0</span></span>
+        <span id="remain70" style="color:var(--text-dim);">—</span>
       </div>
-
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 6px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px;">
         <label style="font-family:var(--mono);font-size:10px;color:var(--text-dim);">Units:</label>
-        <input type="range" id="assistUnitsSlider" min="0" max="8" value="0" step="1" style="flex:1;">
-        <span class="val-display" id="assistUnitsVal">0</span>
+        <input type="range" id="units70" min="0" max="12" value="0" step="1" style="flex:1;accent-color:#4caf50;">
+        <span class="val-display" id="units70Val" style="color:#4caf50;">0</span>
       </div>
-
       <div class="preset-btns">
-        <button class="preset-btn" style="border-color:rgba(76,175,80,0.4);color:#4caf50;" onclick="applyAssistPreset('allCorners')">All Corners</button>
-        <button class="preset-btn" style="border-color:rgba(76,175,80,0.4);color:#4caf50;" onclick="applyAssistPreset('allWalls')">All Walls</button>
-        <button class="preset-btn" style="border-color:rgba(76,175,80,0.4);color:#4caf50;" onclick="applyAssistPreset('mixed')">2+2 Mixed</button>
-        <button class="preset-btn" style="border-color:rgba(76,175,80,0.4);color:#4caf50;" onclick="applyAssistPreset('clear')">Clear</button>
+        <button class="preset-btn" style="border-color:rgba(76,175,80,0.4);color:#4caf50;" onclick="applyPreset70('allCorners')">All Corners</button>
+        <button class="preset-btn" style="border-color:rgba(76,175,80,0.4);color:#4caf50;" onclick="applyPreset70('allWalls')">All Walls</button>
+        <button class="preset-btn" style="border-color:rgba(76,175,80,0.4);color:#4caf50;" onclick="applyPreset70('mixed')">2+2 Mixed</button>
+        <button class="preset-btn" style="border-color:rgba(76,175,80,0.4);color:#4caf50;" onclick="applyPreset70('clear')">Clear</button>
       </div>
-
-      <div class="placement-hint">
-        Independent of Nodal-55/70 — can be deployed alone<br>
-        <span style="color:#4caf50;">Green</span> = corner &nbsp;|&nbsp; <span style="color:#81c784;">Light green</span> = mid-wall
-      </div>
-
-      <div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px;">
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em;">85 Hz Q Factor</div>
+      <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Q Factor &nbsp;<span id="bw70" style="color:#4caf50;">±18.4 Hz</span></div>
         <div class="room-dim-row">
-          <label style="width:20px;color:#4caf50;">C</label>
-          <input type="range" id="qC" min="0.5" max="8" step="0.1" value="2.0">
-          <span class="dim-val" id="qCVal">Q = 2.0</span>
-        </div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-top:4px;line-height:1.6;">
-          BW<sub>C</sub>: <span id="bwC" style="color:#4caf50;">±21 Hz</span>
+          <label style="width:20px;color:#4caf50;">Q</label>
+          <input type="range" id="q70Slider" min="0.5" max="8" step="0.1" value="1.9" style="flex:1;accent-color:#4caf50;">
+          <span class="dim-val" id="q70Val" style="color:#4caf50;">Q = 1.9</span>
         </div>
       </div>
+      <div class="stats-grid" style="margin-top:8px;">
+        <div class="stat-cell"><span class="val" style="color:#4caf50;">70 Hz</span><span class="lbl">Target</span></div>
+        <div class="stat-cell"><span class="val" style="color:#4caf50;">Q = 1.9</span><span class="lbl">Bandwidth</span></div>
+      </div>
+      <div class="placement-hint"><span style="color:#4caf50;">Green</span> = corner &nbsp;|&nbsp; <span style="color:#81c784;">Light green</span> = wall</div>
     </div>
 
-    <div class="panel-box">
+        <div class="panel-box">
       <h3>Legend</h3>
       <div class="legend-items">
         <div class="legend-item">
@@ -1155,7 +1167,7 @@
 
 <div class="model-disclaimer">
   <span class="disc-title">Model limitations — please read</span>
-  The RT60 predictions shown use the <strong>Eyring acoustic model</strong>, which assumes a statistically diffuse sound field. In small rooms (typically below the Schroeder frequency shown above), the bass range is governed by <strong>discrete room modes</strong> rather than a diffuse field — the Eyring model is technically outside its strict domain of validity in this regime.
+  The RT60 predictions shown for the <strong>Nodal 40 (40 Hz), Nodal 55 (54 Hz), and Nodal 70 (70 Hz)</strong> use the <strong>Eyring acoustic model</strong>, which assumes a statistically diffuse sound field. In small rooms (typically below the Schroeder frequency shown above), the bass range is governed by <strong>discrete room modes</strong> rather than a diffuse field — the Eyring model is technically outside its strict domain of validity in this regime.
   <br><br>
   In practice this means: the <strong>predicted RT60 reductions are indicative, not precise</strong>. The actual reduction in your room may be higher or lower than predicted depending on your specific room dimensions, construction, and measurement position. The model is most reliable as a <strong>comparative tool</strong> — the difference between untreated and treated predictions is more meaningful than the absolute values.
   <br><br>
@@ -1163,7 +1175,7 @@
 </div>
 
 <footer>
-  <span>Eyring model · rectangular room axial modes · absorption Q≈2.25 · α_peak≈0.92–0.95</span>
+  <span>Eyring model · rectangular room axial modes · Nodal 40 / 55 / 70 · membrane 24"×29" Richlite · BOOST_CORNER=18 · α_peak≈0.95 · v2 spec</span>
   <span>Indicative predictions only — validate all results with REW measurement · not for engineering certification</span>
 </footer>
 
@@ -1268,17 +1280,10 @@ function chamberAlpha(f, f0, Q, alphaMax) {
   return alphaPeak / (1 + Math.pow(Q * xSkew, 2));
 }
 
-// Alpha for Nodal-55/70 unit (chambers A + B)
-function unitAlpha(f) {
-  const a = chamberAlpha(f, 55, state.qA, 0.95);
-  const b = chamberAlpha(f, 70, state.qB, 0.92);
-  return Math.min(0.99, a + b - a * b);
-}
-
-// Alpha for Nodal-85 unit (chamber C only)
-function assistAlpha(f) {
-  return chamberAlpha(f, 85, state.qC, 0.92);
-}
+// Alpha for each Nodal model
+function alpha40(f) { return chamberAlpha(f, 40, state.q40, 0.95); }
+function alpha55(f) { return chamberAlpha(f, 54, state.q55, 0.95); }
+function alpha70(f) { return chamberAlpha(f, 70, state.q70, 0.95); }
 
 // ── Modal reduction model ────────────────────────────────────────────────────
 //
@@ -1302,66 +1307,28 @@ function assistAlpha(f) {
 // This gives physically meaningful reductions (8–15 dB at resonance for
 // well-placed corner units) consistent with published measurement data.
 
-// ── Combined reduction from a specific set of positions ──────────────────────
-function modalReductionDB(f, positions) {
+// ── Combined reduction from a set of positions for a given alpha function ──
+function reductionDB(f, positions, alphaFn) {
   if (!positions || positions.length === 0) return 0;
-
-  const alpha = unitAlpha(f);
-  const unitArea = 0.54;
+  const unitArea   = 0.4490; // m² — 24" × 29" Richlite membrane
   const minWallArea = ROOM.W * ROOM.H;
-
-  // Count units at each placement type
+  const alpha = alphaFn(f);
   const nCorner = positions.filter(id => {
     const p = ALL_POSITIONS.find(p => p.id === id);
     return p && p.type === 'corner';
   }).length;
-  const nWall = positions.filter(id => {
-    const p = ALL_POSITIONS.find(p => p.id === id);
-    return p && p.type === 'wall';
-  }).length;
-
-  // Effective alpha from each group
-  function groupAlphaEff(n, mult) {
+  const nWall = positions.length - nCorner;
+  function gEff(n, mult) {
     if (n === 0) return 0;
-    const coverage = (unitArea * n) / minWallArea;
-    return Math.min(0.97, alpha * coverage * mult);
+    return Math.min(0.97, alpha * (unitArea * n / minWallArea) * mult);
   }
-
-  const cornerEff = groupAlphaEff(nCorner, 4.86);
-  const wallEff   = groupAlphaEff(nWall,   2.00);
-
-  // Probabilistic combination — avoids double-counting
-  const combined = 1 - (1 - cornerEff) * (1 - wallEff);
-  const alphaEff = Math.min(0.97, combined);
-
-  return alphaEff > 0 ? -10 * Math.log10(1 - alphaEff) : 0;
+  const combined = 1 - (1 - gEff(nCorner, 4.86)) * (1 - gEff(nWall, 2.00));
+  const aEff = Math.min(0.97, combined);
+  return aEff > 0 ? -10 * Math.log10(1 - aEff) : 0;
 }
-
-// Reduction from 85 Hz assist units at given positions
-function assistReductionDB(f, assistPositions) {
-  if (!assistPositions || assistPositions.length === 0) return 0;
-
-  const alpha = assistAlpha(f);
-  const unitArea = 0.54;
-  const minWallArea = ROOM.W * ROOM.H;
-
-  const nCorner = assistPositions.filter(id => {
-    const p = ALL_POSITIONS.find(p => p.id === id);
-    return p && p.type === 'corner';
-  }).length;
-  const nWall = assistPositions.length - nCorner;
-
-  function groupAlphaEff(n, mult) {
-    if (n === 0) return 0;
-    const coverage = (unitArea * n) / minWallArea;
-    return Math.min(0.97, alpha * coverage * mult);
-  }
-
-  const cornerEff = groupAlphaEff(nCorner, 4.86);
-  const wallEff   = groupAlphaEff(nWall,   2.00);
-  const combined  = 1 - (1 - cornerEff) * (1 - wallEff);
-  return combined > 0 ? -10 * Math.log10(1 - Math.min(0.97, combined)) : 0;
-}
+function reduction40DB(f, pos) { return reductionDB(f, pos, alpha40); }
+function reduction55DB(f, pos) { return reductionDB(f, pos, alpha55); }
+function reduction70DB(f, pos) { return reductionDB(f, pos, alpha70); }
 
 // ─── Room Construction Absorption Profiles ────────────────────────────────────
 // Frequency-dependent mean absorption coefficients for whole room surface,
@@ -1391,21 +1358,21 @@ const CONSTRUCTION_PROFILES = {
   },
   plasterboard: {
     label: 'Plasterboard on Studs',
-    note:  'Typical studio/project room bare shell. Mean room alpha based on published drywall/gypsum data (Cox & D\'Antonio, Everest). Untreated RT60 typically 0.7–1.0s at 55–80 Hz.',
+    note:  'Typical studio/project room bare shell. Mean-room alpha from full-room reverberation chamber measurements (Cox & D\'Antonio Table 3.3, Everest Table 9.1). Drywall resonates at 55–90 Hz (½" on 3.5" studs ≈ 61 Hz) — below 50 Hz the panel is stiffness-controlled with α≈0.02–0.04, so RT60 is long there. Peak absorption at 63–80 Hz is already moderating untreated RT60 in that band.',
     freqs: [31.5,  50,    63,    80,    100,   125,   160],
-    alpha: [0.030, 0.050, 0.113, 0.115, 0.090, 0.065, 0.050],
+    alpha: [0.028, 0.040, 0.120, 0.130, 0.090, 0.065, 0.050],
   },
   mixed: {
     label: 'Mixed (Plasterboard + Concrete)',
-    note:  'Concrete floor & ceiling, plasterboard stud walls (~47% of surface area). Concrete is highly reflective at bass — RT60 is significantly longer than all-plasterboard.',
+    note:  'Concrete floor & ceiling, plasterboard stud walls (~47% of surface area). Drywall resonance peak still present at 63–80 Hz but hard concrete surfaces dominate below 50 Hz, keeping low-bass RT60 very long.',
     freqs: [31.5,  50,    63,    80,    100,   125,   160],
-    alpha: [0.020, 0.029, 0.061, 0.065, 0.053, 0.041, 0.040],
+    alpha: [0.024, 0.039, 0.13, 0.14, 0.093, 0.068, 0.051],
   },
-  treated: {
+    treated: {
     label: 'Part-treated (broadband panels)',
-    note:  'Plasterboard shell with ~25% surface coverage of broadband absorbers. Typical mid-level studio fit-out.',
-    freqs: [31.5,  50,   63,   80,   100,  125,  160],
-    alpha: [0.055, 0.120, 0.260, 0.300, 0.230, 0.160, 0.140],
+    note:  'Plasterboard shell with ~25% surface coverage of 2" broadband panels (e.g. OC 703). Panel contribution rolls off gradually below 125 Hz — no hard cutoff. At 80 Hz panels contribute ~35% of their rated alpha; at 50 Hz ~10%; below 40 Hz negligible. Profile derived from published ISO 354 reverberation chamber data (Cox & D\'Antonio Table A2.1).',
+    freqs: [31.5,  50,    63,    80,    100,   125,   160],
+    alpha: [0.028, 0.050, 0.153, 0.197, 0.193, 0.203, 0.219],
   },
   iso: {
     label: 'ISO 354 Reverberation Room',
@@ -1457,30 +1424,24 @@ function updateConstructionNote() {
 // Combined: alpha_total = 1 - (1-alpha_base)*∏(1-alpha_per_unit_i)
 // BOOST_CORNER=4.0 calibrated to published corner absorber effectiveness data.
 
-const UNIT_AREA  = 0.54;   // m² — active face area of one unit
-const BOOST_CORNER = 4.00; // calibrated corner position multiplier
-const BOOST_WALL   = 1.75; // mid-wall position multiplier
+const UNIT_AREA  = 0.4490; // m² — active face area of one unit (24" × 29" membrane)
+const BOOST_CORNER = 18.0; // calibrated corner position multiplier (recalibrated for 21.4"×28.4" membrane area)
+const BOOST_WALL   = 7.88; // mid-wall position multiplier (maintains original corner/wall ratio)
 
-function rt60(f, positions, assistPositions) {
+function rt60(f, pos40, pos55, pos70) {
   const baseAlpha = baselineAlpha(f);
   let survival = 1 - Math.min(0.99, baseAlpha);
-
-  const uA55 = unitAlpha(f);   // absorption coefficient of one 55/70 unit at freq f
-  const uA85 = assistAlpha(f); // absorption coefficient of one 85 Hz assist unit at freq f
-
-  function applyUnits(posArray, unitAlphaVal) {
+  function applyUnits(posArray, alphaFn) {
     posArray.forEach(id => {
       const pos = ALL_POSITIONS.find(p => p.id === id);
       const boost = pos && pos.type === 'corner' ? BOOST_CORNER : BOOST_WALL;
-      // Fraction of room surface energy intercepted by this unit
-      const alpha_i = Math.min(0.5, unitAlphaVal * UNIT_AREA * boost / ROOM_SA);
-      survival *= (1 - alpha_i);
+      const ai = Math.min(0.5, alphaFn(f) * UNIT_AREA * boost / ROOM_SA);
+      survival *= (1 - ai);
     });
   }
-
-  if (positions       && positions.length       > 0) applyUnits(positions,       uA55);
-  if (assistPositions && assistPositions.length  > 0) applyUnits(assistPositions, uA85);
-
+  if (pos40 && pos40.length > 0) applyUnits(pos40, alpha40);
+  if (pos55 && pos55.length > 0) applyUnits(pos55, alpha55);
+  if (pos70 && pos70.length > 0) applyUnits(pos70, alpha70);
   const alphaTotal = Math.min(0.99, 1 - survival);
   return Math.max(0.05, 0.161 * ROOM_VOLUME / (-ROOM_SA * Math.log(1 - alphaTotal)));
 }
@@ -1508,14 +1469,10 @@ let state = {
   freq: 55,
   slice: 0.5,
   treated: true,
-  nUnits: 4,
-  positions: ['FL', 'FR', 'RL', 'RR'],
-  nAssistUnits: 0,
-  assistPositions: [],
+  n40: 4, pos40: ['FL','FR','RL','RR'], q40: 1.1,
+  n55: 0, pos55: [],                   q55: 1.5,
+  n70: 0, pos70: [],                   q70: 1.9,
   highlightMode: null,
-  qA: 2.25,
-  qB: 2.25,
-  qC: 2.0,
   construction: 'plasterboard'
 };
 
@@ -1654,7 +1611,7 @@ function renderHeatmap() {
       WW: { x: ROOM.L,   y: ROOM.W/2, type: 'wall' },
     };
 
-    state.positions.forEach(id => {
+    [...state.pos40, ...state.pos55, ...state.pos70].forEach(id => {
       const pos = posRoomCoords[id];
       if (!pos) return;
       const isCorner = pos.type === 'corner';
@@ -1725,55 +1682,39 @@ function renderHeatmap() {
 
 function computePressure(f, x, y, z) {
   let pressure = 0;
-
-  const positions      = state.treated ? state.positions      : [];
-  const assistPos      = state.treated ? state.assistPositions : [];
-
-  const nCorner55 = positions.filter(id => ALL_POSITIONS.find(p => p.id === id)?.type === 'corner').length;
-  const nCornerA  = assistPos.filter(id => ALL_POSITIONS.find(p => p.id === id)?.type === 'corner').length;
-  const cornerFrac55 = positions.length > 0 ? nCorner55 / positions.length : 0;
-  const cornerFracA  = assistPos.length  > 0 ? nCornerA  / assistPos.length  : 0;
-
+  const p40 = state.treated ? state.pos40 : [];
+  const p55 = state.treated ? state.pos55 : [];
+  const p70 = state.treated ? state.pos70 : [];
+  function cf(pos) { return pos.length===0 ? 0 : pos.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length / pos.length; }
+  const cf40 = cf(p40), cf55 = cf(p55), cf70 = cf(p70);
   MODES.forEach(mode => {
     const bw = mode.f / 3.0;
     const weight = Math.exp(-0.5 * Math.pow((f - mode.f) / (bw / 2.355), 2));
     if (weight < 0.005) return;
-
     let spatial = 1;
     if (mode.axis === 'X') spatial = Math.cos((mode.n * Math.PI * x) / ROOM.L);
     if (mode.axis === 'Y') spatial = Math.cos((mode.n * Math.PI * y) / ROOM.W);
     if (mode.axis === 'Z') spatial = Math.cos((mode.n * Math.PI * z) / ROOM.H);
-
-    const absSpatial = Math.abs(spatial);
-
-    // 55/70 unit reduction
-    let mult = 1;
-    if (positions.length > 0) {
-      const redDB = modalReductionDB(mode.f, positions);
+    const absSp = Math.abs(spatial);
+    function applyRed(pos, redFn, cFrac) {
+      if (pos.length === 0) return 1;
+      const redDB = redFn(mode.f, pos);
       const ampMult = Math.pow(10, -redDB / 20);
-      const spatialMult = 1 - absSpatial * (1 - ampMult);
-      mult *= cornerFrac55 * spatialMult + (1 - cornerFrac55) * ampMult;
+      return cFrac * (1 - absSp * (1 - ampMult)) + (1 - cFrac) * ampMult;
     }
-
-    // 85 assist unit reduction — applied on top
-    if (assistPos.length > 0) {
-      const redDB = assistReductionDB(mode.f, assistPos);
-      const ampMult = Math.pow(10, -redDB / 20);
-      const spatialMult = 1 - absSpatial * (1 - ampMult);
-      mult *= cornerFracA * spatialMult + (1 - cornerFracA) * ampMult;
-    }
-
+    const mult = applyRed(p40, reduction40DB, cf40)
+               * applyRed(p55, reduction55DB, cf55)
+               * applyRed(p70, reduction70DB, cf70);
     pressure += weight * spatial * mult;
   });
-
   return Math.abs(pressure) + 0.001;
 }
 
 function estimateModeReduction(mode) {
   if (!state.treated) return 0;
-  const r1 = state.positions.length      > 0 ? modalReductionDB(mode.f, state.positions)           : 0;
-  const r2 = state.assistPositions.length > 0 ? assistReductionDB(mode.f, state.assistPositions)   : 0;
-  return r1 + r2;
+  return reduction40DB(mode.f, state.pos40)
+       + reduction55DB(mode.f, state.pos55)
+       + reduction70DB(mode.f, state.pos70);
 }
 
 // ─── Frequency Response Canvas ────────────────────────────────────────────────
@@ -1836,18 +1777,15 @@ function renderFreqResponse() {
     if (mx > normPeak) normPeak = mx;
   }
 
-  function roomResponse(f, treated, positions, assistPositions) {
+  function roomResponse(f, treated) {
     let maxVal = 0;
     MODES.forEach(mode => {
       const denom = 1 + Math.pow(ROOM_Q * (f/mode.f - mode.f/f), 2);
       let peakDB = MODAL_PEAK_DB;
       if (treated) {
-        if (positions && positions.length > 0) {
-          peakDB = Math.max(0, peakDB - modalReductionDB(mode.f, positions));
-        }
-        if (assistPositions && assistPositions.length > 0) {
-          peakDB = Math.max(0, peakDB - assistReductionDB(mode.f, assistPositions));
-        }
+        if (state.pos40.length > 0) peakDB = Math.max(0, peakDB - reduction40DB(mode.f, state.pos40));
+        if (state.pos55.length > 0) peakDB = Math.max(0, peakDB - reduction55DB(mode.f, state.pos55));
+        if (state.pos70.length > 0) peakDB = Math.max(0, peakDB - reduction70DB(mode.f, state.pos70));
       }
       const v = peakDB / denom;
       if (v > maxVal) maxVal = v;
@@ -1855,28 +1793,25 @@ function renderFreqResponse() {
     return Math.max(-30, maxVal - normPeak);
   }
 
-  // Always draw untreated as orange reference
+    // Always draw untreated as orange reference
   ctx.strokeStyle = 'rgba(255,107,53,0.6)';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   freqs.forEach((f, i) => {
-    const db = roomResponse(f, false, [], []);
+    const db = roomResponse(f, false);
     const x = fToX(f), y = dBToY(db);
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
   ctx.stroke();
 
   // Treated curve
-  if (state.treated && (state.positions.length > 0 || state.assistPositions.length > 0)) {
-    const nC  = state.positions.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
-    const nW  = state.positions.length - nC;
-    const col = (state.assistPositions.length > 0 && state.positions.length === 0) ? '#4caf50'
-              : nC >= nW ? '#00e5ff' : '#ff9800';
-    ctx.strokeStyle = col;
+  const hasTreatedFreq = state.treated && (state.pos40.length > 0 || state.pos55.length > 0 || state.pos70.length > 0);
+  if (hasTreatedFreq) {
+    ctx.strokeStyle = '#00e5ff';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     freqs.forEach((f, i) => {
-      const db = roomResponse(f, true, state.positions, state.assistPositions);
+      const db = roomResponse(f, true);
       const x = fToX(f), y = dBToY(db);
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
@@ -1897,27 +1832,23 @@ function renderFreqResponse() {
   ctx.font = '9px Share Tech Mono';
   ctx.fillStyle = 'rgba(255,107,53,0.8)';
   ctx.fillText('UNTREATED', pad.l + 6, pad.t + 11);
-  if (state.treated && (state.positions.length > 0 || state.assistPositions.length > 0)) {
-    const nCL = state.positions.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
-    const nWL = state.positions.length - nCL;
-    const nCA = state.assistPositions.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
-    const nWA = state.assistPositions.length - nCA;
-    let label = '';
-    if (state.positions.length > 0)      label += `Nodal-55/70: ${nCL}C+${nWL}W`;
-    if (state.assistPositions.length > 0) label += (label ? '  ' : '') + `85: ${nCA}C+${nWA}W`;
-    const col = (state.assistPositions.length > 0 && state.positions.length === 0) ? '#4caf50'
-              : nCL >= nWL ? '#00e5ff' : '#ff9800';
-    ctx.fillStyle = col;
-    ctx.fillText(label, pad.l + 6, pad.t + 22);
+  if (hasTreatedFreq) {
+    const parts = [
+      state.pos40.length > 0 ? `N40:${state.pos40.length}` : '',
+      state.pos55.length > 0 ? `N55:${state.pos55.length}` : '',
+      state.pos70.length > 0 ? `N70:${state.pos70.length}` : '',
+    ].filter(Boolean);
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillText(parts.join(' '), pad.l + 6, pad.t + 22);
   }
   ctx.fillStyle = 'rgba(0,229,255,0.5)';
   ctx.fillText('ABSORBER α', pad.l + 6, pad.t + 33);
 
-  // Tuning markers: 55, 70, and 85 if assist placed
+  // Tuning markers: 40, 55, 70
   const freqMarkers = [
+    { f: 40, col: '#4caf50' },
     { f: 55, col: '#00e5ff' },
     { f: 70, col: '#ff6b35' },
-    ...(state.assistPositions.length > 0 ? [{ f: 85, col: '#4caf50' }] : [])
   ];
   freqMarkers.forEach(({ f, col }) => {
     const mx = fToX(f);
@@ -2028,21 +1959,20 @@ function renderRT60() {
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   freqs.forEach((f, i) => {
-    const t = rt60(f, [], []);
+    const t = rt60(f, [], [], []);
     const x = fToX(f), y = rtToY(Math.min(rt60Max, t));
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
   ctx.stroke();
 
   // Treated RT60
-  if (state.treated && (state.positions.length > 0 || state.assistPositions.length > 0)) {
-    const nC = state.positions.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
-    const col = nC >= state.positions.length - nC ? '#00e5ff' : '#ff9800';
-    ctx.strokeStyle = col;
+  const hasTreatedRT = state.treated && (state.pos40.length > 0 || state.pos55.length > 0 || state.pos70.length > 0);
+  if (hasTreatedRT) {
+    ctx.strokeStyle = '#00e5ff';
     ctx.lineWidth = 2;
     ctx.beginPath();
     freqs.forEach((f, i) => {
-      const t = rt60(f, state.positions, state.assistPositions);
+      const t = rt60(f, state.pos40, state.pos55, state.pos70);
       const x = fToX(f), y = rtToY(Math.min(rt60Max, t));
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
@@ -2054,11 +1984,9 @@ function renderRT60() {
   const alphaBaseY  = pad.t + plotH;
 
   const chambers = [
-    { f0: 55, Q: state.qA, peak: 0.95, col: 'rgba(0,229,255,',   label: 'α 55Hz' },
-    { f0: 70, Q: state.qB, peak: 0.92, col: 'rgba(255,107,53,',  label: 'α 70Hz' },
-    ...(state.assistPositions.length > 0
-      ? [{ f0: 85, Q: state.qC, peak: 0.92, col: 'rgba(76,175,80,', label: 'α 85Hz' }]
-      : []),
+    { f0: 40, Q: state.q40, peak: 0.95, col: 'rgba(76,175,80,',  label: 'α 40Hz' },
+    { f0: 55, Q: state.q55, peak: 0.95, col: 'rgba(0,229,255,',  label: 'α 55Hz' },
+    { f0: 70, Q: state.q70, peak: 0.92, col: 'rgba(255,107,53,', label: 'α 70Hz' },
   ];
 
   chambers.forEach(ch => {
@@ -2109,18 +2037,16 @@ function renderRT60() {
   ctx.setLineDash([]);
 
   // RT60 values at current frequency
-  const rtUntreated = rt60(state.freq, [], []);
-  const rtTreated   = rt60(state.freq, state.positions, state.assistPositions);
-  const nC2 = state.positions.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
-  const nW2 = state.positions.length - nC2;
+  const rtUntreated = rt60(state.freq, [], [], []);
+  const rtTreated   = rt60(state.freq, state.pos40, state.pos55, state.pos70);
 
   ctx.fillStyle = '#ff6b35';
   ctx.beginPath();
   ctx.arc(fToX(state.freq), rtToY(Math.min(rt60Max, rtUntreated)), 4, 0, Math.PI*2);
   ctx.fill();
 
-  if (state.treated && (state.positions.length > 0 || state.assistPositions.length > 0)) {
-    ctx.fillStyle = nC2 >= nW2 ? '#00e5ff' : '#ff9800';
+  if (hasTreatedRT) {
+    ctx.fillStyle = '#00e5ff';
     ctx.beginPath();
     ctx.arc(fToX(state.freq), rtToY(Math.min(rt60Max, rtTreated)), 4, 0, Math.PI*2);
     ctx.fill();
@@ -2133,24 +2059,25 @@ function renderRT60() {
 
   ctx.fillStyle = 'rgba(255,107,53,0.8)';
   ctx.fillText('UNTREATED  ' + rtUntreated.toFixed(2) + 's', pad.l + 6, pad.t + 11);
-  if (state.treated && (state.positions.length > 0 || state.assistPositions.length > 0)) {
-    ctx.fillStyle = nC2 >= nW2 ? '#00e5ff' : '#ff9800';
-    const label = `${nC2}C+${nW2}W`;
-    ctx.fillText(label + '  ' + rtTreated.toFixed(2) + 's', pad.l + 6, pad.t + 22);
+  if (hasTreatedRT) {
+    ctx.fillStyle = '#00e5ff';
+    const rtParts = [
+      state.pos40.length > 0 ? `N40:${state.pos40.length}` : '',
+      state.pos55.length > 0 ? `N55:${state.pos55.length}` : '',
+      state.pos70.length > 0 ? `N70:${state.pos70.length}` : '',
+    ].filter(Boolean).join(' ');
+    ctx.fillText(rtParts + '  ' + rtTreated.toFixed(2) + 's', pad.l + 6, pad.t + 22);
   }
 
   // Dynamic zone status warning
   // Evaluate only within the effective treatment bandwidth — checking outside
   // the tuning range will always show under-damped since those modes are untouched.
   ctx.font = '9px Share Tech Mono';
-  if (state.treated && (state.positions.length > 0 || state.assistPositions.length > 0)) {
-    const fLow  = 55;
-    const fHigh = state.assistPositions.length > 0 ? 85 : 70;
+  if (hasTreatedRT) {
     const checkFreqs = [];
-    for (let f = fLow; f <= fHigh; f += 1) checkFreqs.push(f);
-
-    const minTreated = Math.min(...checkFreqs.map(f => rt60(f, state.positions, state.assistPositions)));
-    const maxTreated = Math.max(...checkFreqs.map(f => rt60(f, state.positions, state.assistPositions)));
+    for (let f = 35; f <= 80; f += 1) checkFreqs.push(f);
+    const minTreated = Math.min(...checkFreqs.map(f => rt60(f, state.pos40, state.pos55, state.pos70)));
+    const maxTreated = Math.max(...checkFreqs.map(f => rt60(f, state.pos40, state.pos55, state.pos70)));
 
     if (minTreated < 0.25) {
       ctx.fillStyle = 'rgba(244,67,54,0.9)';
@@ -2171,6 +2098,29 @@ function renderRT60() {
   [30, 50, 70, 100, 120, 150].forEach(f => {
     ctx.fillText(f + 'Hz', fToX(f) - 10, H - 6);
   });
+
+  // ── Schroeder frequency marker ──
+  // Below this frequency the room is modal — Eyring is outside strict validity.
+  // Double-slope decay is common. Use T20 in REW; inspect waterfall.
+  const schroederF = Math.round(2000 * Math.sqrt(1.5 / ROOM_VOLUME));
+  if (schroederF >= fMin && schroederF <= fMax) {
+    const sx = fToX(schroederF);
+    ctx.strokeStyle = 'rgba(255,152,0,0.45)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 4]);
+    ctx.beginPath();
+    ctx.moveTo(sx, pad.t);
+    ctx.lineTo(sx, pad.t + plotH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(255,152,0,0.75)';
+    ctx.font = '8px Share Tech Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('fₛ ' + schroederF + 'Hz', sx, pad.t + 8);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255,152,0,0.50)';
+    ctx.fillText('← modal: use T20 in REW, check waterfall', sx + 4, pad.t + 8);
+  }
 }
 
 // ─── Listening Position Overlay ───────────────────────────────────────────────
@@ -2218,16 +2168,16 @@ function updateListenReadout() {
 
   // Pressure at this position: untreated vs treated
   const savedTreated = state.treated;
-  const savedN = state.nUnits;
+  const savedP40u = state.pos40.slice(), savedP55u = state.pos55.slice(), savedP70u = state.pos70.slice();
 
-  state.treated = false; state.nUnits = 0;
+  state.treated = false; state.pos40 = []; state.pos55 = []; state.pos70 = [];
   const pUntreated = computePressure(f, x, y, z);
 
-  state.treated = true; state.nUnits = savedN;
+  state.treated = true; state.pos40 = savedP40u; state.pos55 = savedP55u; state.pos70 = savedP70u;
   const pTreated = computePressure(f, x, y, z);
 
   // Restore
-  state.treated = savedTreated; state.nUnits = savedN;
+  state.treated = savedTreated; state.pos40 = savedP40u; state.pos55 = savedP55u; state.pos70 = savedP70u;
 
   // Convert to relative dB (normalised to untreated peak from scale)
   const dbUntreated = 20 * Math.log10(pUntreated / SCALE_MAX);
@@ -2336,32 +2286,29 @@ function renderSweep() {
   // We compute pressure relative to the untreated room's peak at each freq
   function splAtPos(f, treated) {
     const savedTreated   = state.treated;
-    const savedPositions = state.positions.slice();
-    const savedAssist    = state.assistPositions.slice();
-
+    const savedPos40 = state.pos40.slice();
+    const savedPos55 = state.pos55.slice();
+    const savedPos70 = state.pos70.slice();
     state.treated = treated;
-    if (!treated) { state.positions = []; state.assistPositions = []; }
+    if (!treated) { state.pos40 = []; state.pos55 = []; state.pos70 = []; }
 
     const res = 12;
     let mx = 0;
     for (let i = 0; i <= res; i++) {
       for (let j = 0; j <= res; j++) {
         const savedT2 = state.treated;
-        state.treated = false;
-        const savedA2 = state.assistPositions.slice();
-        state.assistPositions = [];
+        const savedP40b = state.pos40.slice(), savedP55b = state.pos55.slice(), savedP70b = state.pos70.slice();
+        state.treated = false; state.pos40 = []; state.pos55 = []; state.pos70 = [];
         const v = computePressure(f, (i/res)*ROOM.L, (j/res)*ROOM.W, lz);
-        state.treated = savedT2;
-        state.assistPositions = savedA2;
+        state.treated = savedT2; state.pos40 = savedP40b; state.pos55 = savedP55b; state.pos70 = savedP70b;
         if (v > mx) mx = v;
       }
     }
 
     const p = computePressure(f, lx, ly, lz);
 
-    state.treated        = savedTreated;
-    state.positions      = savedPositions;
-    state.assistPositions = savedAssist;
+    state.treated = savedTreated;
+    state.pos40 = savedPos40; state.pos55 = savedPos55; state.pos70 = savedPos70;
 
     const db = mx > 0 ? 20 * Math.log10(p / mx) : -60;
     return Math.max(dBMin, Math.min(dBMax, db));
@@ -2378,15 +2325,11 @@ function renderSweep() {
   });
   ctx.stroke();
 
-  const hasTreated = state.positions.length > 0 || state.assistPositions.length > 0;
+  const hasTreated = state.pos40.length > 0 || state.pos55.length > 0 || state.pos70.length > 0;
 
   // Treated sweep
   if (hasTreated) {
-    const nC = state.positions.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
-    const nWs = state.positions.length - nC;
-    ctx.strokeStyle = (state.assistPositions.length > 0 && state.positions.length === 0)
-      ? '#4caf50'
-      : nC >= nWs ? '#00e5ff' : '#ff9800';
+      ctx.strokeStyle = '#00e5ff';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     freqs.forEach((f, i) => {
@@ -2425,18 +2368,15 @@ function renderSweep() {
   ctx.fillStyle = 'rgba(255,107,53,0.8)';
   ctx.fillText('UNTREATED', pad.l + 4, pad.t + 22);
   if (hasTreated) {
-    const nC = state.positions.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
-    const col = (state.assistPositions.length > 0 && state.positions.length === 0) ? '#4caf50'
-              : nC >= state.positions.length - nC ? '#00e5ff' : '#ff9800';
-    ctx.fillStyle = col;
+    ctx.fillStyle = '#00e5ff';
     ctx.fillText('TREATED', pad.l + 74, pad.t + 22);
   }
 
   // Tuning markers
   const markers = [
+    { f: 40, col: '#4caf50' },
     { f: 55, col: '#00e5ff' },
     { f: 70, col: '#ff6b35' },
-    ...(state.assistPositions.length > 0 ? [{ f: 85, col: '#4caf50' }] : [])
   ];
   markers.forEach(({ f, col }) => {
     ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.setLineDash([2,3]);
@@ -2479,7 +2419,8 @@ function exportReport() {
   ctx.font = 'bold 20px sans-serif';
   ctx.fillText('GroundControl Nodal Series — Modal Analysis Report', margin, 30);
   const mToFt = m => (m * 3.28084).toFixed(0);
-  const subtitle = `Room: ${mToFt(ROOM.L)}×${mToFt(ROOM.W)}×${mToFt(ROOM.H)} ft  |  ${state.positions.length} units  |  ${new Date().toLocaleDateString()}`;
+  const totalUnits = state.pos40.length + state.pos55.length + state.pos70.length;
+  const subtitle = `Room: ${mToFt(ROOM.L)}×${mToFt(ROOM.W)}×${mToFt(ROOM.H)} ft  |  ${totalUnits} units  |  ${new Date().toLocaleDateString()}`;
   ctx.font = '12px monospace';
   ctx.fillStyle = '#4a5a6a';
   ctx.fillText(subtitle, margin, 48);
@@ -2489,36 +2430,27 @@ function exportReport() {
   // ── Row 1: heatmaps ──
   // Save state and render both versions
   const savedTreated = state.treated;
-  const savedPositions = state.positions.slice();
+  const savedPos40e = state.pos40.slice(), savedPos55e = state.pos55.slice(), savedPos70e = state.pos70.slice();
 
   // Untreated heatmap
-  state.treated = false;
-  state.positions = [];
-  updateScale(state.freq);
-  renderHeatmap();
+  state.treated = false; state.pos40 = []; state.pos55 = []; state.pos70 = [];
+  updateScale(state.freq); renderHeatmap();
   const hmCanvas = document.getElementById('heatmap');
-
-  // Label
   ctx.fillStyle = '#4a5a6a'; ctx.font = '11px monospace';
   ctx.fillText('UNTREATED — ' + state.freq + ' Hz', margin, y + 14);
   ctx.drawImage(hmCanvas, margin, y + labelH, hmW, hmH);
 
   // Treated heatmap
-  state.treated = true;
-  state.positions = savedPositions;
-  updateScale(state.freq);
-  renderHeatmap();
-
+  state.treated = true; state.pos40 = savedPos40e; state.pos55 = savedPos55e; state.pos70 = savedPos70e;
+  updateScale(state.freq); renderHeatmap();
   const x2 = margin * 2 + hmW;
   ctx.fillStyle = '#4a5a6a'; ctx.font = '11px monospace';
-  const nC = savedPositions.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
-  const nW = savedPositions.length - nC;
-  ctx.fillText(`TREATED (${nC}C+${nW}W) — ${state.freq} Hz`, x2, y + 14);
+  const expParts = [savedPos40e.length>0?`N40:${savedPos40e.length}`:'', savedPos55e.length>0?`N55:${savedPos55e.length}`:'', savedPos70e.length>0?`N70:${savedPos70e.length}`:''].filter(Boolean).join(' ');
+  ctx.fillText(`TREATED (${expParts}) — ${state.freq} Hz`, x2, y + 14);
   ctx.drawImage(hmCanvas, x2, y + labelH, hmW, hmH);
 
-  // Restore and re-render heatmap for screen
-  state.treated = savedTreated;
-  state.positions = savedPositions;
+  // Restore
+  state.treated = savedTreated; state.pos40 = savedPos40e; state.pos55 = savedPos55e; state.pos70 = savedPos70e;
   renderHeatmap();
 
   y += hmRowH + labelH;
@@ -2567,7 +2499,7 @@ function renderDecaySummary() {
   const rows  = document.getElementById('decaySummaryRows');
   if (!panel || !rows) return;
 
-  const hasUnits = state.positions.length > 0 || state.assistPositions.length > 0;
+  const hasUnits = state.pos40.length > 0 || state.pos55.length > 0 || state.pos70.length > 0;
   if (!state.treated || !hasUnits) {
     panel.style.display = 'none';
     return;
@@ -2576,7 +2508,7 @@ function renderDecaySummary() {
 
   // Pick the 5 most prominent modes in the 45–90 Hz band, sorted by frequency
   const bandModes = MODES
-    .filter(m => m.f >= 45 && m.f <= 90)
+    .filter(m => m.f >= 35 && m.f <= 80)
     .sort((a, b) => a.f - b.f)
     .slice(0, 5);
 
@@ -2587,8 +2519,8 @@ function renderDecaySummary() {
 
   rows.innerHTML = '';
   bandModes.forEach(mode => {
-    const rtBefore = rt60(mode.f, [], []);
-    const rtAfter  = rt60(mode.f, state.positions, state.assistPositions);
+    const rtBefore = rt60(mode.f, [], [], []);
+    const rtAfter  = rt60(mode.f, state.pos40, state.pos55, state.pos70);
     const pctImprove = Math.round((1 - rtAfter / rtBefore) * 100);
 
     const wBefore = Math.min(100, (rtBefore / barMax) * 100);
@@ -2663,163 +2595,131 @@ document.getElementById('heatmap').addEventListener('touchmove', e => {
   handleHeatmapPointer(e.touches[0]);
 }, { passive: false });
 
-// ─── Placement Diagram ────────────────────────────────────────────────────────
+// ─── Placement Diagram ───────────────────────────────────────────────────────
+// Each model has its own diagram + state array + max-per-corner of 3
+function buildDiagram(diagId, posState, activeCornerClass, activeWallClass) {
+  const diagram = document.getElementById(diagId);
+  if (!diagram) return;
+  if (!diagram.querySelector('.pos-btn')) {
+    ALL_POSITIONS.forEach(pos => {
+      const btn = document.createElement('button');
+      btn.className = 'pos-btn';
+      btn.id = diagId + '-' + pos.id;
+      btn.style.left = (pos.dx * 100) + '%';
+      btn.style.top  = (pos.dy * 100) + '%';
+      btn.textContent = pos.id;
+      diagram.appendChild(btn);
+    });
+  }
+  const counts = {};
+  posState.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+  ALL_POSITIONS.forEach(pos => {
+    const btn = document.getElementById(diagId + '-' + pos.id);
+    if (!btn) return;
+    const n = counts[pos.id] || 0;
+    btn.className = 'pos-btn' + (n > 0 ? (pos.type === 'corner' ? ' ' + activeCornerClass : ' ' + activeWallClass) : '');
+    const existing = btn.querySelector('.unit-count');
+    if (existing) existing.remove();
+    if (n > 1) {
+      const badge = document.createElement('span');
+      badge.className = 'unit-count';
+      badge.textContent = n;
+      btn.appendChild(badge);
+    }
+  });
+}
+
 function renderPlacementDiagram() {
-  // ── 55/70 diagram ──
-  const diagram = document.getElementById('placementDiagram');
-  if (diagram) {
-    if (!diagram.querySelector('.pos-btn')) {
-      ALL_POSITIONS.forEach(pos => {
-        const btn = document.createElement('button');
-        btn.className = 'pos-btn';
-        btn.id = 'pos-' + pos.id;
-        btn.style.left = (pos.dx * 100) + '%';
-        btn.style.top  = (pos.dy * 100) + '%';
-        btn.textContent = pos.id;
-        btn.onclick = () => togglePosition(pos.id);
-        diagram.appendChild(btn);
-      });
-    }
-    const counts = {};
-    state.positions.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
-    ALL_POSITIONS.forEach(pos => {
-      const btn = document.getElementById('pos-' + pos.id);
-      if (!btn) return;
-      const n = counts[pos.id] || 0;
-      btn.className = 'pos-btn' + (n > 0 ? (pos.type === 'corner' ? ' active-corner' : ' active-wall') : '');
-      const existing = btn.querySelector('.unit-count');
-      if (existing) existing.remove();
-      if (n > 1) {
-        const badge = document.createElement('span');
-        badge.className = 'unit-count';
-        badge.textContent = n;
-        btn.appendChild(badge);
-      }
-    });
-    const placed = state.positions.length;
-    const remaining = state.nUnits - placed;
-    const nC = state.positions.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
-    const nW = placed - nC;
-    document.getElementById('budgetLabel').textContent = `${placed} of ${state.nUnits} placed`;
-    document.getElementById('budgetLabel').style.color = remaining === 0 ? 'var(--accent)' : remaining < 0 ? '#f44336' : '#ff9800';
-    document.getElementById('cornerCount').textContent = nC;
-    document.getElementById('wallCount').textContent = nW;
-    document.getElementById('unitsRemaining').textContent = remaining > 0 ? `${remaining} unplaced` : remaining < 0 ? `${-remaining} over` : 'budget full';
-    if (document.getElementById('effCornerUnits')) document.getElementById('effCornerUnits').textContent = nC;
-    if (document.getElementById('effWallUnits'))   document.getElementById('effWallUnits').textContent = nW;
-  }
+  // ── Nodal 40 ──
+  buildDiagram('diag40', state.pos40, 'active-corner', 'active-wall');
+  ALL_POSITIONS.forEach(pos => { const b = document.getElementById('diag40-'+pos.id); if(b && !b._has40) { b.onclick = () => { togglePos(state.pos40, pos.id, state.n40, 3); render(); }; b._has40=true; } });
+  const placed40 = state.pos40.length;
+  const nC40 = state.pos40.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
+  document.getElementById('budget40').textContent = `${placed40} of ${state.n40} placed`;
+  document.getElementById('budget40').style.color = placed40===state.n40 ? 'var(--accent)' : placed40>state.n40 ? '#f44336' : '#ff9800';
+  document.getElementById('corner40').textContent = nC40;
+  document.getElementById('wall40').textContent   = placed40 - nC40;
+  document.getElementById('remain40').textContent = (state.n40 - placed40) > 0 ? `${state.n40-placed40} unplaced` : placed40>state.n40 ? `${placed40-state.n40} over` : 'budget full';
 
-  // ── Nodal-85 diagram ──
-  const aDiagram = document.getElementById('assistDiagram');
-  if (aDiagram) {
-    if (!aDiagram.querySelector('.pos-btn')) {
-      ALL_POSITIONS.forEach(pos => {
-        const btn = document.createElement('button');
-        btn.className = 'pos-btn';
-        btn.id = 'apos-' + pos.id;
-        btn.style.left = (pos.dx * 100) + '%';
-        btn.style.top  = (pos.dy * 100) + '%';
-        btn.textContent = pos.id;
-        btn.onclick = () => toggleAssistPosition(pos.id);
-        aDiagram.appendChild(btn);
-      });
-    }
-    const aCounts = {};
-    state.assistPositions.forEach(id => { aCounts[id] = (aCounts[id] || 0) + 1; });
-    ALL_POSITIONS.forEach(pos => {
-      const btn = document.getElementById('apos-' + pos.id);
-      if (!btn) return;
-      const n = aCounts[pos.id] || 0;
-      // Green colour classes for assist
-      btn.className = 'pos-btn' + (n > 0 ? (pos.type === 'corner' ? ' active-assist-corner' : ' active-assist-wall') : '');
-      const existing = btn.querySelector('.unit-count');
-      if (existing) existing.remove();
-      if (n > 1) {
-        const badge = document.createElement('span');
-        badge.className = 'unit-count';
-        badge.textContent = n;
-        btn.appendChild(badge);
-      }
-    });
-    const aPlaced = state.assistPositions.length;
-    const aRemaining = state.nAssistUnits - aPlaced;
-    const nCA = state.assistPositions.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
-    const nWA = aPlaced - nCA;
-    document.getElementById('assistBudgetLabel').textContent = `${aPlaced} of ${state.nAssistUnits} placed`;
-    document.getElementById('assistBudgetLabel').style.color = aRemaining === 0 && state.nAssistUnits > 0 ? '#4caf50' : aRemaining < 0 ? '#f44336' : '#81c784';
-    document.getElementById('assistCornerCount').textContent = nCA;
-    document.getElementById('assistWallCount').textContent = nWA;
-    document.getElementById('assistUnitsRemaining').textContent = aRemaining > 0 ? `${aRemaining} unplaced` : aRemaining < 0 ? `${-aRemaining} over` : (state.nAssistUnits > 0 ? 'budget full' : '—');
-  }
+  // ── Nodal 55 ──
+  buildDiagram('diag55', state.pos55, 'active-55-corner', 'active-55-wall');
+  ALL_POSITIONS.forEach(pos => { const b = document.getElementById('diag55-'+pos.id); if(b && !b._has55) { b.onclick = () => { togglePos(state.pos55, pos.id, state.n55, 3); render(); }; b._has55=true; } });
+  const placed55 = state.pos55.length;
+  const nC55 = state.pos55.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
+  document.getElementById('budget55').textContent = `${placed55} of ${state.n55} placed`;
+  document.getElementById('budget55').style.color = placed55===state.n55 ? '#ba68c8' : placed55>state.n55 ? '#f44336' : '#ce93d8';
+  document.getElementById('corner55').textContent = nC55;
+  document.getElementById('wall55').textContent   = placed55 - nC55;
+  document.getElementById('remain55').textContent = (state.n55 - placed55) > 0 ? `${state.n55-placed55} unplaced` : placed55>state.n55 ? `${placed55-state.n55} over` : 'budget full';
+
+  // ── Nodal 70 ──
+  buildDiagram('diag70', state.pos70, 'active-assist-corner', 'active-assist-wall');
+  ALL_POSITIONS.forEach(pos => { const b = document.getElementById('diag70-'+pos.id); if(b && !b._has70) { b.onclick = () => { togglePos(state.pos70, pos.id, state.n70, 3); render(); }; b._has70=true; } });
+  const placed70 = state.pos70.length;
+  const nC70 = state.pos70.filter(id => ALL_POSITIONS.find(p=>p.id===id)?.type==='corner').length;
+  document.getElementById('budget70').textContent = `${placed70} of ${state.n70} placed`;
+  document.getElementById('budget70').style.color = placed70===state.n70 ? '#4caf50' : placed70>state.n70 ? '#f44336' : '#81c784';
+  document.getElementById('corner70').textContent = nC70;
+  document.getElementById('wall70').textContent   = placed70 - nC70;
+  document.getElementById('remain70').textContent = (state.n70 - placed70) > 0 ? `${state.n70-placed70} unplaced` : placed70>state.n70 ? `${placed70-state.n70} over` : (state.n70>0 ? 'budget full' : '—');
 }
 
-function togglePosition(id) {
-  const atPos = state.positions.filter(x => x === id).length;
-  if (atPos >= 2) {
-    state.positions.splice(state.positions.indexOf(id), 1);
-  } else if (state.positions.length >= state.nUnits) {
-    state.positions.shift();
-    state.positions.push(id);
+// Toggle a position in a state array — max 3 per corner, max n total
+function togglePos(posArray, id, maxTotal, maxPerCorner) {
+  const atPos = posArray.filter(x => x === id).length;
+  const posType = ALL_POSITIONS.find(p => p.id === id)?.type;
+  const maxAtPos = posType === 'corner' ? maxPerCorner : 1;
+  if (atPos >= maxAtPos) {
+    // Remove one instance
+    posArray.splice(posArray.indexOf(id), 1);
+  } else if (posArray.length >= maxTotal) {
+    posArray.shift();
+    posArray.push(id);
   } else {
-    state.positions.push(id);
+    posArray.push(id);
   }
-  render();
 }
 
-function toggleAssistPosition(id) {
-  const atPos = state.assistPositions.filter(x => x === id).length;
-  if (atPos >= 2) {
-    state.assistPositions.splice(state.assistPositions.indexOf(id), 1);
-  } else if (state.assistPositions.length >= state.nAssistUnits) {
-    state.assistPositions.shift();
-    state.assistPositions.push(id);
-  } else {
-    state.assistPositions.push(id);
-  }
-  render();
-}
 
-function applyPreset(name) {
-  const n = state.nUnits;
+function applyModelPreset(name, posArray, n) {
   if (name === 'allCorners') {
+    posArray.length = 0;
     const corners = ['FL','FR','RL','RR'];
-    state.positions = [];
-    for (let i = 0; i < n; i++) state.positions.push(corners[i % 4]);
+    for (let i = 0; i < n; i++) posArray.push(corners[i % 4]);
   } else if (name === 'allWalls') {
+    posArray.length = 0;
     const walls = ['WF','WR','WL','WW'];
-    state.positions = [];
-    for (let i = 0; i < n; i++) state.positions.push(walls[i % 4]);
+    for (let i = 0; i < n; i++) posArray.push(walls[i % 4]);
   } else if (name === 'mixed') {
+    posArray.length = 0;
     const half = Math.floor(n / 2), cHalf = n - half;
-    state.positions = [];
-    ['FL','FR','RL','RR'].slice(0, cHalf).forEach(id => state.positions.push(id));
-    ['WF','WR','WL','WW'].slice(0, half).forEach(id => state.positions.push(id));
+    ['FL','FR','RL','RR'].slice(0, cHalf).forEach(id => posArray.push(id));
+    ['WF','WR','WL','WW'].slice(0, half).forEach(id => posArray.push(id));
   } else if (name === 'clear') {
-    state.positions = [];
+    posArray.length = 0;
   }
   render();
+}
+function applyPreset(name)       { applyModelPreset(name, state.pos40, state.n40); }
+function applyPreset55(name)     { applyModelPreset(name, state.pos55, state.n55); }
+function applyPreset70(name)     { applyModelPreset(name, state.pos70, state.n70); }
+
+
+function updateQDisplay() {
+  const el40 = document.getElementById('q40Val');
+  const el55 = document.getElementById('q55Val');
+  const el70 = document.getElementById('q70Val');
+  const bw40 = document.getElementById('bw40');
+  const bw55 = document.getElementById('bw55');
+  const bw70 = document.getElementById('bw70');
+  if (el40) el40.textContent = 'Q = ' + state.q40.toFixed(1);
+  if (el55) { el55.textContent = 'Q = ' + state.q55.toFixed(1); el55.style.color = '#ba68c8'; }
+  if (el70) el70.textContent = 'Q = ' + state.q70.toFixed(1);
+  if (bw40) bw40.textContent = '±' + (40 / state.q40 / 2).toFixed(1) + ' Hz';
+  if (bw55) bw55.textContent = '±' + (55 / state.q55 / 2).toFixed(1) + ' Hz';
+  if (bw70) bw70.textContent = '±' + (70 / state.q70 / 2).toFixed(1) + ' Hz';
 }
 
-function applyAssistPreset(name) {
-  const n = state.nAssistUnits;
-  if (name === 'allCorners') {
-    const corners = ['FL','FR','RL','RR'];
-    state.assistPositions = [];
-    for (let i = 0; i < n; i++) state.assistPositions.push(corners[i % 4]);
-  } else if (name === 'allWalls') {
-    const walls = ['WF','WR','WL','WW'];
-    state.assistPositions = [];
-    for (let i = 0; i < n; i++) state.assistPositions.push(walls[i % 4]);
-  } else if (name === 'mixed') {
-    const half = Math.floor(n / 2), cHalf = n - half;
-    state.assistPositions = [];
-    ['FL','FR','RL','RR'].slice(0, cHalf).forEach(id => state.assistPositions.push(id));
-    ['WF','WR','WL','WW'].slice(0, half).forEach(id => state.assistPositions.push(id));
-  } else if (name === 'clear') {
-    state.assistPositions = [];
-  }
-  render();
-}
 document.getElementById('planeSelect').addEventListener('change', e => {
   state.plane = e.target.value; render();
 });
@@ -2836,47 +2736,45 @@ document.getElementById('sliceSlider').addEventListener('input', e => {
   render();
 });
 
-document.getElementById('unitsSlider').addEventListener('input', e => {
-  state.nUnits = parseInt(e.target.value);
-  document.getElementById('unitsVal').textContent = e.target.value;
-  while (state.positions.length > state.nUnits) state.positions.shift();
+// Nodal 40
+document.getElementById('units40').addEventListener('input', e => {
+  state.n40 = parseInt(e.target.value);
+  document.getElementById('units40Val').textContent = e.target.value;
+  while (state.pos40.length > state.n40) state.pos40.shift();
   render();
+});
+document.getElementById('q40Slider').addEventListener('input', e => {
+  state.q40 = parseFloat(e.target.value);
+  updateQDisplay(); render();
+});
+
+// Nodal 55
+document.getElementById('units55').addEventListener('input', e => {
+  state.n55 = parseInt(e.target.value);
+  document.getElementById('units55Val').textContent = e.target.value;
+  while (state.pos55.length > state.n55) state.pos55.shift();
+  render();
+});
+document.getElementById('q55Slider').addEventListener('input', e => {
+  state.q55 = parseFloat(e.target.value);
+  updateQDisplay(); render();
+});
+
+// Nodal 70
+document.getElementById('units70').addEventListener('input', e => {
+  state.n70 = parseInt(e.target.value);
+  document.getElementById('units70Val').textContent = e.target.value;
+  while (state.pos70.length > state.n70) state.pos70.shift();
+  render();
+});
+document.getElementById('q70Slider').addEventListener('input', e => {
+  state.q70 = parseFloat(e.target.value);
+  updateQDisplay(); render();
 });
 
 document.getElementById('roomL').addEventListener('input', e => { ROOM.L = parseFloat(e.target.value); rebuildRoom(); render(); });
 document.getElementById('roomW').addEventListener('input', e => { ROOM.W = parseFloat(e.target.value); rebuildRoom(); render(); });
 document.getElementById('roomH').addEventListener('input', e => { ROOM.H = parseFloat(e.target.value); rebuildRoom(); render(); });
-
-function updateQDisplay() {
-  document.getElementById('qAVal').textContent = 'Q = ' + state.qA.toFixed(1);
-  document.getElementById('qBVal').textContent = 'Q = ' + state.qB.toFixed(1);
-  document.getElementById('qCVal').textContent = 'Q = ' + state.qC.toFixed(1);
-  document.getElementById('bwA').textContent = '±' + (55 / state.qA / 2).toFixed(1) + ' Hz';
-  document.getElementById('bwB').textContent = '±' + (70 / state.qB / 2).toFixed(1) + ' Hz';
-  document.getElementById('bwC').textContent = '±' + (85 / state.qC / 2).toFixed(1) + ' Hz';
-}
-
-document.getElementById('assistUnitsSlider').addEventListener('input', e => {
-  state.nAssistUnits = parseInt(e.target.value);
-  document.getElementById('assistUnitsVal').textContent = e.target.value;
-  while (state.assistPositions.length > state.nAssistUnits) state.assistPositions.shift();
-  render();
-});
-document.getElementById('qC').addEventListener('input', e => {
-  state.qC = parseFloat(e.target.value);
-  updateQDisplay();
-  render();
-});
-document.getElementById('qA').addEventListener('input', e => {
-  state.qA = parseFloat(e.target.value);
-  updateQDisplay();
-  render();
-});
-document.getElementById('qB').addEventListener('input', e => {
-  state.qB = parseFloat(e.target.value);
-  updateQDisplay();
-  render();
-});
 
 document.getElementById('constructionSelect').addEventListener('change', e => {
   state.construction = e.target.value;
@@ -2898,6 +2796,7 @@ document.getElementById('btnTreated').addEventListener('click', () => {
 });
 
 document.getElementById('btnExport').addEventListener('click', exportReport);
+
 rebuildRoom();
 updateQDisplay();
 updateConstructionNote();
