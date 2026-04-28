@@ -386,7 +386,7 @@
     grid-template-columns: 88px 1fr 60px 60px 52px;
     gap: 8px;
     font-family: var(--mono);
-    font-size: 8px;
+    font-size: 9px;
     color: var(--text-dim);
     margin-bottom: 6px;
     padding-bottom: 4px;
@@ -693,7 +693,7 @@
     background: transparent;
     color: var(--text-dim);
     font-family: var(--mono);
-    font-size: 8px;
+    font-size: 9px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -747,7 +747,7 @@
     right: -8px;
     background: var(--accent);
     color: var(--bg);
-    font-size: 8px;
+    font-size: 9px;
     width: 14px;
     height: 14px;
     border-radius: 50%;
@@ -919,6 +919,14 @@
         <span>IMPROVEMENT</span>
       </div>
       <div class="decay-summary-rows" id="decaySummaryRows"></div>
+      <div id="decayCaveat" style="display:none;margin-top:10px;padding:6px 8px;border-top:1px solid var(--border);">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);line-height:1.6;">
+          <span style="color:#4caf50;">&#9679;</span> &#8804;0.35s &nbsp;Mastering &nbsp;&nbsp;
+          <span style="color:#8bc34a;">&#9679;</span> &#8804;0.55s &nbsp;General controlled &nbsp;&nbsp;
+          <span style="color:#ff9800;">&#9679;</span> &#8804;0.75s &nbsp;Lively
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.35);margin-top:3px;">&#9888; = within 'Controlled' but may exceed mastering / mixing targets (0.20&#8211;0.45 s)</div>
+      </div>
     </div>
 
     <div class="bass-char-chart">
@@ -940,7 +948,7 @@
           <div class="bass-char-swatch" style="background:rgba(76,175,80,0.20);border-color:rgba(76,175,80,0.5);"></div>
           <div class="bass-char-range" style="color:#4caf50;">0.25 – 0.55 s</div>
           <div class="bass-char-label" style="color:#4caf50;">Controlled</div>
-          <div class="bass-char-desc">Punchy, defined, and balanced — the target for critical listening</div>
+          <div class="bass-char-desc">Defined and workable — but a wide range. Mastering: target 0.20–0.35s. Mixing: 0.25–0.45s. General listening: 0.30–0.55s.</div>
         </div>
         <div class="bass-char-row">
           <div class="bass-char-swatch" style="background:rgba(244,67,54,0.18);border-color:rgba(244,67,54,0.5);"></div>
@@ -948,6 +956,15 @@
           <div class="bass-char-label" style="color:rgba(244,67,54,0.85);">Over-damped</div>
           <div class="bass-char-desc">Unnaturally tight and dry — too much absorption for musical use</div>
         </div>
+      </div>
+      <div style="margin-top:10px;padding:8px 10px;border-left:2px solid rgba(76,175,80,0.4);background:rgba(76,175,80,0.04);">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);line-height:1.5;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Application targets at 35&#8211;80 Hz</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);line-height:1.7;">
+          <span style="color:#4caf50;">Mastering / critical</span> &nbsp;&nbsp;0.20 &#8211; 0.35 s<br>
+          <span style="color:#8bc34a;">Mixing / tracking</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.25 &#8211; 0.45 s<br>
+          <span style="color:var(--text-dim);">Listening / project</span> &nbsp;&nbsp;0.30 &#8211; 0.55 s
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,0.35);margin-top:5px;line-height:1.5;">A reading within &#8216;Controlled&#8217; does not mean treatment is unnecessary. At 70 Hz, drywall resonance and broadband panels already contribute &#8212; the residual RT60 may still exceed mastering or critical mixing targets.</div>
       </div>
     </div>
 
@@ -1051,11 +1068,9 @@
         <button class="preset-btn" onclick="applyPreset('clear')">Clear</button>
       </div>
       <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Q Factor &nbsp;<span id="bw40" style="color:var(--accent);">±18.2 Hz</span></div>
-        <div class="room-dim-row">
-          <label style="width:20px;color:var(--accent);">Q</label>
-          <input type="range" id="q40Slider" min="0.5" max="8" step="0.1" value="1.1" style="flex:1;accent-color:var(--accent);">
-          <span class="dim-val" id="q40Val">Q = 1.1</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;">Q Factor</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500;">Q = 1.1 &nbsp;<span style="font-size:10px;color:var(--text-dim);">±18.2 Hz</span></span>
         </div>
       </div>
       <div class="stats-grid" style="margin-top:8px;">
@@ -1091,11 +1106,9 @@
         <button class="preset-btn" onclick="applyPreset55('clear')" style="border-color:rgba(186,104,200,0.4);color:#ba68c8;">Clear</button>
       </div>
       <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Q Factor &nbsp;<span id="bw55" style="color:#ba68c8;">±18.3 Hz</span></div>
-        <div class="room-dim-row">
-          <label style="width:20px;color:#ba68c8;">Q</label>
-          <input type="range" id="q55Slider" min="0.5" max="8" step="0.1" value="1.5" style="flex:1;accent-color:#ba68c8;">
-          <span class="dim-val" id="q55Val" style="color:#ba68c8;">Q = 1.5</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;">Q Factor</span>
+          <span style="font-family:var(--mono);font-size:11px;color:#ba68c8;font-weight:500;">Q = 1.5 &nbsp;<span style="font-size:10px;color:var(--text-dim);">±18.0 Hz</span></span>
         </div>
       </div>
       <div class="stats-grid" style="margin-top:8px;">
@@ -1131,11 +1144,9 @@
         <button class="preset-btn" style="border-color:rgba(76,175,80,0.4);color:#4caf50;" onclick="applyPreset70('clear')">Clear</button>
       </div>
       <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.1em;">Q Factor &nbsp;<span id="bw70" style="color:#4caf50;">±18.4 Hz</span></div>
-        <div class="room-dim-row">
-          <label style="width:20px;color:#4caf50;">Q</label>
-          <input type="range" id="q70Slider" min="0.5" max="8" step="0.1" value="1.9" style="flex:1;accent-color:#4caf50;">
-          <span class="dim-val" id="q70Val" style="color:#4caf50;">Q = 1.9</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;">Q Factor</span>
+          <span style="font-family:var(--mono);font-size:11px;color:#4caf50;font-weight:500;">Q = 1.9 &nbsp;<span style="font-size:10px;color:var(--text-dim);">±18.4 Hz</span></span>
         </div>
       </div>
       <div class="stats-grid" style="margin-top:8px;">
@@ -1281,9 +1292,9 @@ function chamberAlpha(f, f0, Q, alphaMax) {
 }
 
 // Alpha for each Nodal model
-function alpha40(f) { return chamberAlpha(f, 40, state.q40, 0.95); }
-function alpha55(f) { return chamberAlpha(f, 54, state.q55, 0.95); }
-function alpha70(f) { return chamberAlpha(f, 70, state.q70, 0.95); }
+function alpha40(f) { return chamberAlpha(f, 40, 1.1, 0.95); }  // Q=1.1 fixed per spec
+function alpha55(f) { return chamberAlpha(f, 54, 1.5, 0.95); }  // Q=1.5 fixed per spec
+function alpha70(f) { return chamberAlpha(f, 70, 1.9, 0.95); }  // Q=1.9 fixed per spec
 
 // ── Modal reduction model ────────────────────────────────────────────────────
 //
@@ -1469,9 +1480,9 @@ let state = {
   freq: 55,
   slice: 0.5,
   treated: true,
-  n40: 4, pos40: ['FL','FR','RL','RR'], q40: 1.1,
-  n55: 0, pos55: [],                   q55: 1.5,
-  n70: 0, pos70: [],                   q70: 1.9,
+  n40: 4, pos40: ['FL','FR','RL','RR'],
+  n55: 0, pos55: [],
+  n70: 0, pos70: [],
   highlightMode: null,
   construction: 'plasterboard'
 };
@@ -1984,9 +1995,9 @@ function renderRT60() {
   const alphaBaseY  = pad.t + plotH;
 
   const chambers = [
-    { f0: 40, Q: state.q40, peak: 0.95, col: 'rgba(76,175,80,',  label: 'α 40Hz' },
-    { f0: 55, Q: state.q55, peak: 0.95, col: 'rgba(0,229,255,',  label: 'α 55Hz' },
-    { f0: 70, Q: state.q70, peak: 0.92, col: 'rgba(255,107,53,', label: 'α 70Hz' },
+    { f0: 40, Q: 1.1,       peak: 0.95, col: 'rgba(76,175,80,',  label: 'α 40Hz' },
+    { f0: 55, Q: 1.5,       peak: 0.95, col: 'rgba(0,229,255,',  label: 'α 55Hz' },
+    { f0: 70, Q: 1.9,       peak: 0.95, col: 'rgba(255,107,53,', label: 'α 70Hz' },
   ];
 
   chambers.forEach(ch => {
@@ -2055,7 +2066,7 @@ function renderRT60() {
   // Labels
   ctx.font = '9px Share Tech Mono';
   ctx.fillStyle = '#4a5a6a';
-  ctx.fillText('BASS MODAL DECAY', 4, pad.t + 8);
+  ctx.fillText('BASS MODAL DECAY', 304, pad.t + 8);
 
   ctx.fillStyle = 'rgba(255,107,53,0.8)';
   ctx.fillText('UNTREATED  ' + rtUntreated.toFixed(2) + 's', pad.l + 6, pad.t + 11);
@@ -2517,6 +2528,12 @@ function renderDecaySummary() {
   // RT60 max used to scale bars — cap at 2.0 s so bars are readable
   const barMax = 2.0;
 
+  // Add application caveat header
+  const caveatEl = document.getElementById('decayCaveat');
+  if (caveatEl) {
+    caveatEl.style.display = 'block';
+  }
+
   rows.innerHTML = '';
   bandModes.forEach(mode => {
     const rtBefore = rt60(mode.f, [], [], []);
@@ -2527,10 +2544,15 @@ function renderDecaySummary() {
     const wAfter  = Math.min(100, (rtAfter  / barMax) * 100);
 
     // Zone colour for the after value
-    const afterCol = rtAfter < 0.25 ? '#f44336'
-                   : rtAfter <= 0.55 ? '#4caf50'
-                   : rtAfter <= 0.75 ? '#ff9800'
-                   : 'rgba(255,107,53,0.6)';
+    // Three-tier within 'Controlled': professional (<0.35), general (<0.55), marginal
+    const afterCol = rtAfter < 0.25 ? '#f44336'          // over-damped
+                   : rtAfter <= 0.35 ? '#4caf50'          // mastering/critical target
+                   : rtAfter <= 0.55 ? '#8bc34a'          // general controlled (yellow-green)
+                   : rtAfter <= 0.75 ? '#ff9800'          // lively
+                   : 'rgba(255,107,53,0.6)';              // boomy
+    const afterNote = rtAfter <= 0.35 ? '' 
+                    : rtAfter <= 0.55 ? ' ⚠' 
+                    : '';
 
     const row = document.createElement('div');
     row.className = 'decay-row';
@@ -2541,7 +2563,7 @@ function renderDecaySummary() {
         <div class="decay-bar-after"  style="width:${wAfter}%"></div>
       </div>
       <span class="decay-val-before">${rtBefore.toFixed(2)}s</span>
-      <span class="decay-val-after"  style="color:${afterCol}">${rtAfter.toFixed(2)}s</span>
+      <span class="decay-val-after"  style="color:${afterCol}" title="${rtAfter<=0.35?'Within mastering target':rtAfter<=0.55?'Controlled — may exceed mastering/mixing target (0.20–0.45s)':rtAfter<=0.75?'Lively — treatment recommended':'Boomy — treatment needed'}">${rtAfter.toFixed(2)}s${afterNote}</span>
       <span class="decay-delta"      style="color:${afterCol}">−${pctImprove}%</span>
     `;
     rows.appendChild(row);
@@ -2705,20 +2727,7 @@ function applyPreset55(name)     { applyModelPreset(name, state.pos55, state.n55
 function applyPreset70(name)     { applyModelPreset(name, state.pos70, state.n70); }
 
 
-function updateQDisplay() {
-  const el40 = document.getElementById('q40Val');
-  const el55 = document.getElementById('q55Val');
-  const el70 = document.getElementById('q70Val');
-  const bw40 = document.getElementById('bw40');
-  const bw55 = document.getElementById('bw55');
-  const bw70 = document.getElementById('bw70');
-  if (el40) el40.textContent = 'Q = ' + state.q40.toFixed(1);
-  if (el55) { el55.textContent = 'Q = ' + state.q55.toFixed(1); el55.style.color = '#ba68c8'; }
-  if (el70) el70.textContent = 'Q = ' + state.q70.toFixed(1);
-  if (bw40) bw40.textContent = '±' + (40 / state.q40 / 2).toFixed(1) + ' Hz';
-  if (bw55) bw55.textContent = '±' + (55 / state.q55 / 2).toFixed(1) + ' Hz';
-  if (bw70) bw70.textContent = '±' + (70 / state.q70 / 2).toFixed(1) + ' Hz';
-}
+// updateQDisplay removed — Q values are fixed per spec
 
 document.getElementById('planeSelect').addEventListener('change', e => {
   state.plane = e.target.value; render();
@@ -2743,10 +2752,7 @@ document.getElementById('units40').addEventListener('input', e => {
   while (state.pos40.length > state.n40) state.pos40.shift();
   render();
 });
-document.getElementById('q40Slider').addEventListener('input', e => {
-  state.q40 = parseFloat(e.target.value);
-  updateQDisplay(); render();
-});
+
 
 // Nodal 55
 document.getElementById('units55').addEventListener('input', e => {
@@ -2755,10 +2761,7 @@ document.getElementById('units55').addEventListener('input', e => {
   while (state.pos55.length > state.n55) state.pos55.shift();
   render();
 });
-document.getElementById('q55Slider').addEventListener('input', e => {
-  state.q55 = parseFloat(e.target.value);
-  updateQDisplay(); render();
-});
+
 
 // Nodal 70
 document.getElementById('units70').addEventListener('input', e => {
@@ -2767,10 +2770,7 @@ document.getElementById('units70').addEventListener('input', e => {
   while (state.pos70.length > state.n70) state.pos70.shift();
   render();
 });
-document.getElementById('q70Slider').addEventListener('input', e => {
-  state.q70 = parseFloat(e.target.value);
-  updateQDisplay(); render();
-});
+
 
 document.getElementById('roomL').addEventListener('input', e => { ROOM.L = parseFloat(e.target.value); rebuildRoom(); render(); });
 document.getElementById('roomW').addEventListener('input', e => { ROOM.W = parseFloat(e.target.value); rebuildRoom(); render(); });
@@ -2798,7 +2798,6 @@ document.getElementById('btnTreated').addEventListener('click', () => {
 document.getElementById('btnExport').addEventListener('click', exportReport);
 
 rebuildRoom();
-updateQDisplay();
 updateConstructionNote();
 renderColorbar();
 render();
