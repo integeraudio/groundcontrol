@@ -25,5 +25,14 @@
     "treatment": "1× Nodal 40 · 1× Nodal 50 · front-left corner",
     "date": "January 2025",
     "file": "dave_s_room_1.json"
+  },
+   {
+   "id": "room_1780687165346",
+   "name": "Dave Room 1",
+   "location": "Rochester",
+   "roomSize": "20x16x8",
+   "treatment": "4 Nodal 40 and 4 Nodal 50",
+   "date": "June 2026",
+   "file": "dave_room_1.json"
   }
 ]
