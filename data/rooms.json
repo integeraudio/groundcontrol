@@ -1,7 +1,7 @@
 [
   {
     "id": "studio_a",
-    "name": "Studio A",
+    "name": "Sample Room 1",
     "location": "Brooklyn, NY",
     "roomSize": "4.2 × 5.8 × 2.6 m",
     "treatment": "2× Nodal 40 · 1× Nodal 50 · front corners",
@@ -10,7 +10,7 @@
   },
   {
   "id": "room_1780695958781",
-  "name": "Room 4 Info",
+  "name": "Sample Room 2",
   "location": "Rochester",
   "roomSize": "16x12x9",
   "treatment": "4 x Nodal 40",
