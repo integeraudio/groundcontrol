@@ -8,33 +8,6 @@
     "date": "March 2025",
     "file": "studio_a.json"
   },
-   {
-    "id": "home_studio_b",
-    "name": "Dave Room 1",
-    "location": "Rochester",
-    "roomSize": "3.6 × 4.9 × 2.4 m",
-    "treatment": "1× Nodal 40 · 1× Nodal 50 · front-left corner",
-    "date": "January 2025",
-    "file": "dave_s_room_1.json"
-  },
-   {
-   "id": "room_1780687165346",
-   "name": "Dave Room 2",
-   "location": "Rochester",
-   "roomSize": "20x16x8",
-   "treatment": "4 Nodal 40 and 4 Nodal 50",
-   "date": "June 2026",
-   "file": "dave_room_1.json"
-  },
-   {
-   "id": "room_1780694547165",
-   "name": "Dave Room 3",
-   "location": "Greece",
-   "roomSize": "24x16x8",
-   "treatment": "8 Nodal 40 and 8 Nodal 50",
-   "date": "June 2026",
-   "file": "dave_room_3.json"
- },
   {
   "id": "room_1780695958781",
   "name": "Room 4 Info",
