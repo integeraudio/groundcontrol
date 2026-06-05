@@ -8,15 +8,6 @@
     "date": "March 2025",
     "file": "studio_a.json"
   },
-  {
-    "id": "home_studio_b",
-    "name": "Home Studio B",
-    "location": "Austin, TX",
-    "roomSize": "3.6 × 4.9 × 2.4 m",
-    "treatment": "1× Nodal 40 · 1× Nodal 50 · front-left corner",
-    "date": "January 2025",
-    "file": "home_studio_b.json"
-  },
    {
     "id": "home_studio_b",
     "name": "Dave Room 1",
