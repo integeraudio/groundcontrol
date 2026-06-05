@@ -19,7 +19,7 @@
   },
    {
     "id": "home_studio_b",
-    "name": "Home Room 1",
+    "name": "Dave Room 1",
     "location": "Rochester",
     "roomSize": "3.6 × 4.9 × 2.4 m",
     "treatment": "1× Nodal 40 · 1× Nodal 50 · front-left corner",
@@ -28,7 +28,7 @@
   },
    {
    "id": "room_1780687165346",
-   "name": "Dave Room 1",
+   "name": "Dave Room 2",
    "location": "Rochester",
    "roomSize": "20x16x8",
    "treatment": "4 Nodal 40 and 4 Nodal 50",
