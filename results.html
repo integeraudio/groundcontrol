@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Results — GroundControl Nodal Series · Integer Audio</title>
+<meta name="description" content="Real room measurements showing T60 decay times before and after GroundControl Nodal Series bass treatment. Measured with REW.">
+<style>
+  :root {
+    --navy:   #0D1B2A;
+    --navy2:  #102030;
+    --navy3:  #0A1520;
+    --cyan:   #00D4E8;
+    --orange: #FF6B35;
+    --ply:    #C8A96E;
+    --white:  #FFFFFF;
+    --off:    #F4F6F8;
+    --muted:  #D2E1EE;
+    --dgrey:  #445566;
+    --border: rgba(0,212,232,0.15);
+    --before: #00D4E8;
+    --after:  #FF6B35;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Arial',sans-serif;background:var(--navy);color:var(--white);line-height:1.65;}
+
+  /* ── NAV ── */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:16px 40px;background:rgba(13,27,42,0.95);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);}
+  .nav-brand{font-family:'Courier New',monospace;font-size:13px;letter-spacing:0.08em;}
+  .nav-brand span{color:var(--cyan);font-weight:700;}
+  .nav-brand small{color:var(--muted);font-size:11px;margin-left:8px;}
+  .nav-links{display:flex;gap:28px;align-items:center;}
+  .nav-links a{font-size:12px;color:var(--muted);text-decoration:none;letter-spacing:0.04em;transition:color 0.2s;}
+  .nav-links a:hover{color:var(--white);}
+  .nav-cta{background:var(--cyan);color:var(--navy);padding:10px 20px;border-radius:4px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-decoration:none;text-transform:uppercase;transition:opacity 0.2s;}
+  .nav-cta:hover{opacity:0.85;}
+
+  /* ── PAGE HEADER ── */
+  .page-header{padding:120px 40px 60px;max-width:1100px;margin:0 auto;}
+  .eyebrow{font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.14em;color:var(--cyan);text-transform:uppercase;margin-bottom:16px;display:block;}
+  .page-header h1{font-size:clamp(28px,4vw,52px);font-weight:700;line-height:1.1;margin-bottom:16px;}
+  .page-header h1 em{font-style:normal;color:var(--cyan);}
+  .page-header p{color:var(--muted);font-size:16px;max-width:620px;line-height:1.7;}
+  .method-note{display:inline-flex;align-items:center;gap:8px;margin-top:20px;font-family:'Courier New',monospace;font-size:11px;color:var(--dgrey);border:1px solid rgba(68,85,102,0.4);border-radius:4px;padding:8px 14px;}
+  .method-note svg{flex-shrink:0;}
+
+  /* ── ROOM SELECTOR ── */
+  .selector-section{background:var(--navy2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .selector-wrap{max-width:1100px;margin:0 auto;padding:32px 40px;}
+  .selector-label{font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.12em;color:var(--cyan);text-transform:uppercase;margin-bottom:16px;display:block;}
+  .room-cards{display:flex;gap:12px;flex-wrap:wrap;}
+  .room-card{
+    border:1px solid var(--border);border-radius:6px;padding:14px 20px;cursor:pointer;
+    background:transparent;color:var(--white);text-align:left;
+    font-family:'Arial',sans-serif;transition:all 0.2s;min-width:180px;
+    position:relative;overflow:hidden;
+  }
+  .room-card::before{content:'';position:absolute;inset:0;background:rgba(0,212,232,0.06);opacity:0;transition:opacity 0.2s;}
+  .room-card:hover::before{opacity:1;}
+  .room-card.active{border-color:var(--cyan);background:rgba(0,212,232,0.08);}
+  .room-card.active::before{opacity:1;}
+  .room-card-name{font-size:13px;font-weight:700;color:var(--white);margin-bottom:4px;}
+  .room-card-meta{font-family:'Courier New',monospace;font-size:10px;color:var(--dgrey);line-height:1.5;}
+  .room-card-tag{display:inline-block;margin-top:8px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.08em;color:var(--cyan);border:1px solid var(--border);border-radius:3px;padding:2px 7px;text-transform:uppercase;}
+
+  /* ── RESULTS AREA ── */
+  .results-section{max-width:1100px;margin:0 auto;padding:48px 40px;}
+
+  /* room title bar */
+  .room-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid var(--border);}
+  .room-title h2{font-size:clamp(20px,3vw,28px);font-weight:700;margin-bottom:6px;}
+  .room-title .room-detail{font-family:'Courier New',monospace;font-size:11px;color:var(--dgrey);line-height:1.8;}
+  .room-title .room-detail span{color:var(--muted);}
+  .treatment-badge{background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.3);border-radius:6px;padding:12px 18px;font-size:12px;color:var(--muted);max-width:260px;}
+  .treatment-badge strong{color:var(--orange);display:block;margin-bottom:4px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-family:'Courier New',monospace;}
+
+  /* legend */
+  .chart-legend{display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap;}
+  .leg-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+  .leg-swatch{width:24px;height:3px;border-radius:2px;flex-shrink:0;}
+  .leg-swatch.before{background:var(--before);}
+  .leg-swatch.after{
+    background:repeating-linear-gradient(45deg,rgba(255,107,53,.7) 0,rgba(255,107,53,.7) 2px,rgba(255,107,53,.25) 2px,rgba(255,107,53,.25) 7px);
+  }
+
+  /* chart */
+  .chart-container{background:var(--navy3);border:1px solid var(--border);border-radius:8px;padding:24px;margin-bottom:32px;}
+  #chartCanvas{width:100%;display:block;}
+
+  /* summary stats strip */
+  .summary-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:32px;}
+  .summary-cell{background:var(--navy2);padding:20px 16px;text-align:center;}
+  .summary-freq{font-family:'Courier New',monospace;font-size:11px;color:var(--dgrey);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;}
+  .summary-before{font-size:13px;color:var(--before);font-weight:600;margin-bottom:2px;}
+  .summary-arrow{font-size:11px;color:var(--dgrey);margin-bottom:2px;}
+  .summary-after{font-size:13px;color:var(--after);font-weight:600;margin-bottom:6px;}
+  .summary-delta{font-family:'Courier New',monospace;font-size:12px;font-weight:700;}
+  .delta-improved{color:#4ade80;}
+  .delta-worse{color:var(--orange);}
+  .delta-none{color:var(--dgrey);}
+
+  /* detail table */
+  .detail-label{font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.12em;color:var(--cyan);text-transform:uppercase;margin-bottom:12px;display:block;}
+  .tbl{width:100%;border-collapse:collapse;font-size:13px;}
+  .tbl th{text-align:left;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.10em;text-transform:uppercase;color:var(--dgrey);padding:0 12px 10px;border-bottom:1px solid var(--border);}
+  .tbl td{padding:11px 12px;border-bottom:1px solid rgba(0,212,232,0.06);color:var(--muted);white-space:nowrap;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tr:hover td{background:rgba(0,212,232,0.03);}
+  .freq-cell{color:var(--white);font-weight:700;font-family:'Courier New',monospace;}
+  .t60-before{color:var(--before);font-weight:600;}
+  .t60-after{color:var(--after);font-weight:600;}
+  .delta-cell{font-family:'Courier New',monospace;font-weight:700;}
+  .result-pill{display:inline-block;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.06em;padding:2px 8px;border-radius:3px;text-transform:uppercase;}
+  .pill-improved{background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);color:#4ade80;}
+  .pill-worse{background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);color:var(--orange);}
+  .pill-none{background:rgba(68,85,102,0.2);border:1px solid rgba(68,85,102,0.3);color:var(--dgrey);}
+
+  /* loading / error */
+  .state-msg{text-align:center;padding:60px 40px;}
+  .state-msg .icon{font-size:32px;margin-bottom:16px;opacity:0.5;}
+  .state-msg p{font-size:14px;color:var(--dgrey);}
+
+  /* ── FOOTER ── */
+  .divider{border:none;border-top:1px solid var(--border);}
+  footer{padding:40px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;max-width:1100px;margin:0 auto;}
+  .footer-brand{font-family:'Courier New',monospace;font-size:12px;color:var(--muted);}
+  .footer-brand span{color:var(--cyan);}
+  .footer-links{display:flex;gap:24px;}
+  .footer-links a{font-size:12px;color:var(--muted);text-decoration:none;}
+  .footer-links a:hover{color:var(--white);}
+
+  @media(max-width:680px){
+    nav{padding:14px 20px;}
+    .nav-links{display:none;}
+    .page-header,.results-section{padding-left:20px;padding-right:20px;}
+    .selector-wrap{padding:24px 20px;}
+    footer{padding:30px 20px;flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <span>GroundControl</span>
+    <small>by Integer Audio</small>
+  </div>
+  <div class="nav-links">
+    <a href="index.html">Product</a>
+    <a href="simulator.html">Simulator</a>
+    <a href="results.html" style="color:var(--white);">Results</a>
+  </div>
+  <a href="index.html#register" class="nav-cta">Register Interest</a>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <span class="eyebrow">Measured Results · Real Rooms</span>
+  <h1>What the Nodal Series does<br><em>in actual studios.</em></h1>
+  <p>Each graph shows T60 decay time measured before and after GroundControl Nodal Series installation. Measurements taken with Room EQ Wizard using calibrated microphone at the primary listening position.</p>
+  <div class="method-note">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="#445566" stroke-width="1.2"/><path d="M6 5v4M6 3.5v.5" stroke="#445566" stroke-width="1.2" stroke-linecap="round"/></svg>
+    Measured with REW · STFT T60M method · 1/3 octave smoothing · ISO 266 centre frequencies
+  </div>
+</div>
+
+<!-- ROOM SELECTOR -->
+<div class="selector-section">
+  <div class="selector-wrap">
+    <span class="selector-label">Select a room</span>
+    <div class="room-cards" id="roomCards">
+      <div class="state-msg" style="padding:16px 0;text-align:left;">
+        <p style="font-size:13px;color:var(--dgrey);">Loading room data…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="results-section">
+  <div id="resultsArea">
+    <div class="state-msg">
+      <div class="icon">⬆</div>
+      <p>Select a room above to view results.</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+<div style="background:var(--navy);">
+  <footer>
+    <div class="footer-brand"><span>Integer Audio</span> · Rochester, New York · integeraudio.com</div>
+    <div class="footer-links">
+      <a href="index.html">Product</a>
+      <a href="index.html#register">Register</a>
+      <a href="groundcontrol_nodal_product_guide.pdf">Product Guide</a>
+    </div>
+  </footer>
+  <p style="text-align:center;font-size:12px;color:#445566;padding:0 40px 24px;font-family:'Courier New',monospace;">
+    © 2026 Integer Audio LLC · All measurements made at listening position with calibrated mic
+  </p>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// DATA SOURCE
+// Reads from rooms.json — an index of available room data files.
+// Each room data file is a JSON produced by the analysis tool's Export button.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const ROOMS_INDEX = 'data/rooms.json';
+
+// ─── state ────────────────────────────────────────────────────────────────
+let rooms = [];
+let activeRoom = null;
+
+// ─── boot ─────────────────────────────────────────────────────────────────
+async function boot(){
+  try {
+    const r = await fetch(ROOMS_INDEX);
+    if(!r.ok) throw new Error('index not found');
+    rooms = await r.json();
+    renderCards();
+    if(rooms.length > 0) selectRoom(0);
+  } catch(e) {
+    // Show demo data when no rooms.json exists yet (development mode)
+    rooms = getDemoRooms();
+    renderCards();
+    selectRoom(0);
+  }
+}
+
+// ─── demo data (used when rooms.json not yet present) ─────────────────────
+function getDemoRooms(){
+  return [
+    {
+      id:'demo1',
+      name:'Studio A',
+      location:'Brooklyn, NY',
+      roomSize:'4.2 × 5.8 × 2.6 m',
+      treatment:'2× Nodal 40 · 1× Nodal 50 · front corners',
+      date:'March 2025',
+      note:'Primary mixing studio. Dominant mode at 34 Hz reduced from 1.42s to 0.38s.',
+      inline: true,
+      curveA:[{freq:25,t60:1.85,lowConf:true},{freq:31.5,t60:1.62,lowConf:false},{freq:40,t60:1.45,lowConf:false},{freq:50,t60:1.21,lowConf:false},{freq:63,t60:0.92,lowConf:false},{freq:80,t60:0.78,lowConf:false},{freq:100,t60:0.64,lowConf:false},{freq:125,t60:0.55,lowConf:false},{freq:160,t60:0.48,lowConf:false},{freq:200,t60:0.41,lowConf:false}],
+      curveB:[{freq:25,t60:0.72,lowConf:true},{freq:31.5,t60:0.58,lowConf:false},{freq:40,t60:0.44,lowConf:false},{freq:50,t60:0.39,lowConf:false},{freq:63,t60:0.41,lowConf:false},{freq:80,t60:0.44,lowConf:false},{freq:100,t60:0.38,lowConf:false},{freq:125,t60:0.35,lowConf:false},{freq:160,t60:0.33,lowConf:false},{freq:200,t60:0.31,lowConf:false}],
+      dotsA:[{freq:31.5,t60:1.62},{freq:40,t60:1.45},{freq:50,t60:1.21},{freq:63,t60:0.92},{freq:80,t60:0.78},{freq:100,t60:0.64},{freq:125,t60:0.55}],
+      dotsB:[{freq:31.5,t60:0.58},{freq:40,t60:0.44},{freq:50,t60:0.39},{freq:63,t60:0.41},{freq:80,t60:0.44},{freq:100,t60:0.38},{freq:125,t60:0.35}]
+    },
+    {
+      id:'demo2',
+      name:'Home Studio B',
+      location:'Austin, TX',
+      roomSize:'3.6 × 4.9 × 2.4 m',
+      treatment:'1× Nodal 40 · 1× Nodal 50 · front-left corner',
+      date:'January 2025',
+      note:'Bedroom studio. 51 Hz mode was 1.1s. Reduced to under 0.5s across 40–80 Hz range.',
+      inline: true,
+      curveA:[{freq:25,t60:1.12,lowConf:true},{freq:31.5,t60:0.98,lowConf:false},{freq:40,t60:1.05,lowConf:false},{freq:50,t60:1.18,lowConf:false},{freq:63,t60:0.87,lowConf:false},{freq:80,t60:0.72,lowConf:false},{freq:100,t60:0.58,lowConf:false},{freq:125,t60:0.49,lowConf:false},{freq:160,t60:0.44,lowConf:false},{freq:200,t60:0.38,lowConf:false}],
+      curveB:[{freq:25,t60:0.88,lowConf:true},{freq:31.5,t60:0.72,lowConf:false},{freq:40,t60:0.52,lowConf:false},{freq:50,t60:0.47,lowConf:false},{freq:63,t60:0.45,lowConf:false},{freq:80,t60:0.43,lowConf:false},{freq:100,t60:0.40,lowConf:false},{freq:125,t60:0.38,lowConf:false},{freq:160,t60:0.36,lowConf:false},{freq:200,t60:0.33,lowConf:false}],
+      dotsA:[{freq:31.5,t60:0.98},{freq:40,t60:1.05},{freq:50,t60:1.18},{freq:63,t60:0.87},{freq:80,t60:0.72},{freq:100,t60:0.58},{freq:125,t60:0.49}],
+      dotsB:[{freq:31.5,t60:0.72},{freq:40,t60:0.52},{freq:50,t60:0.47},{freq:63,t60:0.45},{freq:80,t60:0.43},{freq:100,t60:0.40},{freq:125,t60:0.38}]
+    },
+    {
+      id:'demo3',
+      name:'Recording Studio C',
+      location:'Nashville, TN',
+      roomSize:'5.1 × 6.4 × 2.8 m',
+      treatment:'2× Nodal 40 · 2× Nodal 50 · all four corners',
+      date:'May 2025',
+      note:'Commercial recording studio. Four-corner treatment. Near-flat T60 curve achieved 40–125 Hz.',
+      inline: true,
+      curveA:[{freq:25,t60:2.1,lowConf:true},{freq:31.5,t60:1.88,lowConf:false},{freq:40,t60:1.65,lowConf:false},{freq:50,t60:1.42,lowConf:false},{freq:63,t60:1.18,lowConf:false},{freq:80,t60:0.95,lowConf:false},{freq:100,t60:0.72,lowConf:false},{freq:125,t60:0.61,lowConf:false},{freq:160,t60:0.52,lowConf:false},{freq:200,t60:0.44,lowConf:false}],
+      curveB:[{freq:25,t60:0.65,lowConf:true},{freq:31.5,t60:0.52,lowConf:false},{freq:40,t60:0.46,lowConf:false},{freq:50,t60:0.43,lowConf:false},{freq:63,t60:0.45,lowConf:false},{freq:80,t60:0.47,lowConf:false},{freq:100,t60:0.44,lowConf:false},{freq:125,t60:0.42,lowConf:false},{freq:160,t60:0.40,lowConf:false},{freq:200,t60:0.38,lowConf:false}],
+      dotsA:[{freq:31.5,t60:1.88},{freq:40,t60:1.65},{freq:50,t60:1.42},{freq:63,t60:1.18},{freq:80,t60:0.95},{freq:100,t60:0.72},{freq:125,t60:0.61}],
+      dotsB:[{freq:31.5,t60:0.52},{freq:40,t60:0.46},{freq:50,t60:0.43},{freq:63,t60:0.45},{freq:80,t60:0.47},{freq:100,t60:0.44},{freq:125,t60:0.42}]
+    }
+  ];
+}
+
+// ─── render room selector cards ───────────────────────────────────────────
+function renderCards(){
+  const el = document.getElementById('roomCards');
+  if(!rooms.length){
+    el.innerHTML = '<p style="font-size:13px;color:var(--dgrey)">No rooms loaded.</p>';
+    return;
+  }
+  el.innerHTML = rooms.map((r,i) => `
+    <button class="room-card${i===0?' active':''}" onclick="selectRoom(${i})" id="card_${i}">
+      <div class="room-card-name">${r.name}</div>
+      <div class="room-card-meta">${r.location}<br>${r.roomSize}</div>
+      <span class="room-card-tag">${r.date}</span>
+    </button>
+  `).join('');
+}
+
+// ─── select and display a room ────────────────────────────────────────────
+async function selectRoom(idx){
+  // Update active card
+  document.querySelectorAll('.room-card').forEach((c,i)=>c.classList.toggle('active',i===idx));
+
+  const room = rooms[idx];
+  if(!room) return;
+
+  // If room has a file path instead of inline data, fetch it
+  let data = room;
+  if(room.file && !room.inline){
+    try {
+      const r = await fetch('data/' + room.file);
+      data = await r.json();
+      data.name     = room.name;
+      data.location = room.location;
+      data.date     = room.date;
+    } catch(e){
+      document.getElementById('resultsArea').innerHTML =
+        `<div class="state-msg"><div class="icon">⚠</div><p>Could not load data for ${room.name}.</p></div>`;
+      return;
+    }
+  }
+
+  activeRoom = data;
+  renderResults(data);
+}
+
+// ─── render results for a room ────────────────────────────────────────────
+function renderResults(room){
+  const{name,location,roomSize,treatment,date,note,curveA,curveB,dotsA,dotsB}=room;
+  const hasB = curveB && curveB.length > 0;
+
+  const el = document.getElementById('resultsArea');
+  el.innerHTML = `
+    <div class="room-header">
+      <div class="room-title">
+        <h2>${name}</h2>
+        <div class="room-detail">
+          <span>Location</span> ${location}<br>
+          <span>Room size</span> ${roomSize}<br>
+          <span>Measured</span> ${date}
+        </div>
+      </div>
+      ${treatment?`<div class="treatment-badge"><strong>Treatment Applied</strong>${treatment}</div>`:''}
+    </div>
+
+    <div class="chart-legend">
+      <div class="leg-item"><span class="leg-swatch before"></span>Before treatment</div>
+      ${hasB?`<div class="leg-item"><span class="leg-swatch after"></span>After treatment</div>`:''}
+    </div>
+
+    <div class="chart-container">
+      <canvas id="chartCanvas" height="280"></canvas>
+    </div>
+
+    ${note?`<div style="border-left:3px solid var(--orange);padding:14px 20px;background:rgba(255,107,53,0.05);border-radius:0 6px 6px 0;margin-bottom:28px;font-size:14px;color:var(--muted);line-height:1.7;">${note}</div>`:''}
+
+    ${hasB?buildSummaryStrip(dotsA,dotsB):''}
+
+    <span class="detail-label">T60M values — selected ISO 266 frequencies</span>
+    ${buildTable(dotsA,dotsB,hasB)}
+  `;
+
+  // Draw chart after DOM is ready
+  requestAnimationFrame(()=>drawChart(curveA,curveB,dotsA,dotsB));
+}
+
+// ─── summary strip ────────────────────────────────────────────────────────
+function buildSummaryStrip(dotsA,dotsB){
+  const mapB=new Map((dotsB||[]).map(d=>[d.freq,d.t60]));
+  const cells=(dotsA||[]).slice(0,6).map(da=>{
+    const tA=da.t60,tB=mapB.get(da.freq);
+    let deltaHtml='';
+    if(tA&&tB){
+      const delta=tB-tA,pct=((tA-tB)/tA*100);
+      const cls=delta<-0.05?'delta-improved':delta>0.05?'delta-worse':'delta-none';
+      const sign=delta<0?'':'+';
+      deltaHtml=`<div class="summary-delta ${cls}">${sign+delta.toFixed(2)}s (${Math.round(pct)}%)</div>`;
+    }
+    return `<div class="summary-cell">
+      <div class="summary-freq">${da.freq} Hz</div>
+      <div class="summary-before">${tA?tA.toFixed(2)+'s':'—'}</div>
+      <div class="summary-arrow">↓</div>
+      <div class="summary-after">${tB?tB.toFixed(2)+'s':'—'}</div>
+      ${deltaHtml}
+    </div>`;
+  }).join('');
+  return `<div class="summary-strip">${cells}</div>`;
+}
+
+// ─── detail table ─────────────────────────────────────────────────────────
+function buildTable(dotsA,dotsB,hasB){
+  const mapB=new Map((dotsB||[]).map(d=>[d.freq,d.t60]));
+  const rows=(dotsA||[]).map(da=>{
+    const tA=da.t60,tB=mapB.get(da.freq);
+    let deltaTd='<td>—</td><td>—</td>';
+    if(hasB&&tA&&tB){
+      const delta=tB-tA,pct=((tA-tB)/tA*100);
+      const sign=delta<0?'':'+';
+      const dCls=delta<-0.05?'delta-improved':delta>0.05?'delta-worse':'delta-none';
+      const pill=delta<-0.05?'improved':delta>0.05?'worse':'none';
+      const pillText=delta<-0.05?'Improved':delta>0.05?'Higher':'No change';
+      deltaTd=`
+        <td class="delta-cell ${dCls}">${sign+delta.toFixed(3)}s</td>
+        <td><span class="result-pill pill-${pill}">${pillText}</span></td>`;
+    }
+    return `<tr>
+      <td class="freq-cell">${da.freq} Hz</td>
+      <td class="t60-before">${tA?tA.toFixed(3)+'s':'—'}</td>
+      ${hasB?`<td class="t60-after">${tB?tB.toFixed(3)+'s':'—'}</td>${deltaTd}`:''}
+    </tr>`;
+  }).join('');
+  return `<table class="tbl">
+    <thead><tr>
+      <th>Frequency</th>
+      <th>Before T60</th>
+      ${hasB?'<th>After T60</th><th>Change</th><th>Result</th>':''}
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// ─── chart ────────────────────────────────────────────────────────────────
+function drawChart(curveA,curveB,dotsA,dotsB){
+  const cv=document.getElementById('chartCanvas');if(!cv)return;
+  const dpr=window.devicePixelRatio||2;
+  const W=cv.offsetWidth*dpr,H=280*dpr;
+  cv.width=W;cv.height=H;
+  const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+  const w=W/dpr,h=H/dpr;
+  const pad={l:52,r:20,t:14,b:36},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  ctx.clearRect(0,0,w,h);
+
+  const allT=[...(curveA||[]),...(curveB||[]),...(dotsA||[]),...(dotsB||[])]
+    .filter(d=>d.t60&&d.t60>0&&d.t60<5).map(d=>d.t60);
+  if(!allT.length)return;
+  const tMax=Math.min(3,Math.ceil(Math.max(...allT)*10)/10*1.18),tMin=0;
+  const fMin=20,fMax=250;
+  const fx=f=>pad.l+Math.log10(f/fMin)/Math.log10(fMax/fMin)*cw;
+  const ty=t=>pad.t+ch-(Math.max(0,Math.min(tMax,t))-tMin)/(tMax-tMin)*ch;
+
+  // grid
+  [20,25,31.5,40,50,63,80,100,125,160,200,250].forEach(f=>{
+    ctx.strokeStyle='rgba(0,212,232,0.07)';ctx.lineWidth=.5;
+    ctx.beginPath();ctx.moveTo(fx(f),pad.t);ctx.lineTo(fx(f),pad.t+ch);ctx.stroke();
+  });
+  const tStep=tMax<=1?.1:tMax<=2?.2:.5;
+  for(let t=0;t<=tMax+.001;t+=tStep){
+    ctx.strokeStyle='rgba(0,212,232,0.07)';ctx.lineWidth=.5;
+    ctx.beginPath();ctx.moveTo(pad.l,ty(t));ctx.lineTo(pad.l+cw,ty(t));ctx.stroke();
+  }
+  // axes
+  ctx.strokeStyle='rgba(0,212,232,0.25)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t);ctx.lineTo(pad.l,pad.t+ch);ctx.lineTo(pad.l+cw,pad.t+ch);ctx.stroke();
+  // labels
+  ctx.fillStyle='rgba(68,85,102,0.9)';ctx.font=`10px 'Courier New',monospace`;
+  ctx.textAlign='center';ctx.textBaseline='top';
+  [25,31.5,40,50,63,80,100,125,160,200].forEach(f=>ctx.fillText(f+'',fx(f),pad.t+ch+5));
+  ctx.fillText('Frequency (Hz)',pad.l+cw/2,pad.t+ch+20);
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let t=0;t<=tMax+.001;t+=tStep)
+    ctx.fillText(t.toFixed(tStep<.2?2:1),pad.l-6,ty(t));
+  ctx.save();ctx.translate(13,pad.t+ch/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('T60M (s)',0,0);ctx.restore();
+
+  // ── draw curve helper ──
+  function smooth(data){
+    if(!data||data.length<2)return[];
+    const pts=data.filter(d=>d.t60&&d.t60>0&&d.t60<5).sort((a,b)=>a.freq-b.freq);
+    return pts.map((d,i,a)=>{
+      const i0=Math.max(0,i-1),i1=Math.min(a.length-1,i+1);
+      return{...d,ts:(a[i0].t60+d.t60+a[i1].t60)/3};
+    });
+  }
+
+  function fillSolid(sm,col){
+    if(sm.length<2)return;
+    ctx.beginPath();
+    sm.forEach((d,i)=>i?ctx.lineTo(fx(d.freq),ty(d.ts)):ctx.moveTo(fx(d.freq),ty(d.ts)));
+    ctx.lineTo(fx(sm[sm.length-1].freq),pad.t+ch);ctx.lineTo(fx(sm[0].freq),pad.t+ch);
+    ctx.closePath();ctx.fillStyle=col;ctx.fill();
+  }
+
+  function fillHatch(sm,col,sp=7){
+    if(sm.length<2)return;
+    ctx.save();
+    ctx.beginPath();
+    sm.forEach((d,i)=>i?ctx.lineTo(fx(d.freq),ty(d.ts)):ctx.moveTo(fx(d.freq),ty(d.ts)));
+    ctx.lineTo(fx(sm[sm.length-1].freq),pad.t+ch);ctx.lineTo(fx(sm[0].freq),pad.t+ch);
+    ctx.closePath();ctx.clip();
+    ctx.strokeStyle=col;ctx.lineWidth=1;
+    const diag=Math.sqrt(cw*cw+ch*ch)*1.2,num=Math.ceil(diag/sp)+4;
+    const cx2=pad.l+cw/2,cy2=pad.t+ch/2,r=Math.PI/4;
+    for(let k=-num;k<=num;k++){
+      const ox=Math.cos(r+Math.PI/2)*k*sp,oy=Math.sin(r+Math.PI/2)*k*sp;
+      ctx.beginPath();
+      ctx.moveTo(cx2+ox+Math.cos(r)*diag/2,cy2+oy+Math.sin(r)*diag/2);
+      ctx.lineTo(cx2+ox-Math.cos(r)*diag/2,cy2+oy-Math.sin(r)*diag/2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawLine(sm,solid,dim){
+    if(sm.length<2)return;
+    let seg=[],last=null;
+    const flush=lc=>{
+      if(seg.length<2)return;
+      ctx.beginPath();seg.forEach((d,i)=>i?ctx.lineTo(fx(d.freq),ty(d.ts)):ctx.moveTo(fx(d.freq),ty(d.ts)));
+      ctx.strokeStyle=lc?dim:solid;ctx.lineWidth=2;ctx.stroke();
+    };
+    sm.forEach(d=>{
+      const lc=d.lowConf||false;
+      if(last===null||lc===last){seg.push(d);last=lc;}
+      else{flush(last);seg=[seg[seg.length-1],d];last=lc;}
+    });
+    flush(last);
+  }
+
+  function drawDots(dots,fill,warn){
+    (dots||[]).filter(d=>d.t60&&d.t60>0&&d.t60<5&&d.freq>=fMin&&d.freq<=fMax).forEach(d=>{
+      const x=fx(d.freq),y=ty(d.t60);
+      ctx.beginPath();ctx.arc(x,y,7,0,2*Math.PI);
+      ctx.fillStyle='rgba(10,21,32,0.9)';ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,5,0,2*Math.PI);
+      ctx.fillStyle=d.lowConf?warn:fill;ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.8)';ctx.font=`9px 'Courier New',monospace`;
+      ctx.textAlign='center';ctx.textBaseline='bottom';
+      ctx.fillText(d.t60.toFixed(2),x,y-9);
+    });
+  }
+
+  const smA=smooth(curveA),smB=smooth(curveB);
+  // B behind A
+  if(smB.length){
+    fillSolid(smB,'rgba(255,107,53,0.12)');
+    fillHatch(smB,'rgba(255,107,53,0.30)',8);
+    drawLine(smB,'rgba(255,107,53,0.85)','rgba(255,107,53,0.30)');
+  }
+  if(smA.length){
+    fillSolid(smA,'rgba(0,212,232,0.12)');
+    drawLine(smA,'rgba(0,212,232,0.90)','rgba(0,212,232,0.30)');
+  }
+  drawDots(dotsB,'rgba(255,107,53,0.95)','rgba(200,169,110,0.9)');
+  drawDots(dotsA,'rgba(0,212,232,0.95)','rgba(200,169,110,0.9)');
+}
+
+// resize
+let _rt;
+window.addEventListener('resize',()=>{
+  clearTimeout(_rt);_rt=setTimeout(()=>{
+    if(activeRoom) drawChart(activeRoom.curveA,activeRoom.curveB,activeRoom.dotsA,activeRoom.dotsB);
+  },150);
+});
+
+boot();
+</script>
+</body>
+</html>
