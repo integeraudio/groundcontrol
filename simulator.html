@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>GroundControl Nodal Series — Modal Simulation r58</title>
+<title>GroundControl Nodal Series — Modal Simulation r60</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap');
 
@@ -459,7 +459,7 @@
   }
   .btn-export-pdf:hover { background: #81c784; color: var(--bg); }
   .export-note {
-    font-family: var(--mono); font-size: 9px; color: var(--text-dim);
+    font-family: var(--mono); font-size: 10px; color: var(--text-dim);
     line-height: 1.6; margin-top: 6px;
   }
 
@@ -1118,11 +1118,11 @@
     </div>
 
     <div class="rt60-wrap">
-      <canvas id="rt60Canvas" width="700" height="180"></canvas>
+      <canvas id="rt60Canvas" width="700" height="280"></canvas>
     </div>
 
     <div class="decay-summary" id="decaySummary" style="display:none;">
-      <div class="decay-summary-title">PER-MODE DECAY SUMMARY — modal loss-budget model</div>
+      <div class="decay-summary-title" id="decaySummaryTitle">PER-MODE DECAY SUMMARY — modal loss-budget model</div>
       <div class="decay-summary-header">
         <span>MODE</span>
         <span>T₆₀ BAR (2s scale)</span>
@@ -1150,7 +1150,7 @@
           &nbsp;Room shell only — no targeted treatment
         </div>
         <div style="font-family:var(--mono);font-size:9px;color:rgba(0,229,255,0.6);margin-top:6px;line-height:1.5;">
-          T₆₀ = per-mode modal decay (loss-budget model) · validate against REW waterfall T20/T30 per mode<br>
+          T₆₀ = per-mode modal decay · T₆₀ Pre/Post use measured baseline when REW untreated file is loaded · otherwise loss-budget model<br>
           [+Xs / ≤Ys] = predicted measurement range — physics-informed estimate, not a statistically derived confidence interval · actual T₆₀ likely within this range<br>
           Broadband Eyring RT₆₀ shown separately on the RT₆₀ canvas above.
         </div>
@@ -1457,7 +1457,7 @@
         <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.10em;margin-bottom:8px;">Tuning</div>
         <div class="room-dim-row" style="margin-bottom:6px;">
           <label style="width:28px;font-family:var(--mono);font-size:10px;color:var(--accent);">f₀</label>
-          <input type="range" id="f40Slider" min="20" max="120" step="1" value="34" style="flex:1;accent-color:var(--accent);">
+          <input type="range" id="f40Slider" min="20" max="120" step="1" value="35" style="flex:1;accent-color:var(--accent);">
           <span class="dim-val" id="f40Val" style="color:var(--accent);width:46px;">34 Hz</span>
         </div>
         <div class="room-dim-row" style="margin-bottom:6px;">
@@ -1494,7 +1494,7 @@
         </div>
       </div>
       <div class="stats-grid" style="margin-top:8px;">
-        <div class="stat-cell"><span class="val" id="stat-f40">34 Hz</span><span class="lbl">Target f₀</span></div>
+        <div class="stat-cell"><span class="val" id="stat-f40">35 Hz</span><span class="lbl">Target f₀</span></div>
         <div class="stat-cell"><span class="val" id="stat-q40">Q = 1.0</span><span class="lbl">Q factor</span></div>
       </div>
       <div class="placement-hint">Click corner to add unit (cycles 0→1→2→3→4→remove) &nbsp;|&nbsp; ×N = stacked</div>
@@ -1680,12 +1680,12 @@
       <div style="margin-top:8px;padding:6px 8px;background:rgba(255,152,0,0.06);border:1px solid rgba(255,152,0,0.2);">
         <div style="font-family:var(--mono);font-size:9px;color:rgba(255,152,0,0.9);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.08em;">REW Calibration Workflow</div>
         <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);line-height:1.6;">
-          1. Measure untreated room T20/T30 per mode in REW waterfall<br>
-          2. Match T₆₀ Pre column to REW untreated values by adjusting<br>
-          &nbsp;&nbsp;&nbsp;Room Construction profile<br>
-          3. Install TDAs. Re-measure. Match T₆₀ Post to REW treated<br>
-          &nbsp;&nbsp;&nbsp;values by adjusting G<sub>corner</sub> here<br>
-          4. Calibrated G<sub>corner</sub> is your room-specific corner gain
+          1. Export REW waterfall (.txt) before treatment → drop in REW Import panel<br>
+          2. Model auto-computes T60M at all room mode frequencies<br>
+          &nbsp;&nbsp;&nbsp;T₆₀ Pre column now matches measured values at each mode<br>
+          3. Install TDAs. Export treated waterfall → drop in REW Import panel<br>
+          &nbsp;&nbsp;&nbsp;G<sub>corner</sub> is auto-calibrated from treated T60M values<br>
+          4. Export JSON captures both measurements + model predictions
         </div>
       </div>
       <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.25);margin-top:6px;line-height:1.5;">
@@ -1693,14 +1693,39 @@
       </div>
     </div>
 
-    <!-- ═══ REW T30 Import Panel ═══ -->
+    <!-- ═══ REW Waterfall T60M Import Panel (r60) ═══ -->
     <div class="panel-box" style="border-color:rgba(0,229,255,0.30);">
       <h3 style="color:rgba(0,229,255,0.85);">REW Measurement Import</h3>
 
-      <!-- Untreated -->
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);
+      <!-- Waterfall settings note (Method A) -->
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);
+                  line-height:1.65;margin-bottom:10px;padding:6px 8px;
+                  background:rgba(0,229,255,0.03);border:1px solid rgba(0,229,255,0.15);">
+        <span style="color:rgba(0,229,255,0.8);text-transform:uppercase;
+                     letter-spacing:0.08em;">Method A — Waterfall Export (recommended, full range)</span><br>
+        <b style="color:#ccc;">REW Waterfall settings:</b> Mode=Fourier · Window=300ms · Rise Time=30ms<br>
+        Total Slices=1000 · Smoothing=1/48 oct · Normalize unchecked · CSD unchecked<br>
+        <b style="color:#ccc;">Export:</b> Waterfall graph → File → Export → Export data as text (.txt)<br>
+        Both files must use identical settings and mic/speaker positions. T60M is computed
+        automatically at all room mode frequencies (axial modes ≤80 Hz prioritised).
+      </div>
+
+      <!-- Rise time input -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);
+                     text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;">Rise Time (ms)</span>
+        <input type="number" id="rewRiseTime" value="30" step="5" min="5" max="400"
+               style="width:68px;font-family:var(--mono);font-size:10px;
+                      background:#0a1018;color:var(--accent);
+                      border:1px solid rgba(0,229,255,0.25);border-radius:2px;
+                      padding:3px 6px;text-align:right;">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);line-height:1.4;">Match REW Rise Time exactly</span>
+      </div>
+
+      <!-- Untreated waterfall -->
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);
                   text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">
-        Untreated Measurement
+        <span style="color:#4ade80;">■</span> Untreated — waterfall export (.txt)
       </div>
       <div class="rew-drop-zone" id="rewDropUntreated"
            ondragover="rewDragOver(event,'untreated')"
@@ -1708,72 +1733,65 @@
            ondrop="rewDrop(event,'untreated')">
         <input type="file" accept=".txt,.csv" id="rewFileUntreated"
                onchange="rewFileChosen(event,'untreated')">
-        ↑ Drop RT60 tab export or click to browse
+        ↑ Drop waterfall export or click to browse
       </div>
       <div id="rewStatusUntreated"></div>
 
-      <!-- Treated -->
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);
+      <!-- Treated waterfall -->
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);
                   text-transform:uppercase;letter-spacing:0.08em;margin:8px 0 4px;">
-        Treated Measurement (optional)
+        <span style="color:#60a5fa;">■</span> Treated — waterfall export (.txt) <span style="color:var(--text-dim);font-weight:normal;">(optional)</span>
       </div>
       <div class="rew-drop-zone" id="rewDropTreated"
+           style="border-color:rgba(96,165,250,0.25);"
            ondragover="rewDragOver(event,'treated')"
            ondragleave="rewDragLeave(event,'treated')"
            ondrop="rewDrop(event,'treated')">
         <input type="file" accept=".txt,.csv" id="rewFileTreated"
                onchange="rewFileChosen(event,'treated')">
-        ↑ Drop RT60 tab export or click to browse
+        ↑ Drop waterfall export or click to browse
       </div>
       <div id="rewStatusTreated"></div>
 
-      <!-- File export note -->
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);
-                  line-height:1.65;margin-top:10px;padding:6px 8px;
-                  background:rgba(0,229,255,0.03);border:1px solid var(--border);">
-        <span style="color:rgba(0,229,255,0.7);text-transform:uppercase;
-                     letter-spacing:0.08em;">RT60 tab export (≥ 50 Hz only)</span><br>
-        1. In REW: select measurement → <b style="color:#ccc;">RT60 tab</b> (labelled RT Parameters in newer versions)<br>
-        2. <b style="color:#ccc;">File → Export → Export RT Parameters as text</b> → save .txt<br>
-        3. Drop file above · covers modes at 50 Hz and above only<br>
-        <span style="color:rgba(255,152,0,0.7);">For modes below 50 Hz use the Manual Entry table below</span>
-      </div>
+      <!-- Async compute progress -->
+      <div id="rewComputeStatus" style="display:none;font-family:var(--mono);font-size:10px;
+           color:var(--accent);margin-top:6px;padding:4px 6px;
+           background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.15);"></div>
 
-      <!-- Manual Entry section -->
+      <!-- Method B: Manual T60M Entry -->
       <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
+        <div style="font-family:var(--mono);font-size:10px;color:rgba(255,152,0,0.8);
+                    text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Method B — Manual T60M Entry</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);
+                    line-height:1.6;margin-bottom:8px;padding:5px 7px;
+                    background:rgba(255,152,0,0.04);border:1px solid rgba(255,152,0,0.15);">
+          Use if waterfall export is unavailable. In REW's <b style="color:#ccc;">RT60 Decay tab</b>:
+          press Generate → Calculate RT60 model. Position cursor at each mode frequency —
+          the upper panel shows T60M. Enter values below. Works for all frequencies.
+        </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <span style="font-family:var(--mono);font-size:9px;color:rgba(0,229,255,0.7);
-                       text-transform:uppercase;letter-spacing:0.08em;">
-            Manual T60M Entry — RT60 Decay tab
-          </span>
+          <span style="font-family:var(--mono);font-size:10px;color:rgba(255,152,0,0.8);
+                       text-transform:uppercase;letter-spacing:0.08em;">T60M at mode frequencies</span>
           <div style="display:flex;gap:5px;">
             <button id="btnManualApply" onclick="applyManualREW('untreated')"
-              style="font-family:var(--mono);font-size:9px;color:#4caf50;background:none;
+              style="font-family:var(--mono);font-size:10px;color:#4caf50;background:none;
                      border:1px solid rgba(76,175,80,0.4);border-radius:3px;padding:2px 8px;cursor:pointer;">
               Apply untreated
             </button>
             <button id="btnManualApplyTreated" onclick="applyManualREW('treated')"
-              style="font-family:var(--mono);font-size:9px;color:#ba68c8;background:none;
+              style="font-family:var(--mono);font-size:10px;color:#ba68c8;background:none;
                      border:1px solid rgba(186,104,200,0.4);border-radius:3px;padding:2px 8px;cursor:pointer;">
               Apply treated
             </button>
             <button onclick="clearManualREW()"
-              style="font-family:var(--mono);font-size:9px;color:var(--text-dim);background:none;
+              style="font-family:var(--mono);font-size:10px;color:var(--text-dim);background:none;
                      border:1px solid var(--border);border-radius:3px;padding:2px 8px;cursor:pointer;">
               Clear
             </button>
           </div>
         </div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--text-dim);
-                    line-height:1.6;margin-bottom:8px;padding:5px 7px;
-                    background:rgba(255,255,255,0.02);border-radius:2px;">
-          In REW's <b style="color:#ccc;">RT60 Decay tab</b>: press Generate, then Calculate RT60 model.
-          Position the cursor at each mode frequency — the upper panel shows T60M for that frequency.
-          Enter the T60M value (in seconds) for each mode below. Leave blank to skip a mode.
-          Works below 50 Hz where the file export cannot reach.
-        </div>
         <div id="manualREWTable" style="font-family:var(--mono);font-size:10px;"></div>
-        <div id="manualREWStatus" style="font-family:var(--mono);font-size:9px;
+        <div id="manualREWStatus" style="font-family:var(--mono);font-size:10px;
              margin-top:6px;min-height:14px;"></div>
       </div>
     </div>
@@ -1783,7 +1801,7 @@
       <h3 style="color:rgba(129,199,132,0.85);">Export Results</h3>
       <div class="export-note">
         Export your room configuration, calibrated model predictions, and REW
-        measured T30 data as a structured JSON file for submission to the
+        waterfall T60M data (or RT-Parameters T60) as a structured JSON file for submission to the
         GroundControl performance database, or as a formatted PDF report for
         your own records.
       </div>
@@ -1794,7 +1812,7 @@
       <div class="export-note" style="margin-top:8px;padding:5px 8px;
            background:rgba(129,199,132,0.05);border:1px solid rgba(129,199,132,0.2);">
         <span style="color:rgba(129,199,132,0.8);text-transform:uppercase;
-                     letter-spacing:0.08em;">Submit to database</span><br>
+                     letter-spacing:0.08em;font-size:10px;">Submit to database</span><br>
         Send your JSON export to
         <span style="color:var(--accent);">data@groundcontrol.audio</span>
         or upload at groundcontrol.audio/submit.<br>
@@ -1809,7 +1827,7 @@
       <h3 style="color:rgba(0,229,255,0.75);">Enclosure Cavity Depth — D<sub>cavity</sub></h3>
       <div class="room-dim-row" style="margin-bottom:6px;">
         <label style="font-family:var(--mono);font-size:10px;color:#00e5ff;width:28px;">D</label>
-        <input type="range" id="cavitySlider" min="80" max="240" step="5" value="220"
+        <input type="range" id="cavitySlider" min="80" max="240" step="5" value="215"
                style="flex:1;accent-color:#00e5ff;">
         <span class="dim-val" id="cavityVal" style="color:#00e5ff;width:54px;">220 mm</span>
       </div>
@@ -1880,6 +1898,25 @@
           <div class="legend-swatch" style="background: #0a0c0f;"></div>
           <span>Pressure Null</span>
         </div>
+        <div style="border-top:1px solid var(--border);margin:6px 0;padding-top:6px;font-family:var(--mono);font-size:10px;color:var(--text-dim);">
+          <div style="margin-bottom:4px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;font-size:9px;">Decay graph</div>
+          <div class="legend-item">
+            <div style="width:14px;height:14px;border:1.5px solid rgba(255,107,53,0.85);transform:rotate(45deg);flex-shrink:0;margin-right:8px;"></div>
+            <span>T60 Untreated (model)</span>
+          </div>
+          <div class="legend-item">
+            <div style="width:14px;height:14px;border-radius:50%;background:#8bc34a;flex-shrink:0;margin-right:8px;"></div>
+            <span>T60 Treated (model)</span>
+          </div>
+          <div class="legend-item">
+            <div style="width:12px;height:12px;background:rgba(74,222,128,0.85);flex-shrink:0;margin-right:8px;"></div>
+            <span>REW T60 Untreated</span>
+          </div>
+          <div class="legend-item">
+            <div style="width:12px;height:12px;background:rgba(96,165,250,0.85);flex-shrink:0;margin-right:8px;"></div>
+            <span>REW T60 Treated</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1887,15 +1924,15 @@
 
 <div class="model-disclaimer">
   <span class="disc-title">Model limitations — please read</span>
-  The RT60 predictions shown for the <strong>three tunable TDA units</strong> use the <strong>Eyring acoustic model</strong>, which assumes a statistically diffuse sound field. In small rooms (typically below the Schroeder frequency shown above), the bass range is governed by <strong>discrete room modes</strong> rather than a diffuse field — the Eyring model is technically outside its strict domain of validity in this regime.
+  The per-mode decay predictions use a <strong>modal loss-budget model</strong> (r60) that computes T60 at each axial room mode frequency from the total room surface absorption, using the Sabine-weighted boundary damping term rather than per-surface modal coupling. Construction profiles are calibrated to produce physically correct untreated T60 values — residential drywall gives 1.2–1.5s at 30–35 Hz, concrete 4–5s — consistent with real REW measurements in those room types.
   <br><br>
-  In practice this means: the <strong>predicted RT60 reductions are indicative, not precise</strong>. The actual reduction in your room may be higher or lower than predicted depending on your specific room dimensions, construction, and measurement position. The model is most reliable as a <strong>comparative tool</strong> — the difference between untreated and treated predictions is more meaningful than the absolute values.
+  <strong>TDA predictions</strong> are computed as additional modal damping on top of the measured or modelled baseline. When a REW untreated waterfall is loaded, the baseline is back-calculated from the measurement at each mode, making T60 Post a calibrated prediction rather than a model approximation. Loading an after-treatment waterfall enables G_corner calibration — validating the corner gain assumption against your actual room.
   <br><br>
-  The <strong>modal frequency calculations are exact</strong> — the simulation correctly identifies which frequencies are most likely to be problematic in your room. For accurate RT60 measurements, use <strong>REW (Room EQ Wizard)</strong> with a calibrated microphone before and after treatment. Prototype performance will be published once measured.
+  <strong>Known limitations:</strong> The model treats each mode independently and does not capture mode coupling, oblique/tangential mode interactions, or position-dependent pressure distribution within a mode. TDA absorption is modelled as uniform area loading — spatial placement affects the corner boost factor but not the modal pressure distribution. Predictions are most reliable for axial modes below 100 Hz. For accurate validation, use <strong>REW (Room EQ Wizard)</strong> with a calibrated measurement microphone before and after treatment using the waterfall export settings shown in the REW Import panel.
 </div>
 
 <footer>
-  <span>Eyring model · rectangular + sloped/cathedral ceiling perturbation · Nodal 40 / 50 / 60 · membrane <span id="membraneBadge">24"×30"</span> · α rigorous: 4R/(1+R)² · G_corner=<span id="gcornerBadge">4.0</span> · D_cav=<span id="dcavBadge">220</span>mm · G_wall=2 · TDA Design Tool · r58</span>
+  <span>Eyring model · rectangular + sloped/cathedral ceiling perturbation · Nodal 40 / 50 / 60 · membrane <span id="membraneBadge">24"×30"</span> · α rigorous: 4R/(1+R)² · G_corner=<span id="gcornerBadge">4.0</span> · D_cav=<span id="dcavBadge">215</span>mm · G_wall=2 · TDA Design Tool · r60</span>
   <span>Indicative predictions only — validate all results with REW measurement · not for engineering certification</span>
 </footer>
 
@@ -2864,16 +2901,37 @@ function modalT60full(mode, pos40, pos55, pos70) {
   const modArea = modalCouplingArea(mode.axis);
 
   // 1. Boundary loss — six-surface weighted Sabine form
-  // If a measured untreated T60 exists for this mode frequency, use it directly
-  // so that the pre-treatment T60 exactly matches the measurement.
-  const measT60 = measuredUntreatedT60(f);
+  //
+  // delta_boundary always comes from the construction profile (baselineAlpha).
+  // This ensures that changing the construction type always affects T60 Post.
+  //
+  // The measured untreated T60 (if loaded) is used ONLY to correct the pre-
+  // treatment display: renderDecaySummary reads t60Pre = modalT60(mode,[],[],[])
+  // and separately reads rewInterp() for the measured overlay. The measured
+  // value does not alter delta_boundary here so that post-treatment predictions
+  // remain sensitive to construction profile and TDA placement changes.
+  //
+  // Exception: when called with no units (pure pre-treatment query) AND a
+  // measurement exists, we back-calculate delta_boundary so that T60 Pre in
+  // the decay table exactly matches the measurement.
+  const measT60     = measuredUntreatedT60(f);
+  const alpha_b     = baselineAlphaCalibrated(f);
+  // Use full room surface area (Sabine) for delta_boundary, not just the two
+  // modal surfaces. Real room modes lose energy to all six surfaces via
+  // structural coupling, air gaps and HVAC leakage — not just the two
+  // opposing walls the mode is named for. Using modArea here over-predicts
+  // T60 by 3–4× for residential drywall rooms vs real REW measurements.
+  // With ROOM_SA: res_drywall gives ~1.3s at 30 Hz — matching real rooms.
+  // With modArea: res_drywall gives ~5.6s at 30 Hz — grossly wrong.
+  const delta_model = 343 * alpha_b * ROOM_SA / (omega * 4 * ROOM_VOLUME);
   let delta_boundary;
   if (measT60 && measT60 > 0.05 && measT60 < 10) {
-    // Back-calculate delta_boundary from the measured T60
-    delta_boundary = Math.log(Math.pow(10,6)) / (2 * Math.PI * f * measT60);
+    // Measured untreated T60 available: back-calculate δ_boundary from it.
+    // Calibrates BOTH pre and post predictions to the real room.
+    delta_boundary = Math.log(Math.pow(10, 6)) / (omega * measT60);
   } else {
-    const alpha_b = baselineAlphaCalibrated(f);
-    delta_boundary = 343 * alpha_b * modArea / (omega * 4 * ROOM_VOLUME);
+    // No measurement: use construction-profile model with full SA
+    delta_boundary = delta_model;
   }
 
   // 2. TDA contributions — stacked column model
@@ -3022,9 +3080,9 @@ function avaaModalT60(mode, avaaPositions) {
   const modArea = modalCouplingArea(mode.axis);
   const eff     = avaaEffectiveness(f);
 
-  // Boundary loss — identical to modalT60
+  // Boundary loss — use full ROOM_SA (Sabine), same as modalT60full
   const alpha_b        = baselineAlpha(f);
-  const delta_boundary = 343 * alpha_b * modArea / (omega * 4 * ROOM_VOLUME);
+  const delta_boundary = 343 * alpha_b * ROOM_SA / (omega * 4 * ROOM_VOLUME);
 
   // AVAA contribution — Sabine loss-factor form, normalised against modArea
   // consistent with modalT60 boundary and TDA paths.
@@ -3101,9 +3159,9 @@ function combinedModalT60ci(mode, pos40, pos55, pos70, avaaPositions) {
   const omega   = 2 * Math.PI * f;
   const modArea = modalCouplingArea(mode.axis);
 
-  // Boundary loss
+  // Boundary loss — use full ROOM_SA (Sabine), same as modalT60full
   const alpha_b        = baselineAlpha(f);
-  const delta_boundary = 343 * alpha_b * modArea / (omega * 4 * ROOM_VOLUME);
+  const delta_boundary = 343 * alpha_b * ROOM_SA / (omega * 4 * ROOM_VOLUME);
 
   // Each array entry = one physical unit; duplicates = stacked. Efficiency applied per position.
   let delta_tda = 0;
@@ -3204,7 +3262,7 @@ let state = {
   avaaMode: false,
   avaaCount: 2,
   avaaPositions: ['FL','FR'],
-  n40: 4, pos40: ['FL','FR','RL','RR'], q40: 1.0, f40: 34,
+  n40: 4, pos40: ['FL','FR','RL','RR'], q40: 1.0, f40: 35,
   n55: 0, pos55: [],                   q55: 0.9, f55: 51,
   n70: 0, pos70: [],                   q70: 1.5, f70: 61,
   highlightMode: null,
@@ -3702,23 +3760,27 @@ function renderRT60() {
   ctx.fillRect(0, 0, W, H);
 
   const fMin = 20, fMax = 150;
-  const pad = { l: 44, r: 16, t: 14, b: 28 };
+  const pad  = { l: 44, r: 16, t: 14, b: 28 };
   const plotW = W - pad.l - pad.r;
   const plotH = H - pad.t - pad.b;
-
-  const rt60Max = 3.0; // seconds axis max
+  const rt60Max = 2.0;
 
   function fToX(f)  { return pad.l + (f - fMin) / (fMax - fMin) * plotW; }
-  function rtToY(t) { return pad.t + plotH - (t / rt60Max) * plotH; }
+  function rtToY(t) { return pad.t + plotH - Math.min(t / rt60Max, 1) * plotH; }
 
-  // Grid
+  // ── Grid ──────────────────────────────────────────────────────────────────
   ctx.strokeStyle = '#1e2530';
   ctx.lineWidth = 1;
   [30, 50, 70, 100, 120, 150].forEach(f => {
     const x = fToX(f);
     ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + plotH); ctx.stroke();
+    ctx.fillStyle = '#3a5060';
+    ctx.font = '9px Share Tech Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText(f + 'Hz', x, pad.t + plotH + 16);
+    ctx.textAlign = 'left';
   });
-  [0.25, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0].forEach(t => {
+  [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0].forEach(t => {
     const y = rtToY(t);
     ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + plotW, y); ctx.stroke();
     ctx.fillStyle = '#7a8fa0';
@@ -3727,39 +3789,25 @@ function renderRT60() {
   });
 
   // ── Zone bands ────────────────────────────────────────────────────────────
-  // Red   < 0.25 s  — over-damped   (bass too dry for small room)
-  // Green 0.25–0.55 s — target zone (realistic bass modal decay target)
-  // Amber 0.55–0.75 s — moderate    (audible but acceptable improvement)
-  // Above 0.75 s      — no fill     (untreated / under-treated)
-
-  // Over-damped zone — red at bottom
   ctx.fillStyle = 'rgba(244,67,54,0.08)';
   ctx.fillRect(pad.l, rtToY(0.25), plotW, (pad.t + plotH) - rtToY(0.25));
 
-  // Target zone — green
   ctx.fillStyle = 'rgba(76,175,80,0.08)';
   ctx.fillRect(pad.l, rtToY(0.55), plotW, rtToY(0.25) - rtToY(0.55));
 
-  // Moderate zone — amber
   ctx.fillStyle = 'rgba(255,152,0,0.06)';
   ctx.fillRect(pad.l, rtToY(0.75), plotW, rtToY(0.55) - rtToY(0.75));
 
-  // Zone boundary lines
   ctx.lineWidth = 1;
   ctx.setLineDash([2, 4]);
-
   ctx.strokeStyle = 'rgba(244,67,54,0.35)';
   ctx.beginPath(); ctx.moveTo(pad.l, rtToY(0.25)); ctx.lineTo(pad.l+plotW, rtToY(0.25)); ctx.stroke();
-
   ctx.strokeStyle = 'rgba(76,175,80,0.35)';
   ctx.beginPath(); ctx.moveTo(pad.l, rtToY(0.55)); ctx.lineTo(pad.l+plotW, rtToY(0.55)); ctx.stroke();
-
   ctx.strokeStyle = 'rgba(255,152,0,0.30)';
   ctx.beginPath(); ctx.moveTo(pad.l, rtToY(0.75)); ctx.lineTo(pad.l+plotW, rtToY(0.75)); ctx.stroke();
-
   ctx.setLineDash([]);
 
-  // Zone labels (right edge)
   ctx.font = '9px Share Tech Mono';
   ctx.textAlign = 'right';
   ctx.fillStyle = 'rgba(244,67,54,0.6)';
@@ -3771,41 +3819,16 @@ function renderRT60() {
   ctx.textAlign = 'left';
 
   const freqs = [];
-  for (let f = fMin; f <= fMax; f += 1) freqs.push(f);
+  for (let f = fMin; f <= fMax; f += 0.5) freqs.push(f);
 
-  // Untreated RT60
-  ctx.strokeStyle = 'rgba(255,107,53,0.7)';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  freqs.forEach((f, i) => {
-    const t = rt60(f, [], [], []);
-    const x = fToX(f), y = rtToY(Math.min(rt60Max, t));
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  });
-  ctx.stroke();
-
-  // Treated RT60
-  const hasTreatedRT = state.treated && (state.pos40.length > 0 || state.pos55.length > 0 || state.pos70.length > 0);
-  if (hasTreatedRT) {
-    ctx.strokeStyle = '#00e5ff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    freqs.forEach((f, i) => {
-      const t = rt60(f, state.pos40, state.pos55, state.pos70);
-      const x = fToX(f), y = rtToY(Math.min(rt60Max, t));
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-  }
-
-  // ── Absorber alpha overlay ──────────────────────────────────────────────────
+  // ── Absorber alpha overlay ─────────────────────────────────────────────────
   const alphaScaleH = plotH * 0.28;
   const alphaBaseY  = pad.t + plotH;
 
   const chambers = [
     { f0: state.f40, Q: state.q40, peak: alphaPeakRigorous(state.q40, state.f40, pistonMass(state.f40)), col: 'rgba(76,175,80,',  label: 'α Nodal 40' },
     { f0: state.f55, Q: state.q55, peak: alphaPeakRigorous(state.q55, state.f55, pistonMass(state.f55)), col: 'rgba(0,229,255,',  label: 'α Nodal 50' },
-    { f0: state.f70, Q: state.q70, peak: alphaPeakRigorous(state.q70, state.f70, pistonMass(state.f70)), col: 'rgba(255,107,53,', label: 'α Unit 3' },
+    { f0: state.f70, Q: state.q70, peak: alphaPeakRigorous(state.q70, state.f70, pistonMass(state.f70)), col: 'rgba(255,107,53,', label: 'α Nodal 60' },
   ];
 
   chambers.forEach(ch => {
@@ -3834,84 +3857,135 @@ function renderRT60() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = ch.col + '0.8)';
-    ctx.font = '9px Share Tech Mono';
-    ctx.textAlign = 'center';
-    ctx.fillText(ch.label, fToX(ch.f0), alphaBaseY - ch.peak * alphaScaleH - 4);
-    ctx.textAlign = 'left';
+    // Labels removed — absorber peaks identified by position on alpha overlay
   });
 
   ctx.fillStyle = '#2a3a4a';
   ctx.font = '9px Share Tech Mono';
   ctx.fillText('α=1', 2, alphaBaseY - alphaScaleH + 3);
 
-  // ── Per-mode T60 markers ─────────────────────────────────────────────────────
-  // Discrete points showing the modal loss-budget T60 for each mode —
-  // the quantity that corresponds to REW waterfall / T20 measurements.
-  // Untreated: open orange diamonds. Treated: filled cyan circles.
-  const modesToPlot = MODES.filter(m => m.f >= fMin && m.f <= fMax);
+  // ── REW continuous T60M curves (drawn when curve sweep is complete) ─────────
+  function drawCurve(curveData, baseColor, alpha) {
+    if (!curveData || curveData.length < 2) return;
+    // Sort by frequency just in case
+    const pts = curveData.slice().sort((a, b) => a.f - b.f)
+      .filter(p => p.f >= fMin && p.f <= fMax && p.t60 > 0 && p.t60 <= rt60Max * 1.05);
+    if (pts.length < 2) return;
 
-  modesToPlot.forEach(mode => {
-    const t60U = modalT60(mode, [], [], []);
-    const x = fToX(mode.f);
-    const y = rtToY(Math.min(rt60Max, t60U));
-
-    // Untreated diamond
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(Math.PI / 4);
-    ctx.strokeStyle = 'rgba(255,107,53,0.70)';
-    ctx.lineWidth = 1.2;
+    // Single-colour continuous polyline — uniform colour throughout
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = `${baseColor}${alpha})`;
+    ctx.setLineDash([]);
     ctx.beginPath();
-    ctx.rect(-4, -4, 8, 8);
+    pts.forEach((p, i) => {
+      const x = fToX(p.f);
+      const y = rtToY(Math.min(rt60Max, p.t60));
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
     ctx.stroke();
-    ctx.restore();
-  });
+    ctx.setLineDash([]);
+  }
 
-  if (hasTreatedRT) {
+  if (state.rewUntreated && state.rewUntreated.curve) {
+    drawCurve(state.rewUntreated.curve, 'rgba(74,222,128,', 0.55);
+  }
+  if (state.rewTreated && state.rewTreated.curve) {
+    drawCurve(state.rewTreated.curve, 'rgba(96,165,250,', 0.55);
+  }
+
+  // ── REW measured T60 dots (untreated — green squares) ─────────────────────
+  if (state.rewUntreated && state.rewUntreated.data) {
+    state.rewUntreated.data.forEach(d => {
+      if (d.f < fMin || d.f > fMax) return;
+      const x = fToX(d.f);
+      const y = rtToY(d.t30);
+      const sz = 5;
+      ctx.fillStyle = d.lowConf ? 'rgba(250,204,21,0.7)' : 'rgba(74,222,128,0.85)';
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.rect(x - sz/2, y - sz/2, sz, sz);
+      ctx.fill();
+      ctx.stroke();
+    });
+  }
+
+  // ── REW measured T60 dots (treated — blue squares) ────────────────────────
+  if (state.rewTreated && state.rewTreated.data) {
+    state.rewTreated.data.forEach(d => {
+      if (d.f < fMin || d.f > fMax) return;
+      const x = fToX(d.f);
+      const y = rtToY(d.t30);
+      const sz = 5;
+      ctx.fillStyle = d.lowConf ? 'rgba(250,204,21,0.7)' : 'rgba(96,165,250,0.85)';
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.rect(x - sz/2, y - sz/2, sz, sz);
+      ctx.fill();
+      ctx.stroke();
+    });
+  }
+
+  // ── Per-mode T60 markers ──────────────────────────────────────────────────
+  // When REW data is loaded, use REW squares (already drawn above as part of
+  // the continuous-curve dot set). Show model diamonds/circles only when no
+  // REW data is present for that slot.
+  const hasTreated = state.pos40.length > 0 || state.pos55.length > 0 || state.pos70.length > 0;
+  const modesToPlot = MODES.filter(m => m.f >= fMin && m.f <= fMax);
+  const hasRewU = !!(state.rewUntreated && state.rewUntreated.data);
+  const hasRewT = !!(state.rewTreated   && state.rewTreated.data);
+
+  // Untreated — open orange diamonds (only when no REW untreated loaded)
+  if (!hasRewU) {
+    modesToPlot.forEach(mode => {
+      const t60U = modalT60(mode, [], [], []);
+      const x = fToX(mode.f);
+      const y = rtToY(t60U);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(Math.PI / 4);
+      ctx.strokeStyle = 'rgba(255,107,53,0.85)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.rect(-4, -4, 8, 8);
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  // Treated model circles — always drawn when units are placed.
+  // When a treated REW file is also loaded, both appear simultaneously:
+  // blue squares = actual measurement, coloured circles = live model prediction.
+  // This lets the user compare model vs measurement and see the effect of
+  // adding/removing units in real time against the fixed REW reference.
+  if (hasTreated) {
     modesToPlot.forEach(mode => {
       const t60T = modalT60(mode, state.pos40, state.pos55, state.pos70);
       const x = fToX(mode.f);
-      const y = rtToY(Math.min(rt60Max, t60T));
-
-      // Colour by zone
+      const y = rtToY(t60T);
       const col = t60T < 0.25  ? '#f44336'
                 : t60T <= 0.35 ? '#4caf50'
                 : t60T <= 0.55 ? '#8bc34a'
                 : t60T <= 0.75 ? '#ff9800'
                 : 'rgba(255,107,53,0.7)';
-
       ctx.beginPath();
       ctx.arc(x, y, 4.5, 0, Math.PI * 2);
       ctx.fillStyle = col;
       ctx.fill();
-      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-      ctx.lineWidth = 0.8;
+      // Slightly heavier outline when alongside REW data so circles stand out
+      ctx.strokeStyle = hasRewT ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
+      ctx.lineWidth = hasRewT ? 1.2 : 0.8;
       ctx.stroke();
     });
   }
 
-  // ── AVAA RT60 curve — drawn when AVAA mode active ────────────────────────────
+  // ── AVAA mode markers ─────────────────────────────────────────────────────
   if (state.avaaMode && state.avaaPositions.length > 0) {
-    ctx.strokeStyle = '#81c784';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 3]);
-    ctx.beginPath();
-    let first = true;
-    for (let f = fMin; f <= fMax; f += 0.5) {
-      const rt = Math.min(rt60Max, avaaRt60(f, state.avaaPositions));
-      const x = fToX(f), y = rtToY(rt);
-      first ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      first = false;
-    }
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Per-mode T60 markers for AVAA
     MODES.filter(m => m.f >= fMin && m.f <= fMax).forEach(mode => {
       const t60A = avaaModalT60(mode, state.avaaPositions);
       const x = fToX(mode.f);
-      const y = rtToY(Math.min(rt60Max, t60A));
+      const y = rtToY(t60A);
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
       ctx.fillStyle = '#81c784';
@@ -3920,256 +3994,67 @@ function renderRT60() {
       ctx.lineWidth = 0.8;
       ctx.stroke();
     });
-
-    // AVAA legend entry
-    ctx.font = '9px Share Tech Mono';
-    ctx.textAlign = 'right';
-    ctx.setLineDash([6, 3]);
-    ctx.strokeStyle = '#81c784';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(pad.l + plotW - 120, pad.t + 58);
-    ctx.lineTo(pad.l + plotW - 98, pad.t + 58);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = '#81c784';
-    ctx.fillText(`- - AVAA ×${state.avaaPositions.length}  ${avaaRt60(state.freq, state.avaaPositions).toFixed(2)}s`, pad.l + plotW - 4, pad.t + 62);
-    ctx.textAlign = 'left';
-  }
-  // ── Combined TDA+AVAA RT60 curve ─────────────────────────────────────────────
-  if (state.avaaMode && state.avaaPositions.length > 0 && hasTreatedRT) {
-    ctx.strokeStyle = '#81c784';
-    ctx.lineWidth = 2.5;
-    ctx.setLineDash([3, 2]);
-    ctx.beginPath();
-    let firstC = true;
-    for (let f = fMin; f <= fMax; f += 0.5) {
-      const rtA = avaaRt60(f, state.avaaPositions);
-      const rtT = rt60(f, state.pos40, state.pos55, state.pos70);
-      const rtComb = Math.min(rtA, rtT);
-      const y = rtToY(Math.min(rt60Max, rtComb));
-      firstC ? ctx.moveTo(fToX(f), y) : ctx.lineTo(fToX(f), y);
-      firstC = false;
-    }
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Combined per-mode T60 markers (crosshair +)
-    MODES.filter(m => m.f >= fMin && m.f <= fMax).forEach(mode => {
-      const comb = combinedModalT60ci(
-        mode, state.pos40, state.pos55, state.pos70, state.avaaPositions);
-      const x = fToX(mode.f), y = rtToY(Math.min(rt60Max, comb.t60));
-      ctx.beginPath();
-      ctx.moveTo(x-5,y); ctx.lineTo(x+5,y);
-      ctx.moveTo(x,y-5); ctx.lineTo(x,y+5);
-      ctx.strokeStyle = '#81c784';
-      ctx.lineWidth = 1.8;
-      ctx.stroke();
-    });
   }
 
-  // ── REW measured T30 overlays ─────────────────────────────────────────────
-  // Untreated REW — yellow-green stepped curve (one step per data point)
-  if (state.rewUntreated) {
-    ctx.strokeStyle = '#cddc39';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([4, 2]);
-    ctx.beginPath();
-    let firstR = true;
-    state.rewUntreated.data.forEach(pt => {
-      if (pt.f < fMin || pt.f > fMax) return;
-      const x = fToX(pt.f), y = rtToY(Math.min(rt60Max, pt.t30));
-      firstR ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      firstR = false;
-    });
-    ctx.stroke();
-    ctx.setLineDash([]);
-    // Dots at each data point
-    state.rewUntreated.data.forEach(pt => {
-      if (pt.f < fMin || pt.f > fMax) return;
-      ctx.beginPath();
-      ctx.arc(fToX(pt.f), rtToY(Math.min(rt60Max, pt.t30)), 2.5, 0, Math.PI*2);
-      ctx.fillStyle = '#cddc39';
-      ctx.fill();
-    });
-    // Diamonds at axial mode frequencies
-    MODES.filter(m => m.f >= fMin && m.f <= fMax).forEach(mode => {
-      const t = rewInterp(state.rewUntreated, mode.f);
-      if (!t) return;
-      const x = fToX(mode.f), y = rtToY(Math.min(rt60Max, t));
-      ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI/4);
-      ctx.strokeStyle = '#cddc39'; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.rect(-4, -4, 8, 8); ctx.stroke();
-      ctx.restore();
-    });
-  }
-
-  // Treated REW — lime stepped curve
-  if (state.rewTreated) {
-    ctx.strokeStyle = '#b5ea5a';
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([2, 2]);
-    ctx.beginPath();
-    let firstRT = true;
-    state.rewTreated.data.forEach(pt => {
-      if (pt.f < fMin || pt.f > fMax) return;
-      const x = fToX(pt.f), y = rtToY(Math.min(rt60Max, pt.t30));
-      firstRT ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      firstRT = false;
-    });
-    ctx.stroke();
-    ctx.setLineDash([]);
-    state.rewTreated.data.forEach(pt => {
-      if (pt.f < fMin || pt.f > fMax) return;
-      ctx.beginPath();
-      ctx.arc(fToX(pt.f), rtToY(Math.min(rt60Max, pt.t30)), 2.5, 0, Math.PI*2);
-      ctx.fillStyle = '#b5ea5a';
-      ctx.fill();
-    });
-    // Circles at axial mode frequencies
-    MODES.filter(m => m.f >= fMin && m.f <= fMax).forEach(mode => {
-      const t = rewInterp(state.rewTreated, mode.f);
-      if (!t) return;
-      const x = fToX(mode.f), y = rtToY(Math.min(rt60Max, t));
-      ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2);
-      ctx.strokeStyle = '#b5ea5a'; ctx.lineWidth = 1.5; ctx.stroke();
-    });
-  }
-
-  const rtUntreated = rt60(state.freq, [], [], []);
-  const rtTreated   = rt60(state.freq, state.pos40, state.pos55, state.pos70);
-
-  // Legend — right side, below zone labels, to avoid data line overlap
+  // ── Legend ────────────────────────────────────────────────────────────────
+  const lx = pad.l + plotW - 160, ly = pad.t + 8;
   ctx.font = '9px Share Tech Mono';
-  ctx.textAlign = 'right';
-  ctx.fillStyle = 'rgba(255,107,53,0.8)';
-  ctx.fillText('─── RT₆₀ Untreated  ' + rtUntreated.toFixed(2) + 's', pad.l + plotW - 4, pad.t + 11);
-  if (hasTreatedRT) {
-    ctx.fillStyle = '#00e5ff';
-    ctx.fillText('─── RT₆₀ Treated  ' + rtTreated.toFixed(2) + 's', pad.l + plotW - 4, pad.t + 22);
-  }
-  if (state.avaaMode && state.avaaPositions.length > 0 && hasTreatedRT) {
-    ctx.fillStyle = '#81c784';
-    ctx.fillText('─── TDA+AVAA  ' + Math.min(
-      avaaRt60(state.freq, state.avaaPositions),
-      rtTreated).toFixed(2) + 's', pad.l + plotW - 4, pad.t + 33);
-  }
-  // Per-mode T60 legend
-  ctx.fillStyle = 'rgba(255,107,53,0.70)';
-  ctx.fillText('◇ T₆₀ untreated (per-mode)', pad.l + plotW - 4, pad.t + 36);
-  if (hasTreatedRT) {
-    ctx.fillStyle = '#4caf50';
-    ctx.fillText('● T₆₀ treated (per-mode)', pad.l + plotW - 4, pad.t + 47);
-  }
-  if (state.rewUntreated) {
-    ctx.fillStyle = '#cddc39';
-    ctx.fillText('◇ REW T30 untreated (meas.)', pad.l + plotW - 4, pad.t + 58);
-  }
-  if (state.rewTreated) {
-    ctx.fillStyle = '#b5ea5a';
-    ctx.fillText('○ REW T30 treated (meas.)', pad.l + plotW - 4, pad.t + 69);
-  }
-  ctx.textAlign = 'left';
 
-  // Title — bottom left, out of data area
-  ctx.font = '9px Share Tech Mono';
-  ctx.fillStyle = '#7a8fa0';
-  ctx.fillText('BASS MODAL DECAY', pad.l + 4, pad.t + plotH + 18);
+  // Legend — show model markers when no REW, REW markers when loaded
+  let legendRow = ly;
+  const rowH = 16;
 
-  // ── Sub-fundamental shaded region ─────────────────────────────────────────
-  // Shade the region below f1_min with a warning tint; add label.
-  if (window.F1_MIN != null && window.F1_MIN >= fMin) {
-    const f1x = fToX(Math.min(window.F1_MIN, fMax));
-    ctx.fillStyle = 'rgba(255,152,0,0.07)';
-    ctx.fillRect(pad.l, pad.t, f1x - pad.l, plotH);
-    ctx.strokeStyle = 'rgba(255,152,0,0.5)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([3, 3]);
-    ctx.beginPath(); ctx.moveTo(f1x, pad.t); ctx.lineTo(f1x, pad.t + plotH); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = 'rgba(255,152,0,0.75)';
-    ctx.font = '9px Share Tech Mono';
-    ctx.textAlign = 'center';
-    ctx.fillText('SUB-FUND', Math.max(pad.l + 28, (pad.l + f1x) / 2), pad.t + 10);
-    ctx.textAlign = 'left';
+  function legendDiamond(x, y) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.PI / 4);
+    ctx.strokeStyle = 'rgba(255,107,53,0.85)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.rect(-4, -4, 8, 8); ctx.stroke();
+    ctx.restore();
+  }
+  function legendCircle(x, y, col) {
+    ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = col; ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 0.8; ctx.stroke();
+  }
+  function legendSquare(x, y, col) {
+    ctx.fillStyle = col; ctx.fillRect(x - 4, y - 4, 9, 9);
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 0.8;
+    ctx.strokeRect(x - 4, y - 4, 9, 9);
+  }
+  function legendLine(x, y, col) {
+    ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x - 10, y); ctx.lineTo(x + 10, y); ctx.stroke();
   }
 
-  // Current frequency cursor
-  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([2,2]);
-  ctx.beginPath();
-  ctx.moveTo(fToX(state.freq), pad.t);
-  ctx.lineTo(fToX(state.freq), pad.t + plotH);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Cursor dots at current frequency
-  ctx.fillStyle = '#ff6b35';
-  ctx.beginPath();
-  ctx.arc(fToX(state.freq), rtToY(Math.min(rt60Max, rtUntreated)), 4, 0, Math.PI*2);
-  ctx.fill();
-
-  if (hasTreatedRT) {
-    ctx.fillStyle = '#00e5ff';
-    ctx.beginPath();
-    ctx.arc(fToX(state.freq), rtToY(Math.min(rt60Max, rtTreated)), 4, 0, Math.PI*2);
-    ctx.fill();
+  if (!hasRewU) {
+    legendDiamond(lx + 5, legendRow + 5);
+    ctx.fillStyle = 'rgba(255,107,53,0.8)';
+    ctx.fillText('T60 Untreated (model)', lx + 14, legendRow + 9);
+    legendRow += rowH;
+  }
+  if (hasTreated) {
+    legendCircle(lx + 5, legendRow + 5, '#8bc34a');
+    ctx.fillStyle = 'rgba(139,195,74,0.9)';
+    ctx.fillText(hasRewT ? 'T60 Treated (model vs REW)' : 'T60 Treated (model)', lx + 14, legendRow + 9);
+    legendRow += rowH;
+  }
+  if (hasRewU) {
+    legendSquare(lx + 5, legendRow + 5, 'rgba(74,222,128,0.85)');
+    legendLine(lx + 22, legendRow + 5, 'rgba(74,222,128,0.55)');
+    ctx.fillStyle = 'rgba(74,222,128,0.9)';
+    ctx.fillText('REW T60 Untreated' + (state.rewUntreated.curve ? '' : ' …'), lx + 32, legendRow + 9);
+    legendRow += rowH;
+  }
+  if (hasRewT) {
+    legendSquare(lx + 5, legendRow + 5, 'rgba(96,165,250,0.85)');
+    legendLine(lx + 22, legendRow + 5, 'rgba(96,165,250,0.55)');
+    ctx.fillStyle = 'rgba(96,165,250,0.9)';
+    ctx.fillText('REW T60 Treated' + (state.rewTreated.curve ? '' : ' …'), lx + 32, legendRow + 9);
+    legendRow += rowH;
   }
 
-  // Dynamic zone status — bottom left, below data area
-  ctx.font = '9px Share Tech Mono';
-  if (hasTreatedRT) {
-    const checkFreqs = [];
-    for (let f = 35; f <= 80; f += 1) checkFreqs.push(f);
-    const minTreated = Math.min(...checkFreqs.map(f => rt60(f, state.pos40, state.pos55, state.pos70)));
-    const maxTreated = Math.max(...checkFreqs.map(f => rt60(f, state.pos40, state.pos55, state.pos70)));
-
-    if (minTreated < 0.25) {
-      ctx.fillStyle = 'rgba(244,67,54,0.9)';
-      ctx.fillText('⚠ OVER-DAMPED — reduce units or treatment', pad.l + 4, pad.t + plotH - 6);
-    } else if (maxTreated > 0.75) {
-      ctx.fillStyle = 'rgba(255,152,0,0.9)';
-      ctx.fillText('⚠ UNDER-TREATED — additional units recommended', pad.l + 4, pad.t + plotH - 6);
-    } else if (minTreated >= 0.25 && maxTreated <= 0.55) {
-      ctx.fillStyle = 'rgba(76,175,80,0.9)';
-      ctx.fillText('✓ TARGET ZONE — well-controlled bass modal decay', pad.l + 4, pad.t + plotH - 6);
-    } else {
-      ctx.fillStyle = 'rgba(255,152,0,0.7)';
-      ctx.fillText('~ MODERATE — audible improvement, further treatment optional', pad.l + 4, pad.t + plotH - 6);
-    }
-  }
-
-  ctx.fillStyle = '#7a8fa0';
-  [30, 50, 70, 100, 120, 150].forEach(f => {
-    ctx.fillText(f + 'Hz', fToX(f) - 10, H - 6);
-  });
-
-  // ── Schroeder frequency marker ──
-  // Below this frequency the room is modal — Eyring is outside strict validity.
-  // Double-slope decay is common. Use T20 in REW; inspect waterfall.
-  const schroederF = Math.round(2000 * Math.sqrt(1.5 / ROOM_VOLUME));
-  if (schroederF >= fMin && schroederF <= fMax) {
-    const sx = fToX(schroederF);
-    ctx.strokeStyle = 'rgba(255,152,0,0.45)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([3, 4]);
-    ctx.beginPath();
-    ctx.moveTo(sx, pad.t);
-    ctx.lineTo(sx, pad.t + plotH);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = 'rgba(255,152,0,0.75)';
-    ctx.font = '9px Share Tech Mono';
-    ctx.textAlign = 'center';
-    ctx.fillText('fₛ ' + schroederF + 'Hz', sx, pad.t + 8);
-    ctx.textAlign = 'left';
-    ctx.fillStyle = 'rgba(255,152,0,0.50)';
-    ctx.fillText('← modal: use T20 in REW, check waterfall', sx + 4, pad.t + 8);
-  }
 }
 
-// ─── Listening Position Overlay ───────────────────────────────────────────────
+
 function renderListenOverlay() {
   if (!listenPos || state.plane !== 'xy') return;
 
@@ -4273,7 +4158,7 @@ function renderModeList() {
     '<span style="color:var(--accent);">●</span> Axial — modelled (T₆₀, dB reduction, heatmap)&nbsp;&nbsp;' +
     '<span style="color:#7a9aaa;font-style:italic;">◌</span> Tangential — informational only&nbsp;&nbsp;' +
     '<span style="color:#607080;font-style:italic;">◌</span> Oblique — informational only' +
-    (state.rewUntreated ? '&nbsp;&nbsp;<span style="color:#cddc39;">M:</span> REW measured T30' : '');
+    (state.rewUntreated ? '&nbsp;&nbsp;<span style="color:#cddc39;">M:</span> REW measured T60' : '');
   el.appendChild(legend);
 
   // ── Merge all modes into one sorted list for display ────────────────────────
@@ -4328,7 +4213,7 @@ function renderModeList() {
         ? `${t60Pre.toFixed(2)}→<span style="color:${t60Col}">${t60Post.toFixed(2)}s</span>`
         : `${t60Pre.toFixed(2)}s`;
 
-      // REW measured T30 at this mode frequency
+      // REW measured T60 at this mode frequency
       const rewU = rewInterp(state.rewUntreated, mode.f);
       const rewT = rewInterp(state.rewTreated,   mode.f);
       let rewStr = '';
@@ -4395,7 +4280,6 @@ function renderModeList() {
   el.appendChild(summary);
 }
 
-// ─── Listening Position Frequency Sweep ──────────────────────────────────────
 function renderSweep() {
   const canvas = document.getElementById('sweepCanvas');
   const { ctx, W, H } = setupHiDPICanvas(canvas);
@@ -4563,7 +4447,7 @@ function exportReport() {
   // Row 4: Listening position sweep (full width, if available)
 
   const hmW = 700, hmH = 448;
-  const graphW = 700, freqH = 160, rt60H = 180, sweepH = 160;
+  const graphW = 700, freqH = 160, rt60H = 280, sweepH = 160;
 
   const margin = 16;
   const labelH = 24;
@@ -4673,6 +4557,15 @@ function renderDecaySummary() {
   }
   panel.style.display = 'block';
 
+  // Update title to show calibration state
+  const titleEl = document.getElementById('decaySummaryTitle');
+  if (titleEl) {
+    titleEl.textContent = state.rewUntreated
+      ? 'PER-MODE DECAY SUMMARY — calibrated from REW measurement'
+      : 'PER-MODE DECAY SUMMARY — modal loss-budget model';
+    titleEl.style.color = state.rewUntreated ? 'rgba(74,222,128,0.8)' : '';
+  }
+
   const bandModes = MODES
     .filter(m => m.f >= 20 && m.f <= 120)
     .sort((a, b) => a.f - b.f);
@@ -4726,7 +4619,7 @@ function renderDecaySummary() {
     const f = mode.f, omega = 2*Math.PI*f;
     const modArea = modalCouplingArea(mode.axis);
     const alpha   = hasBroadband ? bareAlpha(f) : baselineAlpha(f);
-    const delta_b = 343 * alpha * modArea / (omega * 4 * ROOM_VOLUME);
+    const delta_b = 343 * alpha * ROOM_SA / (omega * 4 * ROOM_VOLUME);
     if (delta_b <= 0) return 9.99;
     return Math.min(9.99, LN10_6 / (omega * delta_b));
   }
@@ -5049,8 +4942,8 @@ function buildExportPayload() {
       axis:                mode.axis,
       t60_pre_s:           Math.round(t60Pre  * 1000) / 1000,
       t60_post_s:          Math.round(t60Post * 1000) / 1000,
-      rew_untreated_t30_s: rewU !== null ? Math.round(rewU * 1000) / 1000 : null,
-      rew_treated_t30_s:   rewT !== null ? Math.round(rewT * 1000) / 1000 : null,
+      rew_untreated_t60_s: rewU !== null ? Math.round(rewU * 1000) / 1000 : null,
+      rew_treated_t60_s:   rewT !== null ? Math.round(rewT * 1000) / 1000 : null,
       model_residual_pct:  residualPct,
     };
   });
@@ -5076,9 +4969,11 @@ function buildExportPayload() {
       date:       rewObj.date  || '',
       n_points:   rewObj.nPoints || rewObj.data.length,
       f_range:    rewObj.fRange || '',
+      method:     rewObj.label && rewObj.label.includes('waterfall') ? 'waterfall_t60m' : 'rt_parameters_t30',
       data: rewObj.data.map(pt => ({
         f_hz: pt.f,
-        t30_s: Math.round(pt.t30 * 1000) / 1000,
+        t60_s: Math.round(pt.t30 * 1000) / 1000,
+        low_conf: pt.lowConf ? true : undefined,
       })),
     };
     if (solverResult) {
@@ -5096,7 +4991,7 @@ function buildExportPayload() {
 
   return {
     schema_version:   1,
-    model_version:    'r53',
+    model_version:    'r60',
     exported_at:      now,
     room,
     calibration,
@@ -5163,11 +5058,11 @@ function exportPDF() {
   const modeRows = p.modes.map(m => {
     const preCol  = zoneColor(m.t60_pre_s);
     const postCol = zoneColor(m.t60_post_s);
-    const rewUCell = (m.rew_untreated_t30_s != null)
-      ? `<td style="color:${zoneColor(m.rew_untreated_t30_s)}">${(+m.rew_untreated_t30_s).toFixed(2)}s</td>`
+    const rewUCell = (m.rew_untreated_t60_s != null)
+      ? `<td style="color:${zoneColor(m.rew_untreated_t60_s)}">${(+m.rew_untreated_t60_s).toFixed(2)}s</td>`
       : '<td style="color:#555">—</td>';
-    const rewTCell = (m.rew_treated_t30_s != null)
-      ? `<td style="color:${zoneColor(m.rew_treated_t30_s)}">${(+m.rew_treated_t30_s).toFixed(2)}s</td>`
+    const rewTCell = (m.rew_treated_t60_s != null)
+      ? `<td style="color:${zoneColor(m.rew_treated_t60_s)}">${(+m.rew_treated_t60_s).toFixed(2)}s</td>`
       : '<td style="color:#555">—</td>';
     const resCell  = m.model_residual_pct !== null
       ? `<td style="color:${Math.abs(m.model_residual_pct) < 15 ? '#4caf50' : '#ff9800'}">${m.model_residual_pct > 0 ? '+' : ''}${m.model_residual_pct}%</td>`
@@ -5353,59 +5248,86 @@ const _origRewLoadFile = typeof rewLoadFile !== 'undefined' ? rewLoadFile : null
 // Rows where T30 <= 0 or is NaN are silently dropped (noise-floor limited).
 //
 // G_corner calibration solver:
-// Given measured T30_meas[i] at axial mode freq[i] (untreated), find the
+// Given measured T60_meas[i] at axial mode freq[i] (untreated), find the
 // G_corner that minimises mean-squared log error between model and measurement:
 //   E(G) = Σ (log(T60_model(G, mode_i)) - log(T30_meas_i))²
 // Solved by golden-section search over G ∈ [1.0, 8.0] with 60 iterations.
 
 // ── Parser ────────────────────────────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REW WATERFALL T60M ENGINE — r60
+// Computes T60M at mode frequencies from REW waterfall exports (.txt)
+// using the STFT Nelder-Mead fitting method (same as rew_t60m_v9).
+// Falls back to the old RT-Parameters parseREWText path if the file is not
+// a waterfall (no frequency header row followed by time-indexed data).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Detect and parse REW waterfall export ────────────────────────────────────
+// Waterfall format: first non-comment row is the freq header (starts with a
+// non-numeric token followed by comma-separated frequencies). Subsequent rows
+// are time slices: time, db@f0, db@f1, ...
+// Returns { freqs, slices } or null if file is not a waterfall.
+function parseWaterfallText(text) {
+  // Identical logic to rew_t60m_v9 parseWF — no clever detection needed.
+  // REW waterfall export: skip lines starting with *, treat first data line
+  // as the frequency header (parts.slice(1)), then every subsequent line as
+  // a time slice. Trailing commas produce NaN tokens — filter them out.
+  const lines = text.split(/\r?\n/);
+  let freqs = null;
+  const slices = [];
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line || line.startsWith('*') || line.startsWith('#')) continue;
+    const parts = line.split(',').map(s => parseFloat(s.trim())).filter(v => !isNaN(v));
+    if (parts.length < 2) continue;
+    if (freqs === null) { freqs = parts.slice(1); continue; }
+    const t = parts[0];
+    if (!isNaN(t)) slices.push({ t, vals: parts.slice(1) });
+  }
+  if (!freqs || freqs.length < 2 || slices.length < 5) return null;
+  return { freqs, slices };
+}
+
+// ── Parse REW RT Parameters export (legacy method — works ≥50 Hz) ────────────
 function parseREWText(text) {
+  // First try waterfall — if it succeeds we return a sentinel
+  const wf = parseWaterfallText(text);
+  if (wf) return { _isWaterfall: true, wf };
+
   const lines = text.split(/\r?\n/);
   let headerIdx = -1;
   let freqCol = -1, t30Col = -1;
-  let sep = '	';
+  let sep = '\t';
   let label = '';
   let date = '';
   const metaLines = [];
 
-  // Scan for metadata and header
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-
-    // Collect metadata from comment lines
     if (line.startsWith('*') || line.startsWith('#')) {
       metaLines.push(line.replace(/^[*#]\s*/, ''));
-      // Try to extract measurement name
       const mMatch = line.match(/[Mm]easurement[:\s]+(.+)/);
       if (mMatch) label = mMatch[1].trim();
       const dMatch = line.match(/[Dd]ate[:\s]+(.+)/);
       if (dMatch) date = dMatch[1].trim();
       continue;
     }
-
-    // Look for the header row containing frequency and T30 columns
-    // Try tab first, then comma
-    for (const s of ['	', ',', ';', '  ']) {
+    for (const s of ['\t', ',', ';', '  ']) {
       const cols = line.split(s).map(x => x.trim());
       if (cols.length < 2) continue;
-      const fi = cols.findIndex(h =>
-        /^[Ff]req/i.test(h) || /^[Ff]requency/i.test(h) || /Hz/i.test(h));
-      const ti = cols.findIndex(h =>
-        /^T30$/i.test(h) || /^T30\s*\(/i.test(h) || /^RT30$/i.test(h));
-      if (fi >= 0 && ti >= 0) {
-        freqCol = fi; t30Col = ti; sep = s; headerIdx = i;
-        break;
-      }
+      const fi = cols.findIndex(h => /^[Ff]req/i.test(h) || /^[Ff]requency/i.test(h) || /Hz/i.test(h));
+      const ti = cols.findIndex(h => /^T30$/i.test(h) || /^T30\s*\(/i.test(h) || /^RT30$/i.test(h));
+      if (fi >= 0 && ti >= 0) { freqCol = fi; t30Col = ti; sep = s; headerIdx = i; break; }
     }
     if (headerIdx >= 0) break;
   }
 
   if (headerIdx < 0 || freqCol < 0 || t30Col < 0) {
-    return { error: 'Could not find Freq and T30 columns. Check file is a REW RT Parameters export with T30 data.' };
+    return { error: 'Could not find Freq and T30 columns. Check file is a REW RT Parameters export or a waterfall export (.txt).' };
   }
 
-  // Parse data rows
   const data = [];
   for (let i = headerIdx + 1; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -5414,7 +5336,7 @@ function parseREWText(text) {
     const f  = parseFloat(cols[freqCol]);
     const t3 = parseFloat(cols[t30Col]);
     if (isNaN(f) || isNaN(t3) || f <= 0 || t3 <= 0) continue;
-    if (f > 200) continue;  // only import bass range
+    if (f > 200) continue;
     data.push({ f: Math.round(f * 10) / 10, t30: t3 });
   }
 
@@ -5422,50 +5344,220 @@ function parseREWText(text) {
     return { error: `Only ${data.length} valid data point(s) found. Need at least 3 rows with positive T30 values.` };
   }
 
-  // Sort by frequency
   data.sort((a, b) => a.f - b.f);
-
-  // Derive label from filename or metadata
   if (!label && metaLines.length > 0) label = metaLines[0];
   if (!label) label = 'REW measurement';
-
   const fRange = `${data[0].f}–${data[data.length-1].f} Hz`;
   return { data, label, date, fRange, nPoints: data.length };
 }
 
-// ── Interpolate measured T30 at a given frequency ─────────────────────────────
-// Linear interpolation between nearest bracketing points.
-// Returns null if f is outside the measured range by more than 3 Hz.
-function rewInterp(rewData, f) {
-  if (!rewData || rewData.length === 0) return null;
-  const d = rewData.data;
-  if (f < d[0].f - 3 || f > d[d.length-1].f + 3) return null;
-
-  // Find bracketing pair
-  for (let i = 0; i < d.length - 1; i++) {
-    if (d[i].f <= f && d[i+1].f >= f) {
-      const t = (f - d[i].f) / (d[i+1].f - d[i].f);
-      return d[i].t30 + t * (d[i+1].t30 - d[i].t30);
-    }
-  }
-  // Extrapolate slightly at edges
-  if (f <= d[0].f) return d[0].t30;
-  return d[d.length-1].t30;
+// ── Waterfall T60M helpers (ported from rew_t60m_v9) ─────────────────────────
+function wfGetDecay(wf, fc) {
+  const { freqs, slices } = wf;
+  let bi = 0, bd = Infinity;
+  for (let i = 0; i < freqs.length; i++) { const d = Math.abs(freqs[i] - fc); if (d < bd) { bd = d; bi = i; } }
+  return { matchedFreq: freqs[bi], times: slices.map(s => s.t), dbVals: slices.map(s => s.vals[bi]) };
 }
 
-// ── Alpha calibration — per-frequency direct approach ─────────────────────────
-// A single alpha multiplier cannot fit measured T30 values at multiple modes
-// simultaneously, because baselineAlpha and modalCouplingArea both vary with
-// frequency. The correct approach: store measured T30 values directly and use
-// them as the untreated T60 for modes where measurement coverage exists.
-//
-// modalT60full checks state.rewUntreated: if a measured T30 exists within ±4Hz
-// of the mode frequency, it uses that value directly for delta_boundary back-
-// calculation, ensuring the pre-treatment T60 exactly matches the measurement.
-//
-// ALPHA_CAL is retained as a fallback global scalar for modes not covered by
-// measurement data — reset to 1.0 when no calibration is active.
+function wfFindPeak(db) {
+  let mx = -Infinity, mi = 0;
+  for (let i = 0; i < db.length; i++) if (db[i] > mx && db[i] > -100) { mx = db[i]; mi = i; }
+  return { maxDb: mx, maxIdx: mi };
+}
 
+function wfFitStart(times, db, maxIdx, maxDb, riseMs) {
+  const PRE = 10, POST = 25, CR = 2.5, R2 = 0.85, n = db.length;
+  const mt = times[maxIdx] + riseMs / 1000, th = maxDb - 5;
+  let si = maxIdx;
+  for (let i = maxIdx; i < n; i++) { if (times[i] < mt) { si = i; continue; } if (db[i] >= th) si = i; else break; }
+  while (si > maxIdx && (maxDb - db[si]) > PRE) si--;
+  si = Math.max(si, maxIdx);
+  const lim = maxIdx + Math.floor((n - maxIdx) * .40), W = 2, se = [];
+  for (let i = si + W; i < Math.min(lim, n - W); i++) {
+    const dt = times[i + W] - times[i - W], dd = db[i + W] - db[i - W];
+    se.push({ idx: i, s: dt > 0 ? dd / dt : 0 });
+  }
+  if (se.length >= 10) {
+    let sj = 0; for (let j = 1; j < se.length; j++) if (se[j].s < se[sj].s) sj = j;
+    const steep = se[sj].s, ps = Math.min(sj + 3, se.length - 1), pe = Math.min(sj + 12, se.length - 1);
+    let psum = 0, pc = 0; const pd = [];
+    for (let j = ps; j <= pe; j++) { psum += se[j].s; pc++; pd.push(db[se[j].idx]); }
+    const pslope = pc ? psum / pc : steep, ratio = pslope < 0 ? steep / pslope : 1;
+    let r2 = 0;
+    if (pd.length >= 4) {
+      const np = pd.length; let sT = 0, sD = 0, sTT = 0, sTD = 0;
+      for (let i = 0; i < np; i++) { sT += i; sD += pd[i]; sTT += i * i; sTD += i * pd[i]; }
+      const den = np * sTT - sT * sT;
+      if (den) { const sl = (np * sTD - sT * sD) / den, ic = (sD - sl * sT) / np; let sr = 0, st = 0, m = sD / np; for (let i = 0; i < np; i++) { sr += (pd[i] - (sl * i + ic)) ** 2; st += (pd[i] - m) ** 2; } r2 = st ? 1 - sr / st : 0; }
+    }
+    if (ratio > CR && r2 >= R2) {
+      const ct = (steep + pslope) / 2; let cl = 0;
+      for (let j = sj; j < se.length - 1; j++) { if (se[j].s > ct) { cl++; if (cl >= 2) { const ce = se[j - 1].idx; if (ce > si) si = ce; break; } } else cl = 0; }
+      while (si > maxIdx && (maxDb - db[si]) > POST) si--;
+    }
+  }
+  return si;
+}
+
+function wfLundebyEnd(times, db, si, snr) {
+  const n = db.length, SAF = Math.max(5, Math.min(10, snr * .30)), TAIL = .1;
+  let ei = n - 1;
+  for (let i = si + 2; i < n - 3; i++) { if (db[i] > db[i - 2] + 5 && db[i + 1] > db[i - 2] + 4 && db[i + 2] > db[i - 2] + 4) { ei = i - 2; break; } }
+  let noise = -120;
+  for (let it = 0; it < 5; it++) {
+    if (ei <= si + 4) break;
+    const tl = Math.max(3, Math.floor((ei - si) * TAIL)), ts = ei - tl;
+    let np = 0; for (let i = ts; i <= ei; i++) np += Math.pow(10, db[i] / 10);
+    noise = 10 * Math.log10(np / (tl + 1));
+    const ta = [], da = [];
+    for (let i = si; i <= ei; i++) if (db[i] > noise + SAF) { ta.push(times[i]); da.push(db[i]); }
+    if (ta.length < 4) break;
+    const nn = ta.length; let sT = 0, sD = 0, sTT = 0, sTD = 0;
+    for (let i = 0; i < nn; i++) { sT += ta[i]; sD += da[i]; sTT += ta[i] ** 2; sTD += ta[i] * da[i]; }
+    const den = nn * sTT - sT * sT; if (!den) break;
+    const sl = (nn * sTD - sT * sD) / den, ic = (sD - sl * sT) / nn;
+    if (!isFinite(sl) || sl >= 0) break;
+    const it2 = (noise + SAF - ic) / sl, net = times[si] + 2 * (it2 - times[si]);
+    let nei = ei; for (let i = si; i < n; i++) { if (times[i] >= net) { nei = i; break; } }
+    nei = Math.min(nei, n - 1); if (Math.abs(nei - ei) <= 1) break; ei = nei;
+  }
+  const tl = Math.max(3, Math.floor((ei - si) * TAIL)), ts = Math.max(si, ei - tl);
+  let np = 0; for (let i = ts; i <= ei; i++) np += Math.pow(10, db[i] / 10);
+  noise = 10 * Math.log10(np / (ei - ts + 1));
+  return { ei, noise };
+}
+
+function wfNelderMead(fn, x0) {
+  const n = x0.length, tol = 1e-9, maxIter = 800; let s = [x0.slice()];
+  for (let i = 0; i < n; i++) { const v = x0.slice(); v[i] += (Math.abs(v[i]) > 1e-8 ? v[i] * .12 : .12); s.push(v); }
+  let fv = s.map(fn);
+  for (let it = 0; it < maxIter; it++) {
+    const o = [...Array(n + 1).keys()].sort((a, b) => fv[a] - fv[b]); s = o.map(i => s[i]); fv = o.map(i => fv[i]);
+    if (fv[n] - fv[0] < tol) break;
+    const c = Array(n).fill(0); for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) c[j] += s[i][j] / n;
+    const xr = c.map((ci, j) => ci + (ci - s[n][j])), fr = fn(xr);
+    if (fr < fv[0]) { const xe = c.map((ci, j) => ci + 2 * (xr[j] - ci)), fe = fn(xe); s[n] = fe < fr ? xe : xr; fv[n] = fe < fr ? fe : fr; continue; }
+    if (fr < fv[n - 1]) { s[n] = xr; fv[n] = fr; continue; }
+    const xc = c.map((ci, j) => ci + .5 * (s[n][j] - ci)), fc = fn(xc);
+    if (fc < fv[n]) { s[n] = xc; fv[n] = fc; continue; }
+    for (let i = 1; i <= n; i++) { s[i] = s[i].map((v, j) => s[0][j] + .5 * (v - s[0][j])); fv[i] = fn(s[i]); }
+  }
+  return s[0];
+}
+
+// Compute T60M for one frequency bin in a waterfall
+function wfComputeT60M(times, dbVals, maxIdx, maxDb, riseMs) {
+  const n = dbVals.length;
+  const tl60 = Math.floor(n * .60);
+  const tailS = dbVals.slice(tl60).slice().sort((a, b) => a - b);
+  const noiseMed = tailS[Math.floor(tailS.length / 2)];
+  const snr = maxDb - noiseMed, LOW_SNR = snr < 25;
+  const si = wfFitStart(times, dbVals, maxIdx, maxDb, riseMs);
+  let ei, noiseDb;
+  if (LOW_SNR) { ei = n - 1; noiseDb = noiseMed; } else { ({ ei, noise: noiseDb } = wfLundebyEnd(times, dbVals, si, snr)); }
+  const fitDur = times[ei] - times[si], t0 = times[si];
+  const ta = [], da = [];
+  for (let i = si; i <= ei; i++) if (dbVals[i] > -120) { ta.push(times[i] - t0); da.push(dbVals[i]); }
+  if (ta.length < 5) return null;
+  const tailN = Math.max(3, Math.floor(da.length / 5));
+  const tails = da.slice(-tailN).slice().sort((a, b) => a - b);
+  const initC = Math.min(tails[Math.floor(tails.length / 2)], noiseDb);
+  const SAF = Math.max(5, Math.min(10, (maxDb - noiseDb) * .30));
+  const abv = ta.map((t, i) => ({ t, d: da[i] })).filter(p => p.d > noiseDb + SAF);
+  let initT60 = .4;
+  if (abv.length >= 4) {
+    let sT = 0, sD = 0, sTT = 0, sTD = 0;
+    abv.forEach(({ t, d }) => { sT += t; sD += d; sTT += t * t; sTD += t * d; });
+    const nn = abv.length, den = nn * sTT - sT * sT;
+    const sl = den ? (nn * sTD - sT * sD) / den : -100;
+    initT60 = Math.max(.05, Math.min(3, sl < 0 ? -60 * Math.LN10 / (sl * 10 * Math.log(10)) : .4));
+  }
+  function loss(p) {
+    const [lA, t60, lC] = p; if (t60 <= .005 || t60 > 5) return 1e10;
+    const A = Math.pow(10, lA / 10), C = Math.pow(10, lC / 10); if (A <= 0) return 1e10;
+    let s = 0;
+    for (let i = 0; i < ta.length; i++) {
+      const pred = 10 * Math.log10(Math.max(1e-15, A * Math.exp(-6 * Math.LN10 * ta[i] / t60) + C));
+      const diff = da[i] - pred, rdb = da[i] - maxDb;
+      s += diff * diff * (rdb < -20 ? 20 / (20 + Math.abs(rdb + 20)) : 1);
+    }
+    return s;
+  }
+  const best = wfNelderMead(loss, [maxDb, initT60, initC]);
+  const [lA, t60, lC] = best; if (t60 <= 0 || t60 > 5 || loss(best) > 1e9) return null;
+  return { t60, snr, lowConf: LOW_SNR || (fitDur < .15) };
+}
+
+// Compute T60M at a list of target frequencies from a waterfall.
+// Returns { data: [{f, t30, lowConf}], label, fRange, nPoints }
+// This output is compatible with the existing rewData / rewInterp pipeline.
+async function computeWaterfallT60M(wf, targetFreqs, riseMs, progressCb) {
+  const tick = () => new Promise(r => setTimeout(r, 8));
+  const results = [];
+  for (let i = 0; i < targetFreqs.length; i++) {
+    const fc = targetFreqs[i];
+    const { matchedFreq, times, dbVals } = wfGetDecay(wf, fc);
+    const { maxDb, maxIdx } = wfFindPeak(dbVals);
+    const res = wfComputeT60M(times, dbVals, maxIdx, maxDb, riseMs);
+    if (res && res.t60 > 0) {
+      // Store at the mode target frequency (fc), not the waterfall bin frequency
+      // (matchedFreq), so rewInterp() can find an exact match for each mode.
+      results.push({ f: fc, t30: res.t60, lowConf: res.lowConf, matchedBin: matchedFreq });
+    }
+    if (progressCb && i % 3 === 0) { progressCb(i + 1, targetFreqs.length); await tick(); }
+  }
+  await tick();
+  if (!results.length) return { error: 'T60M computation produced no valid results at mode frequencies.' };
+  results.sort((a, b) => a.f - b.f);
+  const fRange = `${results[0].f}–${results[results.length - 1].f} Hz`;
+  return { data: results, label: 'REW waterfall T60M', fRange, nPoints: results.length };
+}
+
+// ── Continuous T60M curve sweep 20–150 Hz at 1 Hz steps ─────────────────────
+// Called after computeWaterfallT60M; stores curve[] on the result object.
+// Uses same riseMs. Each point: { f, t60, lowConf }.
+async function computeWaterfallCurve(wf, riseMs, progressCb) {
+  const tick = () => new Promise(r => setTimeout(r, 0));
+  const curve = [];
+  const freqs = [];
+  for (let f = 20; f <= 150; f++) freqs.push(f);
+  for (let i = 0; i < freqs.length; i++) {
+    const fc = freqs[i];
+    const { times, dbVals, matchedFreq } = wfGetDecay(wf, fc);
+    const { maxDb, maxIdx } = wfFindPeak(dbVals);
+    const res = wfComputeT60M(times, dbVals, maxIdx, maxDb, riseMs);
+    if (res && res.t60 > 0 && res.t60 < 10) {
+      curve.push({ f: matchedFreq, t60: res.t60, lowConf: res.lowConf });
+    }
+    if (i % 10 === 0) { if (progressCb) progressCb(i + 1, freqs.length); await tick(); }
+  }
+  return curve;
+}
+
+// ── rewInterp — shared interpolation for both data sources ───────────────────
+function rewInterp(rewData, f) {
+  if (!rewData) return null;
+  const d = rewData.data;
+  if (!d || !d.length) return null;
+  // Exact match first (mode frequency stored at fc)
+  for (let i = 0; i < d.length; i++) {
+    if (Math.abs(d[i].f - f) < 0.01) return d[i].t30;
+  }
+  // Out of range (allow 3 Hz slop at edges)
+  if (f < d[0].f - 3 || f > d[d.length - 1].f + 3) return null;
+  // Bracket interpolation
+  for (let i = 0; i < d.length - 1; i++) {
+    if (d[i].f <= f && d[i + 1].f >= f) {
+      const t = (f - d[i].f) / (d[i + 1].f - d[i].f);
+      return d[i].t30 + t * (d[i + 1].t30 - d[i].t30);
+    }
+  }
+  // Edge fallback
+  if (f <= d[0].f) return d[0].t30;
+  return d[d.length - 1].t30;
+}
+
+// ── Alpha calibration helpers (retained from r58) ────────────────────────────
 let ALPHA_CAL = 1.0;
 
 function baselineAlphaCalibrated(f) {
@@ -5475,92 +5567,64 @@ function baselineAlphaCalibrated(f) {
 // Returns the measured untreated T60 at frequency f if available, else null.
 function measuredUntreatedT60(f) {
   if (!state.rewUntreated) return null;
-  return rewInterp(state.rewUntreated, f);
+  const v = rewInterp(state.rewUntreated, f);
+  return v;
 }
 
-// ── G_corner solver — calibrates against post-treatment T30 measurement ───────
-// G_corner (BOOST_CORNER) is the pressure gain factor for corner-placed TDA units.
-// It enters delta_tda — not delta_boundary — so it has no effect on untreated T60.
-// The correct calibration: given a treated measurement with known unit placement,
-// find the G_corner that minimises log-error between predicted and measured T30.
-//
-// This is a well-posed problem: G_corner directly scales delta_tda, so varying it
-// produces a monotonic change in predicted post-treatment T60 at each mode.
-// The solver uses the current unit placement (state.pos40/55/70) — units must be
-// placed before running the treated calibration.
-//
-// Data collected across multiple rooms and installations will allow the default
-// G_corner = 4.0 to be validated or refined empirically.
+// ── Get mode-frequency targets for waterfall T60M computation ────────────────
+// Returns sorted array of axial mode frequencies (≤80 Hz prioritised, up to 150 Hz)
+function getModeTargetFreqs() {
+  if (!MODES || !MODES.length) return [25, 31.5, 40, 50, 63, 80, 100, 125];
+  const axial = MODES.filter(m => ['X','Y','Z'].includes(m.axis) && !m.tangential && !m._kind)
+                     .map(m => m.f)
+                     .filter(f => f >= 15 && f <= 150)
+                     .sort((a, b) => a - b);
+  // Deduplicate within 1 Hz
+  const deduped = [];
+  for (const f of axial) { if (!deduped.length || f - deduped[deduped.length - 1] > 1) deduped.push(f); }
+  return deduped.length ? deduped : [25, 31.5, 40, 50, 63, 80, 100, 125];
+}
 
+// ── File drop / choose handlers (updated to support waterfall) ────────────────
+// ── G_corner solver — calibrate against post-treatment T30 measurement ──────
 function solveGcorner(treatedData) {
   if (!treatedData || !treatedData.data || !treatedData.data.length) return null;
-
-  // Only use axial modes where treated measurement data exists
   const axialModes = MODES.filter(m => ['X','Y','Z'].includes(m.axis) && !m._kind);
   const pairs = [];
   axialModes.forEach(mode => {
     const t30meas = rewInterp(treatedData, mode.f);
-    if (t30meas && t30meas > 0.05 && t30meas < 8.0) {
-      pairs.push({ mode, t30meas });
-    }
+    if (t30meas && t30meas > 0.05 && t30meas < 8.0) pairs.push({ mode, t30meas });
   });
-
   if (pairs.length < 1) return null;
-
-  // Model post-treatment T60 at a given G_corner, with current unit placement
   function modelT60atG(G) {
-    const savedG = BOOST_CORNER;
-    BOOST_CORNER = G;
-    // Use current unit positions from state
-    const t60s = pairs.map(({ mode }) =>
-      modalT60(mode, state.pos40, state.pos55, state.pos70)
-    );
-    BOOST_CORNER = savedG;
-    return t60s;
+    const savedG = BOOST_CORNER; BOOST_CORNER = G;
+    const t60s = pairs.map(({ mode }) => modalT60(mode, state.pos40, state.pos55, state.pos70));
+    BOOST_CORNER = savedG; return t60s;
   }
-
-  // Cost: mean-squared log-error between predicted and measured treated T60
   function cost(G) {
-    const preds = modelT60atG(G);
-    let mse = 0;
+    const preds = modelT60atG(G); let mse = 0;
     pairs.forEach(({ t30meas }, i) => {
-      const t60pred = preds[i];
-      if (t60pred > 0 && t30meas > 0) {
-        mse += Math.pow(Math.log(t60pred) - Math.log(t30meas), 2);
-      }
+      if (preds[i] > 0 && t30meas > 0) mse += Math.pow(Math.log(preds[i]) - Math.log(t30meas), 2);
     });
     return mse / pairs.length;
   }
-
-  // Golden-section search over G_corner range [1.0, 8.0]
   const phi = (1 + Math.sqrt(5)) / 2;
-  let a = 1.0, b = 8.0;
-  let c1 = b - (b - a) / phi;
-  let c2 = a + (b - a) / phi;
-  for (let iter = 0; iter < 80; iter++) {
+  let a = 1.0, b = 8.0, c1 = b-(b-a)/phi, c2 = a+(b-a)/phi;
+  for (let i = 0; i < 80; i++) {
     if (cost(c1) < cost(c2)) { b = c2; } else { a = c1; }
-    c1 = b - (b - a) / phi;
-    c2 = a + (b - a) / phi;
+    c1 = b-(b-a)/phi; c2 = a+(b-a)/phi;
   }
-  const Gopt = Math.round(((a + b) / 2) * 10) / 10;
-
-  // Residuals at optimal G
+  const Gopt = Math.round(((a+b)/2)*10)/10;
   const predsAtOpt = modelT60atG(Gopt);
   const residuals = pairs.map(({ mode, t30meas }, i) => ({
-    f:    mode.f,
-    pred: predsAtOpt[i],
-    meas: t30meas,
-    err:  ((predsAtOpt[i] - t30meas) / t30meas * 100).toFixed(1),
+    f: mode.f, pred: predsAtOpt[i], meas: t30meas,
+    err: ((predsAtOpt[i]-t30meas)/t30meas*100).toFixed(1),
   }));
-
-  const mae = residuals.reduce((s, r) =>
-    s + Math.abs(r.pred - r.meas), 0) / residuals.length;
-
+  const mae = residuals.reduce((s,r) => s+Math.abs(r.pred-r.meas),0)/residuals.length;
   return { Gopt, pairs: pairs.length, mae, residuals };
 }
 
-// Diagnostic: compute MAE of uncalibrated model vs untreated measurement
-// (used in export report, not for calibration)
+// Diagnostic: MAE of uncalibrated model vs untreated measurement
 function solveGcornerUntreated(untreatedData) {
   if (!untreatedData || !untreatedData.data) return null;
   const axialModes = MODES.filter(m => ['X','Y','Z'].includes(m.axis) && !m._kind);
@@ -5571,26 +5635,24 @@ function solveGcornerUntreated(untreatedData) {
   });
   if (!pairs.length) return null;
   const residuals = pairs.map(({ mode, t30meas }) => {
-    const f = mode.f; const omega = 2*Math.PI*f;
+    const f = mode.f, omega = 2*Math.PI*f;
     const mA = modalCouplingArea(mode.axis);
     const d_b = 343 * baselineAlpha(f) * mA / (omega * 4 * ROOM_VOLUME);
     const t60pred = Math.log(Math.pow(10,6)) / (omega * d_b);
-    return { f, pred: t60pred, meas: t30meas,
-             err: ((t60pred-t30meas)/t30meas*100).toFixed(1) };
+    return { f, pred: t60pred, meas: t30meas, err: ((t60pred-t30meas)/t30meas*100).toFixed(1) };
   });
   const mae = residuals.reduce((s,r) => s+Math.abs(r.pred-r.meas),0)/residuals.length;
   return { pairs: pairs.length, mae, residuals };
 }
 
-// ── File handlers ─────────────────────────────────────────────────────────────
 function rewDragOver(e, slot) {
   e.preventDefault();
-  document.getElementById(`rewDrop${slot === 'untreated' ? 'Untreated' : 'Treated'}`)
-    .classList.add('drag-over');
+  const id = slot === 'untreated' ? 'rewDropUntreated' : 'rewDropTreated';
+  document.getElementById(id)?.classList.add('drag-over');
 }
 function rewDragLeave(e, slot) {
-  document.getElementById(`rewDrop${slot === 'untreated' ? 'Untreated' : 'Treated'}`)
-    .classList.remove('drag-over');
+  const id = slot === 'untreated' ? 'rewDropUntreated' : 'rewDropTreated';
+  document.getElementById(id)?.classList.remove('drag-over');
 }
 function rewDrop(e, slot) {
   e.preventDefault();
@@ -5604,100 +5666,207 @@ function rewFileChosen(e, slot) {
 }
 
 function rewLoadFile(file, slot) {
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const result = parseREWText(ev.target.result);
-    const idSuffix = slot === 'untreated' ? 'Untreated' : 'Treated';
-    const statusEl = document.getElementById(`rewStatus${idSuffix}`);
+  const idSuffix = slot === 'untreated' ? 'Untreated' : 'Treated';
+  const statusEl  = document.getElementById('rewStatus' + idSuffix);
+  const progressEl = document.getElementById('rewComputeStatus');
 
-    if (result.error) {
-      statusEl.innerHTML = `<div class="rew-error">✗ ${result.error}</div>`;
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    const text = ev.target.result;
+    const wf   = parseWaterfallText(text);
+
+    // ── Waterfall path (Method A) ─────────────────────────────────────────
+    if (wf) {
+      const riseMs  = Math.max(5, parseFloat(document.getElementById('rewRiseTime')?.value) || 30);
+      const targets = getModeTargetFreqs();
+
+      if (statusEl) statusEl.innerHTML = '';
+      if (progressEl) { progressEl.style.display = 'block'; progressEl.textContent = 'Computing T60M at ' + targets.length + ' mode frequencies…'; }
+
+      const result = await computeWaterfallT60M(wf, targets, riseMs, (done, total) => {
+        if (progressEl) progressEl.textContent = 'Computing T60M… ' + done + '/' + total + ' modes';
+      });
+
+      if (progressEl) progressEl.style.display = 'none';
+
+      if (result.error) {
+        if (statusEl) statusEl.innerHTML = '<div class="rew-error">✗ ' + result.error + '</div>';
+        return;
+      }
+
+      if (slot === 'untreated') { state.rewUntreated = result; }
+      else                      { state.rewTreated   = result; }
+
+      // ── Continuous curve sweep (background, non-blocking) ─────────────────
+      // Runs 20–150 Hz at 1 Hz; attaches result.curve then re-renders.
+      if (progressEl) { progressEl.style.display = 'block'; progressEl.textContent = 'Computing continuous T60M curve (20–150 Hz)…'; }
+      computeWaterfallCurve(wf, riseMs, (done, total) => {
+        if (progressEl) progressEl.textContent = 'T60M curve… ' + done + '/' + total + ' Hz';
+      }).then(curve => {
+        result.curve = curve;
+        if (progressEl) progressEl.style.display = 'none';
+        renderRT60();
+      });
+
+      // ── Status display ──────────────────────────────────────────────────
+      const slotCol   = slot === 'untreated' ? '#4ade80' : '#60a5fa';
+      const slotLabel = slot === 'untreated' ? 'BEFORE' : 'AFTER';
+      const lowCount  = result.data.filter(d => d.lowConf).length;
+
+      let html = '<div class="rew-loaded" style="font-size:10px;">'
+        + '<span style="color:' + slotCol + ';font-weight:600;">' + slotLabel + '</span>'
+        + ' &nbsp;✓ <span style="color:var(--text);">' + file.name + '</span><br>'
+        + '<span style="color:var(--text-dim);font-size:9px;">'
+        + result.nPoints + ' modes · ' + result.fRange + ' Hz · waterfall T60M'
+        + (lowCount ? ' · <span style="color:#facc15;">⚠ ' + lowCount + ' low-conf</span>' : '')
+        + '</span></div>';
+
+      // Per-mode T60M table
+      html += '<div style="font-family:var(--mono);font-size:10px;margin-top:6px;'
+            + 'padding:6px 8px;background:rgba(0,229,255,0.03);border:1px solid var(--border);">';
+      result.data.forEach(d => {
+        const t   = d.t30;
+        const col = t < 0.35 ? '#4ade80' : t < 0.55 ? '#86efac' : t < 0.75 ? '#facc15' : '#f87171';
+        const w   = d.lowConf ? ' <span style="color:#facc15;">⚠</span>' : '';
+        html += '<div style="display:flex;justify-content:space-between;padding:1px 0;'
+              + 'border-bottom:1px solid rgba(255,255,255,0.04);">'
+              + '<span style="color:var(--text-dim);">' + d.f.toFixed(1) + ' Hz</span>'
+              + '<span style="color:' + col + ';font-weight:600;">' + t.toFixed(3) + 's' + w + '</span>'
+              + '</div>';
+      });
+      html += '</div>';
+
+      // Solver feedback
+      if (slot === 'untreated') {
+        const solved = solveGcornerUntreated(result);
+        window._lastSolverResult = null;
+        if (solved) {
+          const qc = solved.mae < 0.15 ? '#4caf50' : solved.mae < 0.35 ? '#ff9800' : '#f44336';
+          const ql = solved.mae < 0.15 ? 'Good fit' : solved.mae < 0.35 ? 'Moderate fit' : 'Poor fit — adjust construction profile';
+          html += '<div class="rew-gcorner-suggestion">'
+                + 'Untreated T60M from ' + solved.pairs + ' mode' + (solved.pairs > 1 ? 's' : '') + ' (waterfall):<br>'
+                + 'T₆₀ Pre now matches measured values at each mode.<br>'
+                + 'Model MAE vs measurement: <span style="color:' + qc + ';">' + solved.mae.toFixed(3) + 's (' + ql + ')</span>'
+                + '<button class="rew-clear-btn" onclick="rewClear(&apos;untreated&apos;)">Clear</button>'
+                + '<div style="margin-top:6px;color:var(--text-dim);font-size:9px;">'
+                + solved.residuals.slice(0, 6).map(r => r.f + 'Hz: meas ' + (+r.meas).toFixed(2) + 's · uncal ' + (+r.pred).toFixed(2) + 's · diff ' + r.err + '%').join('<br>')
+                + (solved.residuals.length > 6 ? '<br>… +' + (solved.residuals.length - 6) + ' more' : '')
+                + '</div></div>';
+        } else {
+          html += '<div class="rew-gcorner-suggestion" style="border-color:rgba(244,67,54,0.3);color:#f44336;">'
+                + 'No axial mode matches for calibration'
+                + '<button class="rew-clear-btn" onclick="rewClear(&apos;untreated&apos;)" style="margin-left:0;">Clear</button></div>';
+        }
+      } else {
+        const hasUnits = state.pos40.length + state.pos55.length + state.pos70.length > 0;
+        if (hasUnits) {
+          const solved = solveGcorner(result);
+          window._lastSolverResult = solved;
+          if (solved) {
+            const qc = solved.mae < 0.10 ? '#4caf50' : solved.mae < 0.25 ? '#ff9800' : '#f44336';
+            const ql = solved.mae < 0.10 ? 'Excellent fit' : solved.mae < 0.25 ? 'Good fit' : 'Moderate fit';
+            html += '<div class="rew-gcorner-suggestion" style="border-color:rgba(186,104,200,0.4);">'
+                  + '<span style="color:#ba68c8;font-weight:600;">G_corner calibration</span> '
+                  + 'from ' + solved.pairs + ' mode' + (solved.pairs > 1 ? 's' : '') + ' (waterfall T60M):<br>'
+                  + 'Calibrated G_corner = <b style="color:#ba68c8;">' + solved.Gopt + '</b> &nbsp;·&nbsp;'
+                  + '<span style="color:' + qc + ';">MAE = ' + solved.mae.toFixed(3) + 's (' + ql + ')</span><br>'
+                  + '<button class="rew-apply-btn" style="border-color:rgba(186,104,200,0.5);color:#ba68c8;" onclick="rewApplyGcorner(' + solved.Gopt + ')">Apply G_corner = ' + solved.Gopt + '</button>'
+                  + '<button class="rew-clear-btn" onclick="rewClear(&apos;treated&apos;)">Clear</button>'
+                  + '<div style="margin-top:6px;color:var(--text-dim);font-size:9px;">'
+                  + solved.residuals.slice(0, 6).map(r => r.f + 'Hz: meas ' + (+r.meas).toFixed(2) + 's · pred ' + (+r.pred).toFixed(2) + 's · err ' + r.err + '%').join('<br>')
+                  + (solved.residuals.length > 6 ? '<br>… +' + (solved.residuals.length - 6) + ' more' : '')
+                  + '</div></div>';
+          } else {
+            html += '<div class="rew-gcorner-suggestion" style="border-color:rgba(186,104,200,0.3);color:#f44336;">'
+                  + 'No axial mode matches in treated data.'
+                  + '<button class="rew-clear-btn" onclick="rewClear(&apos;treated&apos;)" style="margin-left:0;">Clear</button></div>';
+          }
+        } else {
+          html += '<div class="rew-gcorner-suggestion" style="border-color:rgba(255,152,0,0.3);color:#ff9800;">'
+                + '⚠ Place units in the model before importing treated measurement.'
+                + '<button class="rew-clear-btn" onclick="rewClear(&apos;treated&apos;)" style="margin-left:0;">Clear</button></div>';
+        }
+      }
+
+      if (statusEl) statusEl.innerHTML = html;
+      render();
+      renderTreatmentProgress();
       return;
     }
 
-    // Store in state
-    if (slot === 'untreated') {
-      state.rewUntreated = result;
-    } else {
-      state.rewTreated = result;
+    // ── Legacy RT-Parameters path (Method B fallback) ─────────────────────
+    const result = parseREWText(text);
+    if (result.error) {
+      if (statusEl) statusEl.innerHTML = '<div class="rew-error">✗ ' + result.error + '</div>';
+      return;
     }
 
-    // Build status display
-    let html = `<div class="rew-loaded">
-      ✓ ${result.nPoints} points · ${result.fRange} · ${file.name}
-    </div>`;
+    if (slot === 'untreated') { state.rewUntreated = result; }
+    else                      { state.rewTreated   = result; }
+
+    const slotCol   = slot === 'untreated' ? '#4ade80' : '#60a5fa';
+    const slotLabel = slot === 'untreated' ? 'BEFORE' : 'AFTER';
+    let html = '<div class="rew-loaded" style="font-size:10px;">'
+      + '<span style="color:' + slotCol + ';font-weight:600;">' + slotLabel + '</span>'
+      + ' &nbsp;✓ <span style="color:var(--text);">' + file.name + '</span><br>'
+      + '<span style="color:var(--text-dim);font-size:9px;">'
+      + result.nPoints + ' points · ' + result.fRange + ' Hz · RT Parameters'
+      + ' <span style="color:#facc15;">(≥50 Hz only)</span></span></div>';
 
     if (slot === 'untreated') {
       const solved = solveGcornerUntreated(result);
       window._lastSolverResult = null;
       if (solved) {
-        const qualColor = solved.mae < 0.15 ? '#4caf50' : solved.mae < 0.35 ? '#ff9800' : '#f44336';
-        const qualLabel = solved.mae < 0.15 ? 'Good fit' : solved.mae < 0.35 ? 'Moderate fit' : 'Poor fit — consider adjusting construction profile';
-        html += `<div class="rew-gcorner-suggestion">
-          Untreated calibration from ${solved.pairs} axial mode${solved.pairs > 1 ? 's' : ''}:<br>
-          Pre-treatment T₆₀ now matches measured T30 exactly at each mode.<br>
-          Default model MAE vs measurement: <span style="color:${qualColor};">${solved.mae.toFixed(3)}s (${qualLabel})</span>
-          <button class="rew-clear-btn" onclick="rewClear('untreated')">Clear</button>
-          <div style="margin-top:6px;color:var(--text-dim);font-size:9px;">
-          ${solved.residuals.slice(0,6).map(r =>
-            `${r.f}Hz: meas ${r.meas.toFixed(2)}s · uncal ${r.pred.toFixed(2)}s · diff ${r.err}%`
-          ).join('<br>')}${solved.residuals.length > 6 ? `<br>… +${solved.residuals.length-6} more` : ''}
-          </div>
-        </div>`;
+        const qc = solved.mae < 0.15 ? '#4caf50' : solved.mae < 0.35 ? '#ff9800' : '#f44336';
+        const ql = solved.mae < 0.15 ? 'Good fit' : solved.mae < 0.35 ? 'Moderate fit' : 'Poor fit — adjust construction profile';
+        html += '<div class="rew-gcorner-suggestion">'
+              + 'Untreated from ' + solved.pairs + ' mode' + (solved.pairs > 1 ? 's' : '') + ':<br>'
+              + 'T₆₀ Pre matches measured T60 at each mode.<br>'
+              + 'Model MAE: <span style="color:' + qc + ';">' + solved.mae.toFixed(3) + 's (' + ql + ')</span>'
+              + '<button class="rew-clear-btn" onclick="rewClear(&apos;untreated&apos;)">Clear</button>'
+              + '<div style="margin-top:6px;color:var(--text-dim);font-size:9px;">'
+              + solved.residuals.slice(0, 6).map(r => r.f + 'Hz: meas ' + (+r.meas).toFixed(2) + 's · uncal ' + (+r.pred).toFixed(2) + 's · ' + r.err + '%').join('<br>')
+              + (solved.residuals.length > 6 ? '<br>… +' + (solved.residuals.length - 6) + ' more' : '')
+              + '</div></div>';
       } else {
-        html += `<div class="rew-gcorner-suggestion" style="border-color:rgba(244,67,54,0.3);color:#f44336;">
-          Too few axial mode matches for calibration (need ≥ 2 modes in data range)
-          <button class="rew-clear-btn" onclick="rewClear('untreated')" style="margin-left:0;">Clear</button>
-        </div>`;
+        html += '<div class="rew-gcorner-suggestion" style="border-color:rgba(244,67,54,0.3);color:#f44336;">'
+              + 'No axial mode matches (need ≥2 modes in data range)'
+              + '<button class="rew-clear-btn" onclick="rewClear(&apos;untreated&apos;)" style="margin-left:0;">Clear</button></div>';
       }
     } else {
-      // Treated measurement — run G_corner solver
       const hasUnits = state.pos40.length + state.pos55.length + state.pos70.length > 0;
       if (hasUnits) {
         const solved = solveGcorner(result);
         window._lastSolverResult = solved;
         if (solved) {
-          const qualColor = solved.mae < 0.10 ? '#4caf50' : solved.mae < 0.25 ? '#ff9800' : '#f44336';
-          const qualLabel = solved.mae < 0.10 ? 'Excellent fit' : solved.mae < 0.25 ? 'Good fit' : 'Moderate fit — check unit placement matches model';
-          html += `<div class="rew-gcorner-suggestion" style="border-color:rgba(186,104,200,0.4);">
-            <span style="color:#ba68c8;font-weight:600;">G_corner calibration</span>
-            from ${solved.pairs} treated mode${solved.pairs > 1 ? 's' : ''}:<br>
-            Calibrated G_corner = <b style="color:#ba68c8;">${solved.Gopt}</b> &nbsp;·&nbsp;
-            <span style="color:${qualColor};">MAE = ${solved.mae.toFixed(3)}s (${qualLabel})</span><br>
-            <button class="rew-apply-btn" style="border-color:rgba(186,104,200,0.5);color:#ba68c8;"
-              onclick="rewApplyGcorner(${solved.Gopt})">Apply G_corner = ${solved.Gopt}</button>
-            <button class="rew-clear-btn" onclick="rewClear('treated')">Clear</button>
-            <div style="margin-top:6px;color:var(--text-dim);font-size:9px;">
-            ${solved.residuals.slice(0,6).map(r =>
-              `${r.f}Hz: meas ${r.meas.toFixed(2)}s · pred ${r.pred.toFixed(2)}s · err ${r.err}%`
-            ).join('<br>')}${solved.residuals.length > 6 ? `<br>… +${solved.residuals.length-6} more` : ''}
-            </div>
-            <div style="margin-top:5px;font-size:8px;color:var(--text-dim);line-height:1.5;">
-              Default G_corner = 4.0. Calibrated value validates the model's corner gain assumption.
-              Export JSON to contribute this measurement to the GroundControl calibration database.
-            </div>
-          </div>`;
+          const qc = solved.mae < 0.10 ? '#4caf50' : solved.mae < 0.25 ? '#ff9800' : '#f44336';
+          const ql = solved.mae < 0.10 ? 'Excellent' : solved.mae < 0.25 ? 'Good fit' : 'Moderate fit';
+          html += '<div class="rew-gcorner-suggestion" style="border-color:rgba(186,104,200,0.4);">'
+                + '<span style="color:#ba68c8;font-weight:600;">G_corner calibration</span> '
+                + 'from ' + solved.pairs + ' mode' + (solved.pairs > 1 ? 's' : '') + ':<br>'
+                + 'G_corner = <b style="color:#ba68c8;">' + solved.Gopt + '</b> &nbsp;·&nbsp;'
+                + '<span style="color:' + qc + ';">MAE = ' + solved.mae.toFixed(3) + 's (' + ql + ')</span><br>'
+                + '<button class="rew-apply-btn" style="border-color:rgba(186,104,200,0.5);color:#ba68c8;" onclick="rewApplyGcorner(' + solved.Gopt + ')">Apply G_corner = ' + solved.Gopt + '</button>'
+                + '<button class="rew-clear-btn" onclick="rewClear(&apos;treated&apos;)">Clear</button></div>';
         } else {
-          html += `<div class="rew-gcorner-suggestion" style="border-color:rgba(186,104,200,0.3);color:#f44336;">
-            No axial mode matches in treated data range.
-            <button class="rew-clear-btn" onclick="rewClear('treated')" style="margin-left:0;">Clear</button>
-          </div>`;
+          html += '<div class="rew-gcorner-suggestion" style="border-color:rgba(186,104,200,0.3);color:#f44336;">'
+                + 'No axial mode matches in treated data.'
+                + '<button class="rew-clear-btn" onclick="rewClear(&apos;treated&apos;)" style="margin-left:0;">Clear</button></div>';
         }
       } else {
-        html += `<div class="rew-gcorner-suggestion" style="border-color:rgba(255,152,0,0.3);color:#ff9800;">
-          ⚠ Place units in the model before importing treated measurement — G_corner calibration
-          requires knowing which corners have units and how many.
-          <button class="rew-clear-btn" onclick="rewClear('treated')" style="margin-left:0;">Clear</button>
-        </div>`;
+        html += '<div class="rew-gcorner-suggestion" style="border-color:rgba(255,152,0,0.3);color:#ff9800;">'
+              + '⚠ Place units before importing treated measurement.'
+              + '<button class="rew-clear-btn" onclick="rewClear(&apos;treated&apos;)" style="margin-left:0;">Clear</button></div>';
       }
     }
 
-    statusEl.innerHTML = html;
+    if (statusEl) statusEl.innerHTML = html;
     render();
     renderTreatmentProgress();
   };
   reader.readAsText(file);
 }
+
 
 function rewApplyAlpha(alphaOpt) {
   ALPHA_CAL = alphaOpt;
