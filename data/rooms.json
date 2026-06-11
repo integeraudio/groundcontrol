@@ -12,5 +12,12 @@
     "date": "January 2025",
     "note": "Bedroom studio conversion. Single front-left corner. Broadband improvement 40–80 Hz.",
     "file": "home_studio_b.json"
+  },
+   {
+    "name": "Dave's Room",
+    "location": "Rochester, NY",
+    "date": "June 2026",
+    "note": "Bedroom studio conversion. Single front-left corner. Broadband improvement 40–80 Hz.",
+    "file": "GC_Nodal_6.1x4.9x2.4m_2026-06-11.json"
   }
 ]
