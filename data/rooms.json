@@ -1,20 +1,16 @@
 [
   {
-    "id": "studio_a",
-    "name": "Sample Room 1",
+    "name": "Studio A",
     "location": "Brooklyn, NY",
-    "roomSize": "4.2 × 5.8 × 2.6 m",
-    "treatment": "2× Nodal 40 · 1× Nodal 50 · front corners",
     "date": "March 2025",
-    "file": "room_4_info.json"
+    "note": "Primary mixing studio. 4× Nodal 40 + 2× Nodal 50 installed all four front corners. Dominant mode at 35 Hz reduced from 1.22s to 0.41s.",
+    "file": "studio_a.json"
   },
   {
-  "id": "room_1780695958781",
-  "name": "Sample Room 2",
-  "location": "Rochester",
-  "roomSize": "16x12x9",
-  "treatment": "4 x Nodal 40",
-  "date": "June 2026",
-  "file": "room_4_info.json"
-}
+    "name": "Home Studio B",
+    "location": "Austin, TX",
+    "date": "January 2025",
+    "note": "Bedroom studio conversion. Single front-left corner. Broadband improvement 40–80 Hz.",
+    "file": "home_studio_b.json"
+  }
 ]
