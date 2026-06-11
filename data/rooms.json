@@ -4,19 +4,12 @@
     "location": "Brooklyn, NY",
     "date": "March 2025",
     "note": "Primary mixing studio. 4× Nodal 40 + 2× Nodal 50 installed all four front corners. Dominant mode at 35 Hz reduced from 1.22s to 0.41s.",
-    "file": "studio_a.json"
+    "file": "GC_Nodal_6.1x4.9x2.4m_2026-06-11.json"
   },
   {
     "name": "Home Studio B",
     "location": "Austin, TX",
     "date": "January 2025",
-    "note": "Bedroom studio conversion. Single front-left corner. Broadband improvement 40–80 Hz.",
-    "file": "home_studio_b.json"
-  },
-   {
-    "name": "Dave's Room",
-    "location": "Rochester, NY",
-    "date": "June 2026",
     "note": "Bedroom studio conversion. Single front-left corner. Broadband improvement 40–80 Hz.",
     "file": "GC_Nodal_6.1x4.9x2.4m_2026-06-11.json"
   }
