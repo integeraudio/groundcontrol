@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>GroundControl Nodal Series — Modal Simulation r60</title>
+<title>GroundControl Nodal Series — Modal Simulation r61</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap');
 
@@ -1249,19 +1249,16 @@
       <div class="mode-list" id="modeList"></div>
     </div>
 
-    <!-- Treatment Progress Panel -->
+    <!-- Recommendation Panel (replaces Treatment Progress) -->
     <div class="panel-box" style="margin-top:8px;border-color:rgba(0,229,255,0.15);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <h3 style="margin:0;">Treatment Progress</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <h3 style="margin:0;">Treatment Recommendation</h3>
         <div style="display:flex;align-items:center;gap:6px;">
           <label style="font-family:var(--mono);font-size:9px;color:var(--text-dim);">target</label>
           <input type="number" id="t60TargetInput" value="0.55" min="0.10" max="1.50" step="0.05"
             style="width:46px;font-family:var(--mono);font-size:10px;background:#0d1318;color:var(--accent);border:1px solid rgba(0,229,255,0.3);border-radius:3px;padding:2px 4px;text-align:center;">
           <span style="font-family:var(--mono);font-size:9px;color:var(--text-dim);">s</span>
         </div>
-      </div>
-      <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);line-height:1.6;margin-bottom:8px;">
-        Per-mode status against target T₆₀. Best unit = highest absorption at that mode frequency. Projections show estimated T₆₀ if additional units are added at corners.
       </div>
       <div id="treatmentProgressTable"></div>
     </div>
@@ -1361,6 +1358,35 @@
         </select>
         <div class="construction-note" id="constructionNote"></div>
       </div>
+      <!-- Coverage slider — shown only for part-treated profiles -->
+      <div id="coverageRow" style="display:none;margin-top:10px;padding:8px 10px;
+           background:rgba(0,229,255,0.03);border:1px solid rgba(0,229,255,0.12);border-radius:4px;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);
+                    text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">
+          Broadband Panel Coverage
+        </div>
+        <div class="room-dim-row" style="margin-bottom:4px;">
+          <label style="font-family:var(--mono);font-size:10px;color:var(--accent);width:28px;">%</label>
+          <input type="range" id="coverageSlider" min="5" max="60" step="5" value="30"
+                 style="flex:1;accent-color:var(--accent);"
+                 oninput="onCoverageChange(this.value)">
+          <span class="dim-val" id="coverageVal" style="color:var(--accent);width:42px;">30%</span>
+        </div>
+        <div class="room-dim-row" style="margin-top:8px;margin-bottom:4px;">
+          <label style="font-family:var(--mono);font-size:10px;color:var(--accent);width:28px;">D</label>
+          <select id="panelDepthSelect"
+            style="flex:1;font-family:var(--mono);font-size:10px;background:#0d1318;
+                   color:var(--accent);border:1px solid rgba(0,229,255,0.3);border-radius:3px;padding:3px 6px;"
+            onchange="onPanelDepthChange(this.value)">
+            <option value="2">2" panels — effective 125 Hz+</option>
+            <option value="4" selected>4" panels — effective 50 Hz+ (default)</option>
+            <option value="6">6" panels — effective 31 Hz+</option>
+          </select>
+        </div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);line-height:1.6;">
+          % of room SA covered · α = (1−cov)×shell + cov×OC703 (ISO 354)
+        </div>
+      </div>
     </div>
 
     <!-- ═══ AVAA Panel ═══ -->
@@ -1414,9 +1440,9 @@
       </div>
     </div>
 
-    <!-- ═══ Nodal 40 Panel ═══ -->
+    <!-- ═══ Nodal 30 Panel ═══ -->
     <div class="placement-panel">
-      <h3><span style="color:var(--accent);">Nodal 40</span> — <span id="budget40" style="color:var(--accent);">0 of 4 placed</span></h3>
+      <h3><span style="color:var(--accent);">Nodal 30</span> — <span id="budget40" style="color:var(--accent);">0 of 4 placed</span></h3>
       <div class="placement-diagram" id="diag40">
         <div class="room-outline"></div>
         <span class="room-outline-label" style="top:4px;left:50%;transform:translateX(-50%);">FRONT</span>
@@ -1500,9 +1526,15 @@
       <div class="placement-hint">Click corner to add unit (cycles 0→1→2→3→4→remove) &nbsp;|&nbsp; ×N = stacked</div>
     </div>
 
-    <!-- ═══ Nodal 55 Panel ═══ -->
+    <!-- ═══ Custom Unit 2 Panel (Advanced, collapsed by default) ═══ -->
+    <div style="margin-top:8px;">
+      <button id="customUnit2Toggle" onclick="toggleCustomUnit2()" style="width:100%;font-family:var(--mono);font-size:10px;color:var(--text-dim);background:none;border:1px solid var(--border);border-radius:3px;padding:6px 10px;cursor:pointer;text-align:left;letter-spacing:0.06em;">
+        ▶ ADVANCED — Custom Unit 2
+      </button>
+    </div>
+    <div id="customUnit2Panel" style="display:none;">
     <div class="placement-panel" style="margin-top:8px;border-top:2px solid rgba(186,104,200,0.3);">
-      <h3><span style="color:#ba68c8;">Nodal 50</span> — <span id="budget55" style="color:#ba68c8;">0 of 0 placed</span></h3>
+      <h3><span style="color:#ba68c8;">Advanced — Custom Unit 2</span> — <span id="budget55" style="color:#ba68c8;">0 of 0 placed</span></h3>
       <div class="placement-diagram" id="diag55">
         <div class="room-outline"></div>
         <span class="room-outline-label" style="top:4px;left:50%;transform:translateX(-50%);">FRONT</span>
@@ -1529,13 +1561,13 @@
         <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.10em;margin-bottom:8px;">Tuning</div>
         <div class="room-dim-row" style="margin-bottom:6px;">
           <label style="width:28px;font-family:var(--mono);font-size:10px;color:#ba68c8;">f₀</label>
-          <input type="range" id="f55Slider" min="20" max="120" step="1" value="51" style="flex:1;accent-color:#ba68c8;">
-          <span class="dim-val" id="f55Val" style="color:#ba68c8;width:46px;">51 Hz</span>
+          <input type="range" id="f55Slider" min="20" max="120" step="1" value="35" style="flex:1;accent-color:#ba68c8;">
+          <span class="dim-val" id="f55Val" style="color:#ba68c8;width:46px;">35 Hz</span>
         </div>
         <div class="room-dim-row" style="margin-bottom:6px;">
           <label style="width:28px;font-family:var(--mono);font-size:10px;color:#ba68c8;">Q</label>
-          <input type="range" id="q55Slider" min="0.5" max="8.0" step="0.1" value="0.9" style="flex:1;accent-color:#ba68c8;">
-          <span class="dim-val" id="q55Val" style="color:#ba68c8;width:46px;">0.9</span>
+          <input type="range" id="q55Slider" min="0.5" max="8.0" step="0.1" value="1.0" style="flex:1;accent-color:#ba68c8;">
+          <span class="dim-val" id="q55Val" style="color:#ba68c8;width:46px;">1.0</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;">
           <div style="background:rgba(186,104,200,0.06);border:0.5px solid rgba(186,104,200,0.2);border-radius:3px;padding:5px 7px;">
@@ -1566,23 +1598,24 @@
         </div>
       </div>
       <div class="stats-grid" style="margin-top:8px;">
-        <div class="stat-cell"><span class="val" style="color:#ba68c8;" id="stat-f55">51 Hz</span><span class="lbl">Target f₀</span></div>
-        <div class="stat-cell"><span class="val" style="color:#ba68c8;" id="stat-q55">Q = 0.9</span><span class="lbl">Q factor</span></div>
+        <div class="stat-cell"><span class="val" style="color:#ba68c8;" id="stat-f55">35 Hz</span><span class="lbl">Target f₀</span></div>
+        <div class="stat-cell"><span class="val" style="color:#ba68c8;" id="stat-q55">Q = 1.0</span><span class="lbl">Q factor</span></div>
       </div>
       <div class="placement-hint">Click corner to add unit (cycles 0→1→2→3→4→remove) &nbsp;|&nbsp; ×N = stacked</div>
+    </div>
     </div>
 
     <!-- ═══ Custom Unit Panel (Advanced) ═══ -->
     <div style="margin-top:8px;">
       <button id="customUnitToggle" onclick="toggleCustomUnit()" style="width:100%;font-family:var(--mono);font-size:10px;color:var(--text-dim);background:none;border:1px solid var(--border);border-radius:3px;padding:6px 10px;cursor:pointer;text-align:left;letter-spacing:0.06em;">
-        ▶ ADVANCED — Custom Unit (Unit 3)
+        ▶ ADVANCED — Custom Unit 3
       </button>
     </div>
     <div id="customUnitPanel" style="display:none;">
     <div class="placement-panel" style="margin-top:8px; border-top: 2px solid rgba(76,175,80,0.3);">
       <h3 style="color:#4caf50;">Custom Unit — <span id="budget70" style="color:#4caf50;">0 of 0 placed</span></h3>
       <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);line-height:1.6;margin-bottom:8px;padding:6px 8px;background:rgba(76,175,80,0.04);border:0.5px solid rgba(76,175,80,0.2);border-radius:2px;">
-        Third channel for targeting a specific mode that neither Nodal 40 nor Nodal 50 addresses precisely. Set f₀ and Q to match a measured mode frequency. Predictions carry the standard model uncertainty.
+        Advanced custom channel for exploring alternative tuning configurations or modelling a second unit type. Defaults to Nodal 30 parameters (35 Hz, Q=1.0). Set f₀ and Q to match any target mode frequency.
       </div>
       <div class="placement-diagram" id="diag70">
         <div class="room-outline" style="border-color:rgba(76,175,80,0.4);"></div>
@@ -1610,13 +1643,13 @@
         <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.10em;margin-bottom:8px;">Tuning</div>
         <div class="room-dim-row" style="margin-bottom:6px;">
           <label style="width:28px;font-family:var(--mono);font-size:10px;color:#4caf50;">f₀</label>
-          <input type="range" id="f70Slider" min="20" max="120" step="1" value="61" style="flex:1;accent-color:#4caf50;">
-          <span class="dim-val" id="f70Val" style="color:#4caf50;width:46px;">61 Hz</span>
+          <input type="range" id="f70Slider" min="20" max="120" step="1" value="35" style="flex:1;accent-color:#4caf50;">
+          <span class="dim-val" id="f70Val" style="color:#4caf50;width:46px;">35 Hz</span>
         </div>
         <div class="room-dim-row" style="margin-bottom:6px;">
           <label style="width:28px;font-family:var(--mono);font-size:10px;color:#4caf50;">Q</label>
-          <input type="range" id="q70Slider" min="0.5" max="8.0" step="0.1" value="1.5" style="flex:1;accent-color:#4caf50;">
-          <span class="dim-val" id="q70Val" style="color:#4caf50;width:46px;">1.5</span>
+          <input type="range" id="q70Slider" min="0.5" max="8.0" step="0.1" value="1.0" style="flex:1;accent-color:#4caf50;">
+          <span class="dim-val" id="q70Val" style="color:#4caf50;width:46px;">1.0</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;">
           <div style="background:rgba(76,175,80,0.06);border:0.5px solid rgba(76,175,80,0.2);border-radius:3px;padding:5px 7px;">
@@ -1650,8 +1683,8 @@
           <div style="font-family:var(--mono);font-size:9px;color:var(--text-dim);line-height:1.6;" id="qfloor70-msg"></div>
         </div>      </div>
       <div class="stats-grid" style="margin-top:8px;">
-        <div class="stat-cell"><span class="val" style="color:#4caf50;" id="stat-f70">61 Hz</span><span class="lbl">Target f₀</span></div>
-        <div class="stat-cell"><span class="val" style="color:#4caf50;" id="stat-q70">Q = 1.5</span><span class="lbl">Q factor</span></div>
+        <div class="stat-cell"><span class="val" style="color:#4caf50;" id="stat-f70">35 Hz</span><span class="lbl">Target f₀</span></div>
+        <div class="stat-cell"><span class="val" style="color:#4caf50;" id="stat-q70">Q = 1.0</span><span class="lbl">Q factor</span></div>
       </div>
       <div class="placement-hint">Click corner to add unit (cycles 0→1→2→3→4→remove) &nbsp;|&nbsp; ×N = stacked</div>
     </div>
@@ -1693,7 +1726,7 @@
       </div>
     </div>
 
-    <!-- ═══ REW Waterfall T60M Import Panel (r60) ═══ -->
+    <!-- ═══ REW Waterfall T60M Import Panel (r61) ═══ -->
     <div class="panel-box" style="border-color:rgba(0,229,255,0.30);">
       <h3 style="color:rgba(0,229,255,0.85);">REW Measurement Import</h3>
 
@@ -1932,7 +1965,7 @@
 </div>
 
 <footer>
-  <span>Eyring model · rectangular + sloped/cathedral ceiling perturbation · Nodal 40 / 50 / 60 · membrane <span id="membraneBadge">24"×30"</span> · α rigorous: 4R/(1+R)² · G_corner=<span id="gcornerBadge">4.0</span> · D_cav=<span id="dcavBadge">215</span>mm · G_wall=2 · TDA Design Tool · r60</span>
+  <span>Eyring model · rectangular + sloped/cathedral ceiling perturbation · Nodal 30 · membrane <span id="membraneBadge">24"×30"</span> · α rigorous: 4R/(1+R)² · G_corner=<span id="gcornerBadge">4.0</span> · D_cav=<span id="dcavBadge">215</span>mm · G_wall=2 · TDA Design Tool · r61</span>
   <span>Indicative predictions only — validate all results with REW measurement · not for engineering certification</span>
 </footer>
 
@@ -2433,34 +2466,27 @@ function alpha70(f) { const m = pistonMass(state.f70); return chamberAlpha(f, st
 // Kuttruff "Room Acoustics" §3.3 modal damping.
 
 function modalCouplingArea(axis) {
-  let A_term, A_para;
-  if (axis === 'X') {
-    A_term = 2 * ROOM.W * (SLOPE.enabled ? (SLOPE.H1 + SLOPE.H2) / 2 : ROOM.H);
-    A_para = 2 * ROOM.L * (SLOPE.enabled ? (SLOPE.H1 + SLOPE.H2) / 2 : ROOM.H) + 2 * ROOM.L * ROOM.W;
-  } else if (axis === 'Y') {
-    A_term = 2 * ROOM.L * (SLOPE.enabled ? (SLOPE.H1 + SLOPE.H2) / 2 : ROOM.H);
-    A_para = 2 * ROOM.W * (SLOPE.enabled ? (SLOPE.H1 + SLOPE.H2) / 2 : ROOM.H) + 2 * ROOM.L * ROOM.W;
-  } else {
-    // Z-axis: terminating surfaces are floor + ceiling (sloped or cathedral)
-    if (SLOPE.enabled) {
-      const run  = SLOPE.slopeAxis === 'X' ? ROOM.L : ROOM.W;
-      const span = SLOPE.slopeAxis === 'X' ? ROOM.W : ROOM.L;
-      const dH   = Math.abs(SLOPE.H2 - SLOPE.H1);
-      let slopedArea;
-      if (SLOPE.cathedral) {
-        const halfRun = run / 2;
-        slopedArea = 2 * span * Math.sqrt(halfRun * halfRun + dH * dH);
-      } else {
-        slopedArea = span * Math.sqrt(run * run + dH * dH);
-      }
-      A_term = ROOM.L * ROOM.W + slopedArea;  // floor + ceiling
-      A_para = ROOM_SA - A_term;
-    } else {
-      A_term = 2 * ROOM.L * ROOM.W;
-      A_para = 2 * ROOM.L * ROOM.H + 2 * ROOM.W * ROOM.H;
-    }
+  // Returns the terminating surface area for the given mode axis.
+  // Used to normalise TDA baseWeight: the unit at a corner couples to
+  // the mode through the two terminating walls (the surfaces the mode
+  // resonates between). BOOST_CORNER already captures corner pressure gain.
+  // Normalising against terminating area only (A_term) is physically correct.
+  // The previous six-surface weighted form (A_term + 0.5×A_para) was a legacy
+  // artefact that underestimated TDA contribution by ~2.8× for typical rooms.
+  const H_eff = SLOPE.enabled ? (SLOPE.H1 + SLOPE.H2) / 2 : ROOM.H;
+  if (axis === 'X') return 2 * ROOM.W * H_eff;
+  if (axis === 'Y') return 2 * ROOM.L * H_eff;
+  // Z-axis: floor + ceiling
+  if (SLOPE.enabled) {
+    const run  = SLOPE.slopeAxis === 'X' ? ROOM.L : ROOM.W;
+    const span = SLOPE.slopeAxis === 'X' ? ROOM.W : ROOM.L;
+    const dH   = Math.abs(SLOPE.H2 - SLOPE.H1);
+    const slopedArea = SLOPE.cathedral
+      ? 2 * span * Math.sqrt((run/2)**2 + dH**2)
+      : span * Math.sqrt(run**2 + dH**2);
+    return ROOM.L * ROOM.W + slopedArea;
   }
-  return A_term * 1.0 + A_para * 0.5;
+  return 2 * ROOM.L * ROOM.W;
 }
 
 // ── Position pressure-coupling weight ────────────────────────────────────────
@@ -2638,15 +2664,15 @@ const CONSTRUCTION_PROFILES = {
   },
   treated: {
     label: 'Part-Treated — Broadband Panels (sealed)',
-    note:  'Sealed plasterboard shell with ~30% surface coverage of 4" OC 703 broadband panels. 4" panels provide substantial absorption from 63 Hz upward: α ≈ 0.43 at 63 Hz, 0.62 at 80 Hz, 0.97 at 125 Hz. Below 50 Hz negligible panel contribution — sub-40 Hz decay still governed by room shell. Area-weighted mean alpha from Owens Corning published data (ISO 354) at 30% coverage. RT60 at 35 Hz still ~2–3 s; meaningful improvement from 63 Hz upward.',
+    note:  'Sealed plasterboard shell with ~30% surface coverage of 4" OC 703 broadband panels. Area-weighted alpha: 70% plasterboard shell + 30% OC 703 (ISO 354 published data). 4" panels are essentially transparent at 31.5 Hz (α=0.09) and provide modest contribution at 50 Hz (α=0.25), so sub-50 Hz decay is still dominated by the room shell. Meaningful improvement from 63 Hz upward: α rises from 0.12 (shell) to 0.21 at 63 Hz, 0.13→0.28 at 80 Hz, 0.065→0.34 at 125 Hz. RT60 at 35 Hz still ~2–3 s; RT60 at 80 Hz drops from ~0.79 s to ~0.37 s.',
     freqs: [31.5,  50,    63,    80,    100,   125,   160],
-    alpha: [0.035, 0.064, 0.213, 0.277, 0.309, 0.336, 0.332],
+    alpha: [0.047, 0.103, 0.213, 0.277, 0.315, 0.337, 0.332],
   },
   res_treated: {
     label: 'Part-Treated — Broadband Panels (residential)',
-    note:  'Residential construction with ~30% surface coverage of 4" OC 703 broadband panels. Combines the residential leakage floor (α ≈ 0.07 at 35 Hz) with 4" panel contribution above 63 Hz. Area-weighted alpha at 63 Hz rises to 0.220 vs 0.130 bare; at 80 Hz 0.284 vs 0.140; at 125 Hz 0.339 vs 0.068. Sub-50 Hz is still dominated by room shell leakage. Use if your untreated REW shows 1.2–1.8 s at 35 Hz and you have 4" broadband panels installed.',
+    note:  'Residential construction with ~30% surface coverage of 4" OC 703 broadband panels. Area-weighted alpha: 70% residential drywall shell + 30% OC 703 (ISO 354 published data). OC 703 at 31.5 Hz (α=0.09) is similar to the residential shell (α=0.07) so sub-40 Hz is only marginally improved. Meaningful improvement from 50 Hz upward: α rises from 0.09→0.14 at 50 Hz, 0.13→0.22 at 63 Hz, 0.14→0.28 at 80 Hz. Sub-40 Hz decay still 1.2–1.6 s, governed by residential leakage. Use if your untreated REW shows 1.2–1.8 s at 35 Hz and you have 4" broadband panels installed.',
     freqs: [31.5,  50,    63,    80,    100,   125,   160],
-    alpha: [0.064, 0.099, 0.220, 0.284, 0.312, 0.339, 0.333],
+    alpha: [0.076, 0.138, 0.220, 0.284, 0.319, 0.339, 0.333],
   },
   iso: {
     label: 'ISO 354 Reverberation Room (reference)',
@@ -2656,7 +2682,38 @@ const CONSTRUCTION_PROFILES = {
   },
 };
 
+function interpAlphaLog(f, freqs, alphas) {
+  if (f <= freqs[0]) return alphas[0];
+  if (f >= freqs[freqs.length-1]) return alphas[freqs.length-1];
+  for (let i = 0; i < freqs.length-1; i++) {
+    if (freqs[i] <= f && f <= freqs[i+1]) {
+      const t = (Math.log(f)-Math.log(freqs[i])) / (Math.log(freqs[i+1])-Math.log(freqs[i]));
+      return alphas[i] + t*(alphas[i+1]-alphas[i]);
+    }
+  }
+  return alphas[alphas.length-1];
+}
+// OC 703 absorption by thickness — Owens Corning ISO 354 published data
+const OC703_BY_DEPTH = {
+  2: { freqs:[31.5,50,63,80,100,125,160], alpha:[0.04,0.06,0.08,0.11,0.17,0.28,0.42] },
+  4: { freqs:[31.5,50,63,80,100,125,160], alpha:[0.09,0.25,0.43,0.62,0.84,0.97,0.99] },
+  6: { freqs:[31.5,50,63,80,100,125,160], alpha:[0.18,0.45,0.77,0.95,1.00,1.00,1.00] },
+};
+const OC703_4IN = OC703_BY_DEPTH[4]; // backward-compat alias
+const _BB_PROFILES_ALPHA = ['res_treated','treated'];
+const _BARE_EQUIV_SHELL  = { res_treated:'res_drywall', treated:'plasterboard' };
+
 function baselineAlpha(f) {
+  // Dynamic coverage for part-treated profiles
+  if (_BB_PROFILES_ALPHA.includes(state.construction)) {
+    const shellKey  = _BARE_EQUIV_SHELL[state.construction] || 'res_drywall';
+    const shellProf = CONSTRUCTION_PROFILES[shellKey];
+    const cov       = Math.max(0, Math.min(0.95, state.coverage || 0.30));
+    const aShell    = interpAlphaLog(f, shellProf.freqs, shellProf.alpha);
+    const panelData  = OC703_BY_DEPTH[state.panelDepth || 4] || OC703_BY_DEPTH[4];
+    const aPanel    = interpAlphaLog(f, panelData.freqs, panelData.alpha);
+    return (1 - cov) * aShell + cov * aPanel;
+  }
   const profile = CONSTRUCTION_PROFILES[state.construction] || CONSTRUCTION_PROFILES.plasterboard;
   const freqs = profile.freqs;
   const alphas = profile.alpha;
@@ -3263,8 +3320,10 @@ let state = {
   avaaCount: 2,
   avaaPositions: ['FL','FR'],
   n40: 4, pos40: ['FL','FR','RL','RR'], q40: 1.0, f40: 35,
-  n55: 0, pos55: [],                   q55: 0.9, f55: 51,
-  n70: 0, pos70: [],                   q70: 1.5, f70: 61,
+  n55: 0, pos55: [],                   q55: 1.0, f55: 35,
+  coverage: 0.30,   // broadband panel surface coverage fraction (treated profiles)
+  panelDepth: 4,    // panel depth in inches: 2, 4, or 6
+  n70: 0, pos70: [],                   q70: 1.0, f70: 35,
   highlightMode: null,
   construction: 'res_drywall',
   // REW import state
@@ -3826,9 +3885,9 @@ function renderRT60() {
   const alphaBaseY  = pad.t + plotH;
 
   const chambers = [
-    { f0: state.f40, Q: state.q40, peak: alphaPeakRigorous(state.q40, state.f40, pistonMass(state.f40)), col: 'rgba(76,175,80,',  label: 'α Nodal 40' },
-    { f0: state.f55, Q: state.q55, peak: alphaPeakRigorous(state.q55, state.f55, pistonMass(state.f55)), col: 'rgba(0,229,255,',  label: 'α Nodal 50' },
-    { f0: state.f70, Q: state.q70, peak: alphaPeakRigorous(state.q70, state.f70, pistonMass(state.f70)), col: 'rgba(255,107,53,', label: 'α Nodal 60' },
+    { f0: state.f40, Q: state.q40, peak: alphaPeakRigorous(state.q40, state.f40, pistonMass(state.f40)), col: 'rgba(76,175,80,',  label: 'α Nodal 30' },
+    { f0: state.f55, Q: state.q55, peak: alphaPeakRigorous(state.q55, state.f55, pistonMass(state.f55)), col: 'rgba(0,229,255,',  label: 'α Custom Unit 2' },
+    { f0: state.f70, Q: state.q70, peak: alphaPeakRigorous(state.q70, state.f70, pistonMass(state.f70)), col: 'rgba(255,107,53,', label: 'α Custom Unit 3' },
   ];
 
   chambers.forEach(ch => {
@@ -4590,8 +4649,8 @@ function renderDecaySummary() {
   //
   // Whether a broadband-panel construction profile is active — only these
   // profiles produce meaningful alpha above 80 Hz from panels.
-  const BB_PROFILES = ['res_treated', 'treated'];
-  const hasBroadband = BB_PROFILES.includes(state.construction);
+  const _BB_PROFILES = ['res_treated', 'treated'];
+  const hasBroadband = _BB_PROFILES.includes(state.construction);
 
   // Bare-shell alpha reference: use the equivalent non-panel profile so we can
   // isolate how much of T60 Pre reduction is due to broadband panels alone.
@@ -4873,6 +4932,24 @@ function buildExportPayload() {
     volume_m3:      Math.round(ROOM_VOLUME * 100) / 100,
     surface_area_m2: Math.round(ROOM_SA * 100) / 100,
     construction:   state.construction,
+    coverage_pct:   _BB_PROFILES_ALPHA.includes(state.construction) ? Math.round(state.coverage*100) : null,
+    panel_depth_in: _BB_PROFILES_ALPHA.includes(state.construction) ? (state.panelDepth||4) : null,
+    broadband_alpha_table: (() => {
+      if (!_BB_PROFILES_ALPHA.includes(state.construction)) return null;
+      const shellKey  = _BARE_EQUIV_SHELL[state.construction] || 'res_drywall';
+      const shellProf = CONSTRUCTION_PROFILES[shellKey];
+      const panelData = OC703_BY_DEPTH[state.panelDepth||4] || OC703_BY_DEPTH[4];
+      const cov       = Math.max(0, Math.min(0.95, state.coverage||0.30));
+      const freqs     = [31.5,50,63,80,100,125];
+      return freqs.map(f => ({
+        f_hz:       f,
+        alpha_shell:  Math.round(interpAlphaLog(f,shellProf.freqs,shellProf.alpha)*1000)/1000,
+        alpha_panel:  Math.round(interpAlphaLog(f,panelData.freqs,panelData.alpha)*1000)/1000,
+        alpha_eff:    Math.round(baselineAlpha(f)*1000)/1000,
+        t60_shell_s:  Math.round(LN10_6/(2*Math.PI*f * 343*interpAlphaLog(f,shellProf.freqs,shellProf.alpha)*ROOM_SA/(2*Math.PI*f*4*ROOM_VOLUME))*100)/100,
+        t60_eff_s:    Math.round(LN10_6/(2*Math.PI*f * 343*baselineAlpha(f)*ROOM_SA/(2*Math.PI*f*4*ROOM_VOLUME))*100)/100,
+      }));
+    })(),
   };
 
   // ── Calibration ───────────────────────────────────────────────────────────
@@ -4892,9 +4969,9 @@ function buildExportPayload() {
 
   // ── Units ─────────────────────────────────────────────────────────────────
   const unitGroups = [
-    { product: 'Nodal 40', f0: state.f40, Q: state.q40, pos: state.pos40 },
-    { product: 'Nodal 50', f0: state.f55, Q: state.q55, pos: state.pos55 },
-    { product: 'Nodal 60', f0: state.f70, Q: state.q70, pos: state.pos70 },
+    { product: 'Nodal 30', f0: state.f40, Q: state.q40, pos: state.pos40 },
+    { product: 'Custom Unit 2', f0: state.f55, Q: state.q55, pos: state.pos55 },
+    { product: 'Custom Unit 3', f0: state.f70, Q: state.q70, pos: state.pos70 },
   ];
 
   const units = unitGroups
@@ -4991,7 +5068,7 @@ function buildExportPayload() {
 
   return {
     schema_version:   1,
-    model_version:    'r60',
+    model_version:    'r61',
     exported_at:      now,
     room,
     calibration,
@@ -5094,17 +5171,131 @@ function exportPDF() {
 
   // ── REW summary ─────────────────────────────────────────────────────────
   // Built with string concatenation to avoid nested template literal issues.
+  function buildRecommendationSection(p) {
+    if (!p.modes || !p.modes.length) return '';
+    const target = 0.55;
+    const axial  = p.modes.filter(m => m.axis === 'X' || m.axis === 'Y' || m.axis === 'Z');
+    if (!axial.length) return '';
+    const totalUnits = p.units.reduce((s, u) => s + (u.total_units||0), 0);
+    const atTarget   = axial.filter(m => m.t60_post_s != null && m.t60_post_s <= target).length;
+    const needsWork  = axial.filter(m => m.t60_post_s != null && m.t60_post_s > target);
+
+    var out = '<h2>Treatment Recommendation Summary</h2>';
+    out += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">';
+
+    // Summary cells
+    const allGood = atTarget === axial.length && totalUnits > 0;
+    const summaryBg = allGood ? '#E8F5E9' : '#FFF8E1';
+    const summaryBorder = allGood ? '#4caf50' : '#ff9800';
+    out += '<div style="background:' + summaryBg + ';border:1px solid ' + summaryBorder + ';padding:10px 12px;">' +
+           '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:#555;margin-bottom:4px;">Modes at target</div>' +
+           '<div style="font-size:22px;font-weight:bold;color:' + (allGood?'#2e7d32':'#e65100') + '">' + atTarget + ' / ' + axial.length + '</div>' +
+           '</div>';
+    out += '<div style="background:#F2F5F7;border:1px solid #C0D4E4;padding:10px 12px;">' +
+           '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:#555;margin-bottom:4px;">Units placed</div>' +
+           '<div style="font-size:22px;font-weight:bold;color:#0D1F2D">' + totalUnits + '</div>' +
+           '</div>';
+
+    // Worst remaining mode
+    const worst = axial.reduce((a,b) => ((b.t60_post_s||b.t60_pre_s)||(b.t60_pre_s)) > ((a.t60_post_s||a.t60_pre_s)||(a.t60_pre_s)) ? b : a);
+    const worstT = worst.t60_post_s || worst.t60_pre_s;
+    out += '<div style="background:#F2F5F7;border:1px solid #C0D4E4;padding:10px 12px;">' +
+           '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:#555;margin-bottom:4px;">Highest T₆₀</div>' +
+           '<div style="font-size:22px;font-weight:bold;color:' + (worstT>target?'#e65100':'#2e7d32') + '">' + (worstT?worstT.toFixed(2):'—') + ' s</div>' +
+           '<div style="font-size:10px;color:#555;">' + (worst.label||worst.f_hz+'Hz') + '</div>' +
+           '</div>';
+    out += '</div>';
+
+    // Per-mode recommendation table
+    if (needsWork.length > 0) {
+      out += '<table><tr><th>Mode</th><th>Freq</th><th>T₆₀ Pre</th><th>T₆₀ Post</th><th>Gap to target</th><th>Status</th></tr>';
+      axial.forEach(function(m) {
+        const t_pre  = m.t60_pre_s;
+        const t_post = m.t60_post_s;
+        const t_show = t_post != null ? t_post : t_pre;
+        const gap    = t_post != null ? (t_post - target) : null;
+        const atT    = t_post != null && t_post <= target;
+        const statusText = atT ? '✓ At target' : (gap != null ? '+' + gap.toFixed(2) + 's above target' : 'No units placed');
+        const statusCol  = atT ? '#2e7d32' : '#e65100';
+        out += '<tr>' +
+          '<td>' + (m.label||'') + '</td>' +
+          '<td>' + m.f_hz + ' Hz</td>' +
+          '<td style="color:#e65100">' + (t_pre!=null?(+t_pre).toFixed(2)+'s':'—') + '</td>' +
+          '<td style="color:' + (atT?'#2e7d32':'#e65100') + ';font-weight:bold">' + (t_post!=null?(+t_post).toFixed(2)+'s':'—') + '</td>' +
+          '<td style="color:' + (atT?'#2e7d32':'#ff6b35') + '">' + (gap!=null?(atT?'—':'+'+gap.toFixed(3)+'s'):'—') + '</td>' +
+          '<td style="color:' + statusCol + ';font-weight:bold">' + statusText + '</td>' +
+          '</tr>';
+      });
+      out += '</table>';
+    } else if (totalUnits > 0) {
+      out += '<div style="background:#E8F5E9;border:1px solid #4caf50;padding:10px 14px;font-size:12px;color:#2e7d32;">' +
+             '✓ All axial modes within target T₆₀ (' + target + 's). Configuration complete.' +
+             '</div>';
+    }
+    return out;
+  }
+
+  function buildBroadbandSection(p) {
+    if (!p.room.broadband_alpha_table || !p.room.broadband_alpha_table.length) return '';
+    const cov   = p.room.coverage_pct || 30;
+    const depth = p.room.panel_depth_in || 4;
+    const constLabels = { res_drywall:'Residential drywall', plasterboard:'Sealed plasterboard',
+                          res_treated:'Residential + OC703', treated:'Sealed + OC703', concrete:'Concrete' };
+    const shellLabel = constLabels[p.room.construction.replace('_treated','_drywall').replace('treated','plasterboard')] || p.room.construction;
+
+    var out = '<h2>Broadband Panel Contribution (' + cov + '% coverage · ' + depth + '″ OC703)</h2>';
+    out += '<p style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.6;">' +
+      'Effective room alpha αₛₚₛ = (1 − ' + (cov/100).toFixed(2) + ') × αₛₕ₞ₗₗ + ' + (cov/100).toFixed(2) + ' × αₚₐₙ₞ₗ &nbsp;·&nbsp; ' +
+      'ISO 354 OC703 ' + depth + '″ published data &nbsp;·&nbsp; Sabine-weighted boundary damping' +
+      '</p>';
+
+    out += '<table><tr>' +
+      '<th>Frequency</th>' +
+      '<th>α shell</th>' +
+      '<th>α OC703 ' + depth + '″</th>' +
+      '<th>α effective (' + cov + '% mix)</th>' +
+      '<th>T₆₀ shell (s)</th>' +
+      '<th>T₆₀ effective (s)</th>' +
+      '<th>Panel improvement</th>' +
+      '</tr>';
+
+    p.room.broadband_alpha_table.forEach(function(row) {
+      const t_improve = row.t60_shell_s - row.t60_eff_s;
+      const pct_improve = row.t60_shell_s > 0 ? Math.round(t_improve/row.t60_shell_s*100) : 0;
+      const impCol = pct_improve >= 30 ? '#2e7d32' : pct_improve >= 10 ? '#e65100' : '#777';
+      const neglig = pct_improve < 5;
+      out += '<tr>' +
+        '<td><strong>' + row.f_hz + ' Hz</strong></td>' +
+        '<td style="color:#555">' + row.alpha_shell.toFixed(3) + '</td>' +
+        '<td style="color:#1565c0">' + row.alpha_panel.toFixed(3) + '</td>' +
+        '<td style="color:#0D1F2D;font-weight:bold">' + row.alpha_eff.toFixed(3) + '</td>' +
+        '<td style="color:#e65100">' + row.t60_shell_s.toFixed(2) + 's</td>' +
+        '<td style="color:' + (row.t60_eff_s <= 0.55 ? '#2e7d32' : '#e65100') + ';font-weight:bold">' + row.t60_eff_s.toFixed(2) + 's</td>' +
+        '<td style="color:' + impCol + '">' + (neglig ? '<span style=\"color:#aaa\">negligible</span>' : '−' + t_improve.toFixed(2) + 's (' + pct_improve + '%)') + '</td>' +
+        '</tr>';
+    });
+    out += '</table>';
+    out += '<div style="font-size:10px;color:#777;margin-top:6px;line-height:1.7;">' +
+      'α shell = bare room construction absorption &nbsp;·&nbsp; ' +
+      'α OC703 = published absorption coefficient for ' + depth + '″ panel &nbsp;·&nbsp; ' +
+      'α effective = area-weighted mix at ' + cov + '% coverage &nbsp;·&nbsp; ' +
+      'T₆₀ computed from Sabine-weighted boundary damping on full room SA (' + p.room.surface_area_m2 + ' m²)' +
+      '</div>';
+    return out;
+  }
+
   function buildREWSection() {
     if (!p.rew_untreated && !p.rew_treated) {
       return '<p style="color:#777;font-style:italic;">No REW data imported for this session.</p>';
     }
-    var out = '<h2>REW Measured T30 Import</h2>';
+    var out = '<h2>REW Waterfall T60M Measurement</h2>';
     if (p.rew_untreated) {
       out += '<table>' +
         '<tr><th colspan="2">Untreated measurement</th></tr>' +
         '<tr><td>Label</td><td>' + (p.rew_untreated.label || '\u2014') + '</td></tr>' +
         '<tr><td>Date</td><td>' + (p.rew_untreated.date || '\u2014') + '</td></tr>' +
-        '<tr><td>Data points</td><td>' + p.rew_untreated.n_points + ' \u00B7 ' + p.rew_untreated.f_range + '</td></tr>';
+        '<tr><td>Data points</td><td>' + p.rew_untreated.n_points + ' \u00B7 ' + p.rew_untreated.f_range + '</td></tr>' +
+      (p.rew_untreated.method ? '<tr><td>Method</td><td>' + p.rew_untreated.method.replace(/_/g,' ') + '</td></tr>' : '');
       if (p.rew_untreated.g_corner_mae != null) {
         const qcol = p.rew_untreated.g_corner_quality === 'good'   ? '#4caf50'
                    : p.rew_untreated.g_corner_quality === 'moderate' ? '#ff9800' : '#f44336';
@@ -5168,12 +5359,16 @@ function exportPDF() {
       '<div class="cover">\n' +
       '<div style="font-size:11px;color:#3D5166;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">GroundControl \u00B7 Nodal Series</div>\n' +
       '<h1>Room Acoustic Treatment Report</h1>\n' +
-      '<div class="sub">Generated ' + dateStr + ' \u00B7 Model r53 \u00B7 GroundControl Acoustic Modal Simulation</div>\n' +
+      '<div class="sub">Generated ' + dateStr + ' \u00B7 Model r61 \u00B7 GroundControl Acoustic Modal Simulation</div>\n' +
       '<div class="meta-grid">' +
         '<div class="meta-cell"><div class="lbl">Room dimensions</div><div class="val">' + p.room.L_m + ' \u00D7 ' + p.room.W_m + ' \u00D7 ' + p.room.H_m + ' m</div><div class="sub">' + Math.round(p.room.L_m*3.281*10)/10 + ' \u00D7 ' + Math.round(p.room.W_m*3.281*10)/10 + ' \u00D7 ' + Math.round(p.room.H_m*3.281*10)/10 + ' ft</div></div>' +
         '<div class="meta-cell"><div class="lbl">Room volume</div><div class="val">' + p.room.volume_m3 + ' m\u00B3</div><div class="sub">' + Math.round(p.room.volume_m3*35.315) + ' ft\u00B3</div></div>' +
-        '<div class="meta-cell"><div class="lbl">Construction</div><div class="val" style="font-size:12px">' + p.room.construction.replace(/_/g,' ') + '</div></div>' +
-        '<div class="meta-cell"><div class="lbl">G_corner</div><div class="val">' + p.calibration.g_corner + '</div><div class="sub">' + (p.calibration.source === 'rew_import' ? '\u2713 REW calibrated' : 'Manual / default') + '</div></div>' +
+        '<div class="meta-cell"><div class="lbl">Construction</div>' +
+          '<div class="val" style="font-size:11px">' + p.room.construction.replace(/_/g,' ') + '</div>' +
+          (p.coverage_pct != null ? '<div class="sub">' + p.coverage_pct + '% coverage \u00B7 ' + (p.panel_depth_in||4) + '\u2033 panels</div>' : '') +
+        '</div>' +
+        '<div class="meta-cell"><div class="lbl">G_corner</div><div class="val">' + p.calibration.g_corner + '</div>' +
+        '<div class="sub">' + (p.calibration.g_corner_calibrated ? '\u2713 REW calibrated' : 'Default') + '</div></div>' +
       '</div>\n' +
       '<div class="meta-grid">' +
         '<div class="meta-cell"><div class="lbl">Sub-fundamental floor</div><div class="val">' + (p.f1_min_hz || '\u2014') + ' Hz</div></div>' +
@@ -5185,9 +5380,10 @@ function exportPDF() {
 
       '<h2>Unit Configuration</h2>\n' + unitTableHTML + '\n\n' +
 
+      (p.room.broadband_alpha_table ? buildBroadbandSection(p) + '\n\n' : '') +
       '<h2>Per-Mode T\u2086\u2080 Analysis</h2>\n' +
-      '<table><tr><th>Frequency</th><th>Mode</th><th>T\u2086\u2080 Pre (model)</th><th>T\u2086\u2080 Post (model)</th>' +
-      '<th>REW Untreated</th><th>REW Treated</th><th>Residual</th></tr>' +
+      '<table><tr><th>Frequency</th><th>Mode</th><th>T₆₀ Pre (model)</th><th>T₆₀ Post (model)</th>' +
+      '<th>REW T60M Before</th><th>REW T60M After</th><th>Residual</th></tr>' +
       modeTableHTML + '</table>\n' +
       '<div style="font-size:10px;color:#777;margin-top:4px;">' +
       'T\u2086\u2080 zone: <span style="color:#4caf50">\u25A0 0.25\u20130.55 s (target)</span> &nbsp; ' +
@@ -5196,15 +5392,17 @@ function exportPDF() {
       '<span style="color:#f44336">\u25A0 &lt;0.25 s (over-damped)</span>' +
       '&nbsp;\u00B7&nbsp; Residual = (model \u2212 measured) / measured \u00D7 100</div>\n\n' +
 
+      buildRecommendationSection(p) + '\n\n' +
       rewSection + '\n\n' +
 
-      '<div class="disclaimer">All predictions are generated by the GroundControl Acoustic Modal Simulation (r53) ' +
-      'and are indicative only. Validate all results with in-situ REW T20/T30 measurements before and after ' +
-      'installation. Predictions are not for engineering certification. Model basis: Mechel impedance-match ' +
-      '\u00B7 Eyring RT\u2086\u2080 \u00B7 Kuttruff modal loss budget \u00B7 axial modes only (20\u2013150 Hz).</div>\n\n' +
+      '<div class="disclaimer">All predictions are generated by the GroundControl Acoustic Modal Simulation (r61) and are indicative only. ' +
+      'Validate all results with REW waterfall T60M measurements before and after installation. ' +
+      'T60 Pre/Post predictions use the measured baseline when a waterfall file is loaded. ' +
+      'Not for engineering certification without empirical validation. ' +
+      'Model basis: modal loss-budget \u00B7 Sabine-weighted boundary damping \u00B7 axial modes 20\u2013150 Hz.</div>\n\n' +
 
-      '<div class="footer"><span>GroundControl Nodal Series \u00B7 groundcontrol.audio</span>' +
-      '<span>Model r53 \u00B7 ' + p.exported_at.slice(0,10) + '</span></div>\n' +
+      '<div class="footer"><span>GroundControl Nodal Series \u00B7 Integer Audio \u00B7 integeraudio.com</span>' +
+      '<span>Model r61 \u00B7 ' + p.exported_at.slice(0,10) + '</span></div>\n' +
       '</body>\n</html>';
   }
   const html = buildHTML();
@@ -5256,7 +5454,7 @@ const _origRewLoadFile = typeof rewLoadFile !== 'undefined' ? rewLoadFile : null
 // ── Parser ────────────────────────────────────────────────────────────────────
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// REW WATERFALL T60M ENGINE — r60
+// REW WATERFALL T60M ENGINE — r61
 // Computes T60M at mode frequencies from REW waterfall exports (.txt)
 // using the STFT Nelder-Mead fitting method (same as rew_t60m_v9).
 // Falls back to the old RT-Parameters parseREWText path if the file is not
@@ -6038,6 +6236,22 @@ function maxUnitsAtPosition(posId) {
   return Math.max(1, Math.min(4, Math.floor(ROOM.H / 0.762)));
 }
 
+function toggleCustomUnit() {
+  const panel = document.getElementById('customUnitPanel');
+  const btn   = document.getElementById('customUnitToggle');
+  if (!panel || !btn) return;
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  btn.textContent = (open ? '▼' : '▶') + ' ADVANCED — Custom Unit 3';
+}
+function toggleCustomUnit2() {
+  const panel = document.getElementById('customUnit2Panel');
+  const btn   = document.getElementById('customUnit2Toggle');
+  if (!panel || !btn) return;
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  btn.textContent = (open ? '▼' : '▶') + ' ADVANCED — Custom Unit 2';
+}
 function togglePos(posArray, id) {
   // Count current instances of this position ID
   const current = posArray.filter(x => x === id).length;
@@ -6382,7 +6596,7 @@ document.getElementById('q70Slider').addEventListener('input', e => {
   updateTuningDisplay(); render();
 });
 
-// Nodal 40
+// Nodal 30
 document.getElementById('units40').addEventListener('input', e => {
   state.n40 = parseInt(e.target.value);
   document.getElementById('units40Val').textContent = e.target.value;
@@ -6559,8 +6773,31 @@ document.getElementById('memHSlider').addEventListener('input', e => {
   render();
 });
 
+function onCoverageChange(val) {
+  state.coverage = parseFloat(val) / 100;
+  document.getElementById('coverageVal').textContent = val + '%';
+  render();
+}
+function onPanelDepthChange(val) {
+  state.panelDepth = parseInt(val);
+  render();
+}
+
+function updateCoverageVisibility() {
+  const BB_PROFILES = ['res_treated','treated'];
+  const show = BB_PROFILES.includes(state.construction);
+  const row = document.getElementById('coverageRow');
+  if (row) row.style.display = show ? 'block' : 'none';
+  // Sync depth selector to state
+  const sel = document.getElementById('panelDepthSelect');
+  if (sel && state.panelDepth) sel.value = String(state.panelDepth);
+}
+
+updateCoverageVisibility();
+
 document.getElementById('constructionSelect').addEventListener('change', e => {
   state.construction = e.target.value;
+  updateCoverageVisibility();
   updateConstructionNote();
   render();
 });
@@ -6652,173 +6889,126 @@ function renderTreatmentProgress() {
   const el = document.getElementById('treatmentProgressTable');
   if (!el) return;
 
-  const target = getT60Target();
-  const axialModes = MODES.filter(m => ['X','Y','Z'].includes(m.axis) && !m.tangential && !m._kind);
-  if (!axialModes.length) { el.innerHTML = ''; return; }
+  const target  = getT60Target();
+  const axial   = MODES.filter(m => ['X','Y','Z'].includes(m.axis) && !m.tangential && !m._kind);
+  if (!axial.length) { el.innerHTML = ''; return; }
 
-  // Current positions
   const p40 = state.pos40, p55 = state.pos55, p70 = state.pos70;
+  const hasUnits = p40.length + p55.length + p70.length > 0;
 
-  // Best unit helper: returns label and α for the unit with highest α at frequency f
-  function bestUnit(f) {
-    const a40 = alpha40(f), a55 = alpha55(f), a70 = alpha70(f);
-    const units = [
-      { label: `N40 ${state.f40}Hz`, a: a40, col: 'var(--accent)' },
-      { label: `N50 ${state.f55}Hz`, a: a55, col: '#ba68c8' },
-    ];
-    // Only include Custom unit in comparison if units are actually placed there
-    if (p70.length > 0) units.push({ label: `Cst ${state.f70}Hz`, a: a70, col: '#4caf50' });
-    units.sort((a, b) => b.a - a.a);
-    return units[0];
-  }
-
-  // Forward projection: estimate T60 with N additional units of the best type at corners
-  function project(mode, extraN, bestIdx) {
-    // bestIdx: 0=N40,1=N50,2=custom — add to corners not already filled
-    const allCorners = ['FL','FR','RL','RR'];
-    const existing40 = [...p40], existing55 = [...p55], existing70 = [...p70];
-
-    // Count current units at corners to find available slots
-    const cornerCount = {};
-    allCorners.forEach(c => {
-      cornerCount[c] = p40.filter(x=>x===c).length + p55.filter(x=>x===c).length + p70.filter(x=>x===c).length;
-    });
-
-    // Add extra units spread across corners (prefer corners with fewest units)
-    const sorted = allCorners.slice().sort((a,b) => cornerCount[a] - cornerCount[b]);
-    const add40 = [...existing40], add55 = [...existing55], add70 = [...existing70];
-    const a40f = alpha40(mode.f), a55f = alpha55(mode.f), a70f = alpha70(mode.f);
-    const bestAlpha = Math.max(a40f, a55f, a70f);
-
-    for (let i = 0; i < extraN; i++) {
-      const corner = sorted[i % sorted.length];
-      if (bestAlpha === a40f) add40.push(corner);
-      else if (bestAlpha === a55f) add55.push(corner);
-      else add70.push(corner);
-    }
-    return modalT60(mode, add40, add55, add70);
-  }
-
-  // Saturation check: uses the model's own δ_tda cap.
-  // atFloor = true when δ_tda >= SATURATION_RATIO_MAX × δ_boundary —
-  // the hard cap is active and T60 cannot improve further regardless of unit count.
-  function isSaturated(mode) {
-    const full = modalT60full(mode, p40, p55, p70);
-    return full.atFloor === true;
-  }
-
-  // T60 floor for this mode (minimum achievable with any number of TDA units)
-  function t60FloorFor(mode) {
-    return modalT60full(mode, p40, p55, p70).t60Floor;
-  }
-
-  let html = `
-  <div style="display:grid;grid-template-columns:44px 46px 46px 1fr;gap:3px 8px;align-items:center;padding:0 0 5px;border-bottom:1px solid rgba(255,255,255,0.10);margin-bottom:5px;">
-    <span style="color:var(--text-dim);font-size:8px;text-transform:uppercase;letter-spacing:0.08em;">Mode</span>
-    <span style="color:var(--text-dim);font-size:8px;text-transform:uppercase;letter-spacing:0.08em;">Pre T₆₀</span>
-    <span style="color:var(--text-dim);font-size:8px;text-transform:uppercase;letter-spacing:0.08em;">Post T₆₀</span>
-    <span style="color:var(--text-dim);font-size:8px;text-transform:uppercase;letter-spacing:0.08em;">Status &amp; next step</span>
-  </div>`;
-
-  axialModes.forEach(mode => {
+  // ── Per-mode status ───────────────────────────────────────────────────────
+  const modeStats = axial.map(mode => {
     const t_pre  = modalT60(mode, [], [], []);
-    const t_post = modalT60(mode, p40, p55, p70);
-    const hasUnits = p40.length + p55.length + p70.length > 0;
-    const isHighlighted = state.highlightMode === mode;
+    const t_post = hasUnits ? modalT60(mode, p40, p55, p70) : null;
+    const full   = hasUnits ? modalT60full(mode, p40, p55, p70) : null;
+    const atFloor = full ? full.atFloor : false;
+    const t60Floor = full ? full.t60Floor : null;
+    const ratio    = full ? (full.ratio || 0) : 0;
+    return { mode, t_pre, t_post, atFloor, t60Floor, ratio };
+  });
 
-    // Status
-    const atTarget   = t_post <= target;
-    const nearTarget = t_post <= target * 1.25;
-    const statusCol  = atTarget ? '#4caf50' : nearTarget ? '#ff9800' : '#f44336';
-    const statusDot  = atTarget ? '●' : nearTarget ? '◑' : '○';
-    const statusText = atTarget ? `Within target (${target.toFixed(2)}s)` : `${(t_post - target).toFixed(2)}s above target`;
+  // ── Projection: how many N30 corner units needed to hit target at each mode ─
+  function unitsToTarget(mode) {
+    // Try 1-16 units distributed across 4 corners
+    for (let total = 0; total <= 16; total++) {
+      const perCorner = Math.ceil(total / 4);
+      const corners = ['FL','FR','RL','RR'].slice(0, Math.min(total, 4));
+      const testPos = [];
+      for (let i = 0; i < total; i++) testPos.push(['FL','FR','RL','RR'][i % 4]);
+      const t = modalT60(mode, testPos, [], []);
+      if (t <= target) return { total, perCorner: Math.ceil(total/4) };
+    }
+    return null; // saturation floor prevents target
+  }
 
-    // Best unit
-    const best = bestUnit(mode.f);
-    const matchPct = Math.round(best.a / alphaPeakRigorous(
-      best.label.startsWith('N40') ? state.q40 : best.label.startsWith('N50') ? state.q55 : state.q70,
-      best.label.startsWith('N40') ? state.f40 : best.label.startsWith('N50') ? state.f55 : state.f70,
-      pistonMass(best.label.startsWith('N40') ? state.f40 : best.label.startsWith('N50') ? state.f55 : state.f70)
-    ) * 100);
-    const matchCol = matchPct > 70 ? '#4caf50' : matchPct > 30 ? '#ff9800' : '#f44336';
+  // ── Summary stats ─────────────────────────────────────────────────────────
+  const atTarget  = modeStats.filter(s => s.t_post !== null && s.t_post <= target).length;
+  const total     = modeStats.length;
+  const worst     = modeStats.reduce((a,b) => (b.t_post||b.t_pre) > (a.t_post||a.t_pre) ? b : a);
+  const totalUnits = p40.length + p55.length + p70.length;
 
-    // Projections (only if not at target)
-    let projHtml = '';
-    if (!atTarget && hasUnits) {
-      const sat = isSaturated(mode);
-      if (sat) {
-        const floor = t60FloorFor(mode).toFixed(2);
-        projHtml = `<div style="color:#ff9800;font-size:9px;margin-top:3px;line-height:1.6;">⚠ Absorption cap reached — T₆₀ floor for this mode is <b style="color:#ff9800;">${floor}s</b>. Additional TDA units cannot reduce it further. The floor is set by the room's boundary absorption (construction profile). To go lower: improve room construction, change construction profile, or accept this limit.</div>`;
+  // ── Build HTML ────────────────────────────────────────────────────────────
+  let html = '';
+
+  // Summary line
+  if (hasUnits) {
+    const allGood = atTarget === total;
+    const summaryCol = allGood ? '#4ade80' : atTarget > 0 ? '#facc15' : '#f87171';
+    html += `<div style="font-family:var(--mono);font-size:11px;margin-bottom:10px;
+                          padding:8px 10px;border-radius:4px;
+                          background:${allGood?'rgba(74,222,128,0.06)':'rgba(255,255,255,0.03)'};
+                          border:1px solid ${allGood?'rgba(74,222,128,0.2)':'rgba(255,255,255,0.06)'};">
+      <span style="color:${summaryCol};font-weight:700;">${atTarget} of ${total} modes at target</span>
+      &nbsp;·&nbsp; <span style="color:var(--text-dim);">${totalUnits} unit${totalUnits!==1?'s':''} placed</span>
+    </div>`;
+  }
+
+  // Per-mode rows
+  html += `<div style="font-family:var(--mono);font-size:10px;">`;
+
+  modeStats.forEach(({ mode, t_pre, t_post, atFloor, t60Floor, ratio }) => {
+    const t_show  = t_post !== null ? t_post : t_pre;
+    const isGood  = t_post !== null && t_post <= target;
+    const isNear  = t_post !== null && t_post <= target * 1.2 && !isGood;
+    const stateCol = isGood ? '#4ade80' : isNear ? '#facc15' : (t_post !== null ? '#f87171' : 'var(--text-dim)');
+    const dot      = isGood ? '●' : isNear ? '◑' : '○';
+
+    // Recommendation text
+    let recHtml = '';
+    if (!hasUnits) {
+      const proj = unitsToTarget(mode);
+      if (proj) {
+        recHtml = `<span style="color:var(--text-dim);">→ ${proj.total} unit${proj.total!==1?'s':''} at corners reaches target</span>`;
       } else {
-        const t_plus2 = project(mode, 2, 0);
-        const t_plus4 = project(mode, 4, 0);
-        const wouldHit2 = t_plus2 <= target;
-        const wouldHit4 = t_plus4 <= target;
-        projHtml = `<div style="font-size:9px;color:var(--text-dim);margin-top:3px;line-height:1.8;">
-          <span style="color:var(--text-dim);">+2 ${best.label}:</span>
-          <span style="color:${wouldHit2?'#4caf50':'#ff9800'};margin-left:4px;font-weight:${wouldHit2?'700':'400'};">${t_plus2.toFixed(2)}s${wouldHit2?' ✓ reaches target':''}</span>
-          &nbsp;&nbsp;
-          <span style="color:var(--text-dim);">+4:</span>
-          <span style="color:${wouldHit4?'#4caf50':'#ff9800'};margin-left:4px;font-weight:${wouldHit4?'700':'400'};">${t_plus4.toFixed(2)}s${wouldHit4?' ✓ reaches target':''}</span>
-        </div>`;
+        recHtml = `<span style="color:#facc15;">→ floor ${t60Floor?t60Floor.toFixed(2)+'s':'?'} — add broadband panels</span>`;
       }
-    } else if (!atTarget && !hasUnits) {
-      const t_plus4 = project(mode, 4, 0);
-      const t_plus8 = project(mode, 8, 0);
-      projHtml = `<div style="font-size:9px;color:var(--text-dim);margin-top:3px;line-height:1.8;">
-        <span style="color:var(--text-dim);">4 ${best.label}:</span>
-        <span style="color:${t_plus4<=target?'#4caf50':'#ff9800'};margin-left:4px;">${t_plus4.toFixed(2)}s</span>
-        &nbsp;&nbsp;
-        <span style="color:var(--text-dim);">8 ${best.label}:</span>
-        <span style="color:${t_plus8<=target?'#4caf50':'#ff9800'};margin-left:4px;">${t_plus8.toFixed(2)}s</span>
-      </div>`;
+    } else if (isGood) {
+      recHtml = `<span style="color:#4ade80;">✓ target met</span>`;
+    } else if (atFloor) {
+      recHtml = `<span style="color:#facc15;">⚠ absorption cap — floor ${t60Floor?t60Floor.toFixed(2)+'s':'?'}</span>`;
+    } else {
+      // Project how many more units needed
+      const allCorners = ['FL','FR','RL','RR'];
+      let found = null;
+      for (let extra = 1; extra <= 12; extra++) {
+        const testPos = [...p40];
+        for (let i = 0; i < extra; i++) testPos.push(allCorners[i % 4]);
+        const t = modalT60(mode, testPos, p55, p70);
+        if (t <= target) { found = extra; break; }
+      }
+      if (found) {
+        recHtml = `<span style="color:var(--accent);">→ +${found} unit${found!==1?'s':''} to target</span>`;
+      } else {
+        recHtml = `<span style="color:#facc15;">→ stacking beyond 12 needed</span>`;
+      }
     }
 
-    const rowBg = isHighlighted ? 'background:rgba(0,229,255,0.04);border-radius:3px;' : '';
-    const slopedTag = mode.sloped ? `<span style="color:#ff9800;font-size:7px;vertical-align:super;">~</span>` : '';
-
-    html += `
-    <div style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.05);${rowBg}">
-      <div style="display:grid;grid-template-columns:44px 46px 46px 1fr;gap:3px 8px;align-items:baseline;">
-        <span style="color:${isHighlighted?'var(--accent)':'var(--text-dim)'};font-size:10px;font-weight:${isHighlighted?'700':'400'};">${mode.label}${slopedTag}<br><span style="font-size:8px;color:#3a4a5a;">${mode.f.toFixed(1)}Hz</span></span>
-        <span style="color:#7a8fa0;font-size:10px;">${t_pre.toFixed(2)}s</span>
-        <span style="color:${statusCol};font-size:10px;font-weight:600;">${t_post.toFixed(2)}s</span>
-        <div>
-          <div style="font-size:9px;"><span style="color:${statusCol};">${statusDot} ${statusText}</span></div>
-          <div style="font-size:9px;color:var(--text-dim);margin-top:2px;">
-            Best unit: <span style="color:${best.col};font-weight:600;">${best.label}</span>
-            <span style="color:${matchCol};"> ${matchPct}% match</span>
-            <span style="color:#2a3a4a;"> (α=${best.a.toFixed(3)})</span>
-          </div>
-          ${projHtml}
-        </div>
-      </div>
+    html += `<div style="display:grid;grid-template-columns:52px 50px 50px 1fr;
+                          align-items:center;gap:4px 8px;padding:5px 0;
+                          border-bottom:1px solid rgba(255,255,255,0.05);">
+      <span style="color:var(--text-dim);">${mode.label||mode.f.toFixed(1)+'Hz'}</span>
+      <span style="color:var(--text-dim);font-size:9px;">${t_pre.toFixed(2)}s</span>
+      <span style="color:${stateCol};font-weight:${isGood?'700':'500'};">${dot} ${t_show.toFixed(2)}s</span>
+      <span style="font-size:9px;line-height:1.4;">${recHtml}</span>
     </div>`;
   });
 
-  // Summary
-  const allAtTarget = axialModes.every(m => modalT60(m, p40, p55, p70) <= target);
-  const nAbove = axialModes.filter(m => modalT60(m, p40, p55, p70) > target).length;
-  html += `
-  <div style="margin-top:8px;padding:6px 8px;background:rgba(${allAtTarget?'76,175,80':'0,229,255'},0.06);border:0.5px solid rgba(${allAtTarget?'76,175,80':'0,229,255'},0.2);border-radius:2px;">
-    <span style="font-family:var(--mono);font-size:9px;color:${allAtTarget?'#4caf50':'var(--accent)'};">
-      ${allAtTarget ? '✓ All axial modes within target' : `${nAbove} mode${nAbove>1?'s':''} above ${target.toFixed(2)}s target`}
-    </span>
-  </div>
-  <div style="font-family:var(--mono);font-size:8px;color:#3a4a5a;margin-top:5px;line-height:1.6;">
-    Projections add units to corners in round-robin order. Match % = α at this mode / α_peak for that unit. Absorption cap = δ_tda has reached 4×δ_boundary — hard limit, more units cannot help.
+  html += `</div>`;
+
+  // Column headers
+  const headerHtml = `<div style="display:grid;grid-template-columns:52px 50px 50px 1fr;
+                                   gap:4px 8px;padding:0 0 6px;margin-bottom:2px;
+                                   border-bottom:1px solid rgba(255,255,255,0.08);">
+    <span style="font-family:var(--mono);font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;">Mode</span>
+    <span style="font-family:var(--mono);font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;">Pre</span>
+    <span style="font-family:var(--mono);font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;">Post</span>
+    <span style="font-family:var(--mono);font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;">Recommendation</span>
   </div>`;
 
-  el.innerHTML = html;
+  el.innerHTML = headerHtml + html;
 }
 
-function toggleCustomUnit() {
-  const panel = document.getElementById('customUnitPanel');
-  const btn   = document.getElementById('customUnitToggle');
-  const open  = panel.style.display === 'none';
-  panel.style.display = open ? 'block' : 'none';
-  btn.textContent = (open ? '▼' : '▶') + ' ADVANCED — Custom Unit (Unit 3)';
-}
+
 function updateListenModeBreakdown() {
   if (!listenPos || state.plane !== 'xy') return;
   const x = listenPos.nx * ROOM.L;
@@ -7217,7 +7407,7 @@ function saveCurrentConfig() {
     hash,
     savedAt:   Date.now(),
     roomDesc:  `${ROOM.L.toFixed(1)}×${ROOM.W.toFixed(1)}×${((SLOPE.enabled?(SLOPE.H1+SLOPE.H2)/2:ROOM.H)).toFixed(1)}m`,
-    unitDesc:  `N40 ${state.f40}Hz · N50 ${state.f55}Hz`,
+    unitDesc:  `N30 ${state.f40}Hz · U2 ${state.f55}Hz`,
   };
   if (existing >= 0) configs[existing] = entry;
   else configs.unshift(entry);
