@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Customer Results — GroundControl Nodal Series · Integer Audio</title>
-<meta name="description" content="Real room measurements showing T60 decay times before and after GroundControl Nodal Series treatment. Measured with REW waterfall T60M method.">
+<title>Customer Results — GroundControl Nodal 30 · Integer Audio</title>
+<meta name="description" content="Real room measurements showing T60 decay times before and after GroundControl Nodal 30 treatment. REW waterfall T60M method. r61 modal loss-budget model.">
 <style>
   :root {
     --navy:   #0D1B2A;
@@ -223,11 +223,11 @@
 <!-- PAGE HEADER -->
 <div class="page-header">
   <span class="eyebrow">Measured Results · Real Rooms</span>
-  <h1>What the Nodal Series does<br><em>in actual studios.</em></h1>
-  <p>Each result shows T60M decay time measured before and after GroundControl Nodal Series installation using REW waterfall export and STFT fitting. Model predictions shown alongside measured values.</p>
+  <h1>What the Nodal 30 does<br><em>in actual studios.</em></h1>
+  <p>Each result shows T60M decay time measured before and after GroundControl Nodal 30 installation using REW waterfall export and Nelder-Mead STFT fitting. Room construction includes broadband panel contribution where applicable. Model predictions (r61 modal loss-budget) shown alongside measured values.</p>
   <div class="method-note">
     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="#8aa4b8" stroke-width="1.2"/><path d="M6 5v4M6 3.5v.5" stroke="#8aa4b8" stroke-width="1.2" stroke-linecap="round"/></svg>
-    REW waterfall T60M · Nelder-Mead STFT fitting · GroundControl Nodal Series r60 model · ISO 266
+    REW waterfall T60M · Nelder-Mead STFT fitting · GroundControl Nodal 30 · r61 modal loss-budget model · OC703 ISO 354
   </div>
 </div>
 
@@ -264,7 +264,7 @@
     </div>
   </footer>
   <p style="text-align:center;font-size:11px;color:#8aa4b8;padding:0 40px 24px;font-family:'Courier New',monospace;">
-    © 2026 Integer Audio LLC · Measurements at listening position · Calibrated microphone · GroundControl Nodal Series r60 model
+    © 2026 Integer Audio LLC · Measurements at listening position · Calibrated microphone · GroundControl Nodal 30 · r61 model
   </p>
 </div>
 
@@ -292,7 +292,8 @@
 // Export JSON button. Schema:
 // {
 //   schema_version, model_version, exported_at,
-//   room: { L_m, W_m, H_m, volume_m3, surface_area_m2, construction },
+//   room: { L_m, W_m, H_m, volume_m3, surface_area_m2, construction,
+//          coverage_pct, panel_depth_in, broadband_alpha_table },
 //   calibration: { g_corner, source, mae_treated, … },
 //   units: [{ product, f0_hz, Q, positions, total_units, membrane, … }],
 //   modes: [{ f_hz, label, axis, t60_pre_s, t60_post_s,
@@ -331,13 +332,20 @@ function getDemoRooms() {
     location: 'Rochester, NY',
     date: 'June 2026',
     note: 'This is demo data shown before any real rooms are added. Export a JSON file from the GroundControl model, place it in the data/ folder, and add an entry to data/rooms.json.',
-    model_version: 'r60',
+    model_version: 'r61',
     exported_at: new Date().toISOString(),
-    room: { L_m:6.1, W_m:4.9, H_m:2.4, volume_m3:71.5, surface_area_m2:122.8, construction:'res_drywall' },
+    room: { L_m:6.1, W_m:4.9, H_m:2.4, volume_m3:71.5, surface_area_m2:122.8, construction:'res_treated', coverage_pct:30, panel_depth_in:4, broadband_alpha_table:[
+      {f_hz:31.5,alpha_shell:0.070,alpha_panel:0.090,alpha_eff:0.076,t60_shell_s:1.47,t60_eff_s:1.35},
+      {f_hz:50,  alpha_shell:0.090,alpha_panel:0.250,alpha_eff:0.138,t60_shell_s:1.14,t60_eff_s:0.74},
+      {f_hz:63,  alpha_shell:0.130,alpha_panel:0.430,alpha_eff:0.220,t60_shell_s:0.79,t60_eff_s:0.47},
+      {f_hz:80,  alpha_shell:0.140,alpha_panel:0.620,alpha_eff:0.284,t60_shell_s:0.73,t60_eff_s:0.36},
+      {f_hz:100, alpha_shell:0.095,alpha_panel:0.840,alpha_eff:0.319,t60_shell_s:1.08,t60_eff_s:0.32},
+      {f_hz:125, alpha_shell:0.068,alpha_panel:0.970,alpha_eff:0.339,t60_shell_s:1.51,t60_eff_s:0.30},
+    ] },
     calibration: { g_corner:4.0, source:'manual_default', g_corner_calibrated:false },
     units: [
-      { product:'Nodal 40', f0_hz:35, Q:1.0, positions:{'FL':1,'FR':1,'RL':1,'RR':1}, total_units:4, membrane:'Richlite + MLV', mlv_kg_m2:2.84, cavity_mm:215, alpha_peak:0.475 },
-      { product:'Nodal 50', f0_hz:51, Q:0.9, positions:{'FL':1,'FR':1}, total_units:2, membrane:'Richlite', mlv_kg_m2:0, cavity_mm:215, alpha_peak:0.462 },
+      { product:'Nodal 30', f0_hz:35, Q:1.0, positions:{'FL':1,'FR':1,'RL':1,'RR':1}, total_units:4, membrane:'Richlite + MLV', mlv_kg_m2:2.84, cavity_mm:215, alpha_peak:0.475 },
+      { product:'Custom Unit 2', f0_hz:51, Q:0.9, positions:{'FL':1,'FR':1}, total_units:2, membrane:'Richlite', mlv_kg_m2:0, cavity_mm:215, alpha_peak:0.462 },
     ],
     modes: [
       { f_hz:28.1, label:'X1', axis:'X', t60_pre_s:1.28, t60_post_s:0.44, rew_untreated_t60_s:1.35, rew_treated_t60_s:0.48, model_residual_pct:8.3 },
@@ -466,7 +474,7 @@ function renderResults(d) {
         <div class="room-detail">
           ${d.location ? `<span>Location</span> ${d.location}<br>` : ''}
           ${room ? `<span>Dimensions</span> ${room.L_m} × ${room.W_m} × ${room.H_m} m &nbsp;·&nbsp; ${room.volume_m3} m³<br>` : ''}
-          ${room ? `<span>Construction</span> ${constLabels[room.construction] || room.construction}<br>` : ''}
+          ${room ? `<span>Construction</span> ${constLabels[room.construction] || room.construction}${room.coverage_pct != null ? ` · ${room.coverage_pct}% / ${room.panel_depth_in || 4}″ OC703` : ''}<br>` : ''}
           ${schroeder_hz ? `<span>Schroeder freq</span> ~${schroeder_hz} Hz<br>` : ''}
           ${d.date ? `<span>Exported</span> ${d.date}<br>` : ''}
           ${d.model_version ? `<span>Model</span> r${d.model_version.replace(/[^0-9]/g,'')}` : ''}
@@ -488,7 +496,7 @@ function renderResults(d) {
   // REW measurement badge
   if (hasRewU || hasRewT) {
     const meth = (hasRewU && rew_untreated.method) || 'waterfall_t60m';
-    const methLabel = meth === 'waterfall_t60m' ? 'Waterfall T60M' : 'RT Parameters';
+    const methLabel = meth === 'waterfall_t60m' ? 'Waterfall T60M (r61)' : meth === 'rt_parameters_t30' ? 'RT Parameters T60' : 'REW';
     headerHtml += `
         <div class="meta-badge badge-rew">
           <strong>REW Measurement</strong>
@@ -666,6 +674,46 @@ function buildModeTable(modes, hasRewU, hasRewT, hasPost) {
 }
 
 // ── broadband RT60 ────────────────────────────────────────────────────────
+function buildBroadbandAlpha(room) {
+  if (!room || !room.broadband_alpha_table || !room.broadband_alpha_table.length) return '';
+  const cov   = room.coverage_pct || 30;
+  const depth = room.panel_depth_in || 4;
+  const tbl   = room.broadband_alpha_table;
+  let html = `<div class="info-card" style="margin-top:0;">
+    <h4>Broadband Panel Contribution</h4>
+    <div style="font-family:'Courier New',monospace;font-size:9px;color:var(--dgrey);margin-bottom:10px;line-height:1.6;">
+      ${cov}% coverage · ${depth}″ OC703 · ISO 354 data<br>
+      α<sub>eff</sub> = (1−${(cov/100).toFixed(2)}) × α<sub>shell</sub> + ${(cov/100).toFixed(2)} × α<sub>panel</sub>
+    </div>
+    <table class="tbl" style="font-size:11px;">
+      <thead><tr>
+        <th>Hz</th><th class="right">α shell</th>
+        <th class="right">α panel</th><th class="right">α eff</th>
+        <th class="right">T60 shell</th><th class="right">T60 eff</th>
+        <th class="right">Improvement</th>
+      </tr></thead><tbody>`;
+  tbl.forEach(r => {
+    const imp    = r.t60_shell_s - r.t60_eff_s;
+    const pct    = r.t60_shell_s > 0 ? Math.round(imp/r.t60_shell_s*100) : 0;
+    const neglig = pct < 5;
+    const impCol = pct >= 30 ? '#4ade80' : pct >= 10 ? '#facc15' : 'var(--dgrey)';
+    const postCol= r.t60_eff_s <= 0.55 ? '#4ade80' : '#f87171';
+    html += `<tr>
+      <td class="freq-cell" style="font-size:11px;">${r.f_hz}</td>
+      <td style="text-align:right;color:var(--dgrey);">${r.alpha_shell.toFixed(3)}</td>
+      <td style="text-align:right;color:#60a5fa;">${r.alpha_panel.toFixed(3)}</td>
+      <td style="text-align:right;font-weight:600;color:var(--muted);">${r.alpha_eff.toFixed(3)}</td>
+      <td style="text-align:right;color:#f87171;">${r.t60_shell_s.toFixed(2)}s</td>
+      <td style="text-align:right;font-weight:600;color:${postCol};">${r.t60_eff_s.toFixed(2)}s</td>
+      <td style="text-align:right;font-family:'Courier New',monospace;font-size:10px;color:${impCol};">
+        ${neglig ? '<span style="color:var(--dgrey);">—</span>' : `−${imp.toFixed(2)}s (${pct}%)`}
+      </td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
 function buildBroadband(bb) {
   const imp = bb.mean_untreated_s && bb.mean_treated_s
     ? Math.round((1 - bb.mean_treated_s / bb.mean_untreated_s) * 100) : null;
@@ -733,6 +781,8 @@ function buildRoomInfo(room, schroeder, f1min, cal) {
       ${f1min ? `<div class="info-row"><span class="info-key">f₁ min</span><span class="info-val">${f1min.toFixed(1)} Hz</span></div>` : ''}
       ${cal ? `<div class="info-row"><span class="info-key">G_corner</span><span class="info-val ${cal.g_corner_calibrated?'green':'orange'}">${cal.g_corner}</span></div>` : ''}
       ${cal ? `<div class="info-row"><span class="info-key">G source</span><span class="info-val">${calLabel}</span></div>` : ''}
+      ${room && room.coverage_pct != null ? `<div class="info-row"><span class="info-key">Panel coverage</span><span class="info-val cyan">${room.coverage_pct}%</span></div>` : ''}
+      ${room && room.panel_depth_in != null ? `<div class="info-row"><span class="info-key">Panel depth</span><span class="info-val">${room.panel_depth_in}″ OC703</span></div>` : ''}
     </div>`;
 }
 
