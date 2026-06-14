@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GroundControl Acoustic Simulator — User Guide r61</title>
+<style>
+:root {
+  --navy:   #0D1B2A;
+  --navy2:  #0f2030;
+  --navy3:  #081018;
+  --cyan:   #00D4E8;
+  --orange: #FF6B35;
+  --green:  #4ade80;
+  --amber:  #facc15;
+  --purple: #a78bfa;
+  --muted:  #b8ccd8;
+  --dgrey:  #7a9ab0;
+  --white:  #f0f6fa;
+  --border: rgba(0,212,232,0.14);
+  --sidebar-w: 240px;
+  --content-max: 760px;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: -apple-system, 'Segoe UI', Arial, sans-serif; background: var(--navy); color: var(--white); line-height: 1.65; font-size: 15px; }
+
+/* ── Layout ── */
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0; position: fixed; top: 0; left: 0; bottom: 0;
+  background: var(--navy3); border-right: 1px solid var(--border);
+  overflow-y: auto; z-index: 50; padding: 0 0 40px;
+}
+.content { margin-left: var(--sidebar-w); flex: 1; }
+
+/* ── Sidebar ── */
+.sidebar-brand {
+  padding: 20px 18px 16px; border-bottom: 1px solid var(--border);
+  font-family: 'Courier New', monospace; font-size: 11px;
+}
+.sidebar-brand strong { color: var(--cyan); display: block; font-size: 13px; letter-spacing: 0.05em; }
+.sidebar-brand span { color: var(--dgrey); font-size: 10px; }
+nav a {
+  display: block; padding: 8px 18px; font-size: 12px; color: var(--muted);
+  text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s;
+  line-height: 1.4;
+}
+nav a:hover { color: var(--white); border-left-color: rgba(0,212,232,0.4); background: rgba(0,212,232,0.04); }
+nav a.active { color: var(--cyan); border-left-color: var(--cyan); background: rgba(0,212,232,0.06); }
+.nav-section {
+  padding: 14px 18px 4px; font-family: 'Courier New', monospace;
+  font-size: 9px; letter-spacing: 0.12em; color: var(--dgrey);
+  text-transform: uppercase;
+}
+nav a.sub { padding-left: 28px; font-size: 11px; color: var(--dgrey); }
+nav a.sub:hover { color: var(--muted); }
+
+/* ── Content ── */
+.page-header {
+  background: var(--navy3); border-bottom: 1px solid var(--border);
+  padding: 40px 48px 32px; max-width: none;
+}
+.page-header .eyebrow {
+  font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.14em;
+  color: var(--cyan); text-transform: uppercase; display: block; margin-bottom: 10px;
+}
+.page-header h1 { font-size: 26px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+.page-header p { color: var(--muted); font-size: 14px; max-width: 580px; }
+.badge-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.badge {
+  font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.06em;
+  color: var(--cyan); background: rgba(0,212,232,0.08); border: 1px solid var(--border);
+  border-radius: 3px; padding: 3px 10px;
+}
+
+/* ── Article ── */
+article { max-width: var(--content-max); padding: 48px 48px 80px; }
+section { margin-bottom: 56px; }
+section:last-child { margin-bottom: 0; }
+
+h2 {
+  font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 6px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex;
+  align-items: center; gap: 10px;
+}
+h2 .step-num {
+  font-family: 'Courier New', monospace; font-size: 11px; color: var(--cyan);
+  background: rgba(0,212,232,0.1); border: 1px solid rgba(0,212,232,0.3);
+  border-radius: 3px; padding: 1px 8px; font-weight: 400; flex-shrink: 0;
+}
+h3 { font-size: 15px; font-weight: 700; color: var(--white); margin: 24px 0 8px; }
+h4 { font-size: 13px; font-weight: 700; color: var(--cyan); margin: 20px 0 6px;
+     font-family: 'Courier New', monospace; letter-spacing: 0.06em; text-transform: uppercase; }
+p { color: var(--muted); margin-bottom: 12px; font-size: 14px; }
+p:last-child { margin-bottom: 0; }
+ul,ol { color: var(--muted); padding-left: 20px; font-size: 14px; }
+li { margin-bottom: 6px; line-height: 1.55; }
+li:last-child { margin-bottom: 0; }
+strong { color: var(--white); font-weight: 600; }
+code {
+  font-family: 'Courier New', monospace; font-size: 12px;
+  background: rgba(0,212,232,0.08); color: var(--cyan);
+  border: 1px solid rgba(0,212,232,0.2); border-radius: 3px; padding: 1px 5px;
+}
+
+/* ── Callout boxes ── */
+.callout {
+  border-radius: 5px; padding: 14px 18px; margin: 16px 0; font-size: 14px;
+  border-left: 3px solid;
+}
+.callout p { margin-bottom: 0; font-size: 14px; }
+.callout-tip    { background: rgba(0,212,232,0.06); border-color: var(--cyan); }
+.callout-tip p  { color: var(--muted); }
+.callout-warn   { background: rgba(250,204,21,0.06); border-color: var(--amber); }
+.callout-warn p { color: #d4aa00; }
+.callout-note   { background: rgba(255,107,53,0.06); border-color: var(--orange); }
+.callout-note p { color: #cc7755; }
+.callout-good   { background: rgba(74,222,128,0.06); border-color: var(--green); }
+.callout-good p { color: #38a060; }
+.callout-label {
+  font-family: 'Courier New', monospace; font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 6px;
+}
+.callout-tip  .callout-label  { color: var(--cyan); }
+.callout-warn .callout-label  { color: var(--amber); }
+.callout-note .callout-label  { color: var(--orange); }
+.callout-good .callout-label  { color: var(--green); }
+
+/* ── Step list ── */
+.steps { counter-reset: step; list-style: none; padding: 0; margin: 16px 0; }
+.steps li {
+  counter-increment: step; position: relative; padding: 12px 14px 12px 44px;
+  margin-bottom: 8px; background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05); border-radius: 5px;
+  font-size: 14px; color: var(--muted);
+}
+.steps li::before {
+  content: counter(step); position: absolute; left: 14px; top: 12px;
+  width: 20px; height: 20px; background: var(--cyan); color: var(--navy);
+  border-radius: 50%; font-size: 11px; font-weight: 700; font-family: 'Courier New', monospace;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.steps li strong { color: var(--white); }
+
+/* ── Reference table ── */
+.ref-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0; }
+.ref-table th {
+  text-align: left; font-family: 'Courier New', monospace; font-size: 9px;
+  letter-spacing: 0.10em; text-transform: uppercase; color: var(--dgrey);
+  padding: 0 12px 8px; border-bottom: 1px solid var(--border);
+}
+.ref-table td {
+  padding: 9px 12px; border-bottom: 1px solid rgba(0,212,232,0.05);
+  color: var(--muted); vertical-align: top;
+}
+.ref-table tr:last-child td { border-bottom: none; }
+.ref-table tr:hover td { background: rgba(0,212,232,0.03); }
+.ref-table .key { color: var(--white); font-weight: 600; white-space: nowrap; }
+.ref-table .mono { font-family: 'Courier New', monospace; font-size: 12px; color: var(--cyan); }
+
+/* ── T60 zone pill ── */
+.zone { display: inline-block; font-family: 'Courier New', monospace; font-size: 10px;
+        letter-spacing: 0.05em; padding: 2px 8px; border-radius: 3px; font-weight: 700; }
+.z-master { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
+.z-target  { background: rgba(134,239,172,0.10); color: #86efac; border: 1px solid rgba(134,239,172,0.2); }
+.z-mod     { background: rgba(250,204,21,0.10); color: #facc15; border: 1px solid rgba(250,204,21,0.2); }
+.z-high    { background: rgba(255,107,53,0.10); color: #FF6B35; border: 1px solid rgba(255,107,53,0.2); }
+.z-over    { background: rgba(248,113,113,0.10); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
+
+/* ── Symbol ref inline ── */
+.sym {
+  display: inline-block; font-family: 'Courier New', monospace; font-size: 13px;
+  color: var(--amber); min-width: 20px;
+}
+
+/* ── Two-col layout ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+.two-col > div {
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 5px; padding: 14px 16px;
+}
+.two-col h4 { margin: 0 0 8px; }
+
+/* ── Section anchor ── */
+section[id] { scroll-margin-top: 20px; }
+
+/* ── Divider ── */
+hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+/* ── Mobile ── */
+@media(max-width:780px) {
+  .sidebar { display: none; }
+  .content { margin-left: 0; }
+  article { padding: 28px 20px 60px; }
+  .page-header { padding: 28px 20px 24px; }
+  .two-col { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <strong>GroundControl</strong>
+    <span>Acoustic Simulator · r61 User Guide</span>
+  </div>
+  <nav>
+    <div class="nav-section">Getting started</div>
+    <a href="#overview">What this tool does</a>
+    <a href="#quickstart">Quick start</a>
+
+    <div class="nav-section">Setup</div>
+    <a href="#room">1 · Room dimensions</a>
+    <a href="#construction">2 · Construction &amp; panels</a>
+    <a href="#units">3 · TDA unit placement</a>
+
+    <div class="nav-section">Reading the results</div>
+    <a href="#decay">4 · Bass Decay graph</a>
+    <a href="#table">5 · Decay summary table</a>
+    <a href="#recommendation">6 · Recommendation panel</a>
+    <a href="#zones">T60 zone reference</a>
+    <a href="#symbols">Symbols &amp; indicators</a>
+
+    <div class="nav-section">REW workflow</div>
+    <a href="#rew-overview">Using REW measurements</a>
+    <a href="#rew-before">Import before measurement</a>
+    <a href="#rew-after">Import after measurement</a>
+    <a href="#rew-troubleshoot">Troubleshooting</a>
+
+    <div class="nav-section">Advanced</div>
+    <a href="#stacking">Corner stacking</a>
+    <a href="#custom-units">Custom Unit 2 &amp; 3</a>
+    <a href="#gcorner">G_corner calibration</a>
+    <a href="#listen">Listening position</a>
+    <a href="#avaa">AVAA active treatment</a>
+    <a href="#export">Export &amp; sharing</a>
+    <a href="#limits">Model limitations</a>
+  </nav>
+</aside>
+
+<!-- ── CONTENT ── -->
+<div class="content">
+
+<div class="page-header">
+  <span class="eyebrow">GroundControl · Integer Audio · Acoustic Modal Simulation</span>
+  <h1>Simulator User Guide</h1>
+  <p>A step-by-step guide to designing bass modal treatment with the GroundControl acoustic simulator, interpreting the results, and validating predictions with REW measurements.</p>
+  <div class="badge-row">
+    <span class="badge">r61</span>
+    <span class="badge">Nodal 30 · 35 Hz Q=1.0</span>
+    <span class="badge">Cavity 215 mm</span>
+    <span class="badge">OC703 ISO 354</span>
+  </div>
+</div>
+
+<article>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="overview">
+<h2>What this tool does</h2>
+<p>The GroundControl simulator predicts how room modes behave in your specific room — and how Nodal 30 units and broadband panels will reduce the decay time at each mode frequency.</p>
+<p>Enter your room dimensions and construction type. The simulator finds every axial room mode, predicts the decay time (T60) at each one, and shows you what happens when you add Nodal 30 units in the corners. When you have a REW measurement, import it — the simulator calibrates its predictions to your actual room and lets you compare model vs measurement after treatment.</p>
+
+<div class="callout callout-tip">
+  <span class="callout-label">The one number that matters</span>
+  <p>T60 is the time in seconds for a sound to decay by 60 dB after it stops. Every decision the simulator helps you make is about getting T60 at your problem frequencies into the target range: <strong>0.25–0.55 s</strong>.</p>
+</div>
+
+<h3>The two tools that work together</h3>
+<div class="two-col">
+  <div>
+    <h4>Nodal 30 · 20–50 Hz</h4>
+    <p>Targets sub-40 Hz room modes — the range where broadband panels have no meaningful effect. Essential if your room has a bass problem.</p>
+  </div>
+  <div>
+    <h4>Broadband panels · 50 Hz+</h4>
+    <p>OC703 panels handle everything above 50 Hz. The simulator models their contribution from your coverage % and panel thickness. 4″ panels at 30% coverage get most rooms to target at 63 Hz and above.</p>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="quickstart">
+<h2>Quick start</h2>
+<ol class="steps">
+  <li><strong>Enter room dimensions</strong> — set L, W, H in metres. The mode list and heatmap update immediately.</li>
+  <li><strong>Set construction type</strong> — choose your wall type. If you have broadband panels, select a treated profile and set your coverage % and depth.</li>
+  <li><strong>Click a corner</strong> in the Nodal 30 placement diagram — one click places a unit. The T60 Post column in the decay table updates.</li>
+  <li><strong>Read the Recommendation panel</strong> — it tells you which modes still need treatment and how many more units are needed to reach target.</li>
+  <li><strong>Export a PDF report</strong> when your configuration is complete.</li>
+</ol>
+
+<div class="callout callout-tip">
+  <span class="callout-label">If you have a REW measurement</span>
+  <p>Import your before-treatment waterfall file first (see <a href="#rew-before" style="color:var(--cyan)">Import before measurement</a>). The simulator will anchor all predictions to your actual room, making the unit count projections much more reliable.</p>
+</div>
+</section>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="room">
+<h2><span class="step-num">Step 1</span> Room dimensions</h2>
+<p>Set your room's internal dimensions in metres using the L (length), W (width), and H (height) sliders. Everything — mode frequencies, heatmap, decay predictions — recomputes as you move the sliders.</p>
+
+<h3>What to measure</h3>
+<p>Measure between the inner faces of the finished walls, not the exterior of the building. For rooms with carpet, measure floor-to-ceiling height. For rooms with acoustic ceiling tiles, measure to the tile face, not the structural ceiling above.</p>
+
+<h3>Sloped or cathedral ceilings</h3>
+<p>Check the Sloped Ceiling box and set the low and high heights. The simulator supports single-ramp (one end lower) and cathedral (ridge at centre) profiles. Use the average height as a guide — the mode frequencies shown will be accurate for modest slopes. For steep cathedral ceilings (over 25°), use the average height as a flat-ceiling approximation and rely on REW calibration to anchor predictions.</p>
+
+<div class="callout callout-note">
+  <span class="callout-label">Sub-fundamental warning</span>
+  <p>If the selected frequency falls below the room's lowest possible axial mode, an amber warning banner appears. Predictions in this zone are not meaningful — there is no standing wave to treat there.</p>
+</div>
+
+<h3>What the mode list shows</h3>
+<p>The Mode List panel shows every room mode from 20–150 Hz. Axial modes (X, Y, Z axis) are shown in full colour — these are the ones the simulator models for treatment. Tangential and oblique modes are shown greyed out as reference only. Click any axial mode to jump the heatmap to that frequency.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="construction">
+<h2><span class="step-num">Step 2</span> Construction &amp; broadband panels</h2>
+<p>The construction profile sets the room's baseline T60 before any TDA treatment. Choose the profile that best describes your room's walls and ceiling.</p>
+
+<table class="ref-table">
+  <tr><th>Profile</th><th>When to use it</th><th>Sub-40 Hz T60 (typical)</th></tr>
+  <tr><td class="key">Residential drywall</td><td>Standard stud-framed room, drywall on both sides</td><td>1.2–1.5 s</td></tr>
+  <tr><td class="key">Sealed plasterboard</td><td>Denser construction, less structural leakage</td><td>2.5–3.5 s</td></tr>
+  <tr><td class="key">+ Broadband panels (residential)</td><td>Residential room with OC703 or equivalent panels installed</td><td>1.0–1.4 s (depends on coverage/depth)</td></tr>
+  <tr><td class="key">+ Broadband panels (sealed)</td><td>Sealed room with panels</td><td>1.5–2.5 s</td></tr>
+  <tr><td class="key">Concrete</td><td>Solid poured concrete or masonry on all surfaces</td><td>4–5 s</td></tr>
+</table>
+
+<div class="callout callout-tip">
+  <span class="callout-label">Not sure which profile?</span>
+  <p>Import a REW before measurement (Step 5). The G_corner calibration will anchor the predictions to your actual room regardless of which profile you select, and the MAE figure will tell you how well the profile matches.</p>
+</div>
+
+<h3>Broadband panel controls</h3>
+<p>When a treated profile is selected, two additional controls appear: <strong>Coverage %</strong> and <strong>Panel Depth</strong>.</p>
+
+<table class="ref-table">
+  <tr><th>Control</th><th>Range</th><th>What it does</th></tr>
+  <tr><td class="key">Coverage %</td><td>5–60%</td><td>Fraction of total room surface area covered by panels. 30% is typical for a moderately treated room.</td></tr>
+  <tr><td class="key">Panel depth</td><td>2″ / 4″ / 6″</td><td>Selects the OC703 alpha values by thickness (ISO 354 published data). 2″ panels are essentially transparent below 125 Hz. 4″ panels contribute from 50 Hz. 6″ panels contribute meaningfully from 31 Hz.</td></tr>
+</table>
+
+<div class="callout callout-warn">
+  <span class="callout-label">Panels don't help sub-40 Hz</span>
+  <p>Even 6″ panels at 50% coverage leave T60 above 0.80 s at 31 Hz. The Nodal 30 is the only tool that addresses this range. The panel controls affect predictions at 50 Hz and above — they do not reduce the need for TDA treatment at sub-40 Hz modes.</p>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="units">
+<h2><span class="step-num">Step 3</span> TDA unit placement</h2>
+<p>The Nodal 30 panel shows an overhead diagram of the room with eight placement positions: four corners (FL, FR, RL, RR) and four wall mid-points.</p>
+
+<h3>Placing units</h3>
+<p><strong>Click a corner</strong> in the placement diagram to add a unit. Click again to add a second (stacked), and again for a third or fourth. A fifth click removes all units at that corner. The badge shows ×2, ×3, ×4 for stacked units. Wall positions (WF, WR, WL, WW) accept one unit only — click to toggle.</p>
+
+<h3>Where to place first</h3>
+<ul>
+  <li><strong>Start with all four floor corners.</strong> Every axial room mode has pressure maxima at corners — it's the most efficient position for every mode simultaneously.</li>
+  <li>Stack a second unit in each corner only after filling all four — four single units outperform two doubled corners for most rooms.</li>
+  <li>Wall mid-points are useful for second-order modes with interior pressure patterns, but corner positions should always come first.</li>
+</ul>
+
+<div class="callout callout-tip">
+  <span class="callout-label">Stacking efficiency</span>
+  <p>The second unit in a corner contributes at 90% efficiency, the third at 82%, the fourth at 75% — not 100% each. This is already built into the model. The Recommendation panel accounts for it when projecting unit counts.</p>
+</div>
+
+<h3>Reading T60 Post as you place units</h3>
+<p>Watch the decay table (Section 5) as you add units. The T60 Post column updates live. When a mode turns green, it has reached the target range. The Recommendation panel tells you what to do next at each mode.</p>
+
+<h3>Custom Unit 2 and 3</h3>
+<p>Two additional unit channels are hidden by default behind <strong>▶ Advanced — Custom Unit 2</strong> and <strong>▶ Advanced — Custom Unit 3</strong>. Both default to Nodal 30 parameters (35 Hz, Q=1.0). Expand them to explore stacking configurations with different tuning, or to model a second product type. See <a href="#custom-units" style="color:var(--cyan)">Custom Units</a>.</p>
+</section>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="decay">
+<h2><span class="step-num">Step 4</span> Bass Decay graph</h2>
+<p>The graph shows T60 (seconds, vertical axis) at each room mode frequency (Hz, horizontal axis) across 20–150 Hz. The time axis runs 0–2.0 s.</p>
+
+<h3>What you see</h3>
+<table class="ref-table">
+  <tr><th>Element</th><th>Meaning</th></tr>
+  <tr><td class="key">◇ Open diamonds · orange</td><td>Model prediction — T60 without treatment at each axial mode. Shown when no REW untreated file is loaded.</td></tr>
+  <tr><td class="key">● Filled circles · zone colour</td><td>Model prediction — T60 with current unit placement. Always shown when units are placed. Colour matches the T60 zone (see zone reference).</td></tr>
+  <tr><td class="key">Green squares + curve</td><td>REW measured T60M before treatment. Replaces the model diamonds when a before-measurement waterfall is imported. The continuous curve runs 20–150 Hz.</td></tr>
+  <tr><td class="key">Blue squares + curve</td><td>REW measured T60M after treatment. Loaded separately. Zone-coloured model circles remain overlaid so you can compare prediction vs measurement.</td></tr>
+  <tr><td class="key">Alpha curves · dashed</td><td>Absorption curve shapes for each TDA unit — shows which frequency range each unit is targeting. Plotted against the right axis.</td></tr>
+</table>
+
+<h3>Zone bands</h3>
+<p>Three horizontal bands show the T60 target zones. Use these as your design reference — the goal is to get every mode marker into the green or light-green band.</p>
+<table class="ref-table">
+  <tr><th>Band</th><th>T60 range</th><th>Suitable for</th></tr>
+  <tr><td><span class="zone z-master">Mastering</span></td><td>0.25–0.35 s</td><td>Mastering rooms, high-precision critical listening</td></tr>
+  <tr><td><span class="zone z-target">Target ✓</span></td><td>0.35–0.55 s</td><td>Professional mixing, most studio applications</td></tr>
+  <tr><td><span class="zone z-mod">Moderate</span></td><td>0.55–0.75 s</td><td>General work — better than untreated but not studio-critical</td></tr>
+  <tr><td><span class="zone z-high">High</span></td><td>&gt; 0.75 s</td><td>Needs treatment</td></tr>
+  <tr><td><span class="zone z-over">Over-damped</span></td><td>&lt; 0.25 s</td><td>Acoustically dead — reduce unit count</td></tr>
+</table>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="table">
+<h2><span class="step-num">Step 5</span> Decay summary table</h2>
+<p>Appears below the heatmap when at least one unit is placed. Shows every axial mode from 20–120 Hz with detailed before/after T60 data.</p>
+
+<h3>Columns</h3>
+<table class="ref-table">
+  <tr><th>Column</th><th>What it shows</th></tr>
+  <tr><td class="key">Mode</td><td>Frequency and mode label, e.g. <code>28.1 Hz [X1]</code>. X, Y, Z indicate which room axis the mode runs along.</td></tr>
+  <tr><td class="key">T60 Pre</td><td>Decay time before TDA treatment — room shell and broadband panels only. If a REW before-measurement is loaded, this shows the measured value.</td></tr>
+  <tr><td class="key">T60 Post [+CI]</td><td>Predicted decay time with current unit placement. The <code>[+CI]</code> range below shows the estimated measurement uncertainty — see <a href="#ci" style="color:var(--cyan)">Confidence intervals</a>.</td></tr>
+  <tr><td class="key">Δ Improv</td><td>Percentage T60 reduction from Pre to Post.</td></tr>
+  <tr><td class="key">Source</td><td>Badge showing what is providing the treatment — <code>TDA</code>, <code>BRDBAND</code>, <code>COMBINED</code>, or <code>SHELL</code>. See below.</td></tr>
+</table>
+
+<h4>Source badges</h4>
+<table class="ref-table">
+  <tr><td class="mono">TDA</td><td>The Nodal 30 (or custom unit) is the primary control at this mode — the mode frequency falls within the unit's effective bandwidth.</td></tr>
+  <tr><td class="mono">BRDBAND</td><td>Broadband panels are the primary control — typically applies above 63 Hz in treated-profile rooms.</td></tr>
+  <tr><td class="mono">COMBINED</td><td>Both TDA and panels are contributing — typical in the 50–80 Hz transition zone.</td></tr>
+  <tr><td class="mono">SHELL</td><td>Neither system is providing meaningful treatment at this mode. This is a gap — usually a mode that needs attention.</td></tr>
+</table>
+
+<h3 id="ci">Confidence interval [+CI]</h3>
+<p>Shown as <code>[+0.08s / ≤0.57s]</code> below T60 Post. This one-sided range says: the model predicts 0.49 s but the actual measured result will likely be between 0.49 s and 0.57 s. The upper value is the conservative figure to use for design decisions. As you add more units and approach the saturation limit, the range widens.</p>
+
+<div class="callout callout-tip">
+  <span class="callout-label">Use the upper bound for specifications</span>
+  <p>"Predicted 0.49 s, estimated worst case 0.57 s" is an honest specification. The lower number is the model's best estimate; the upper number is what to plan for until you have a measurement.</p>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="recommendation">
+<h2><span class="step-num">Step 6</span> Treatment Recommendation panel</h2>
+<p>Located below the Mode List. Updates automatically whenever you change the room, units, or construction settings. This is the main decision-support output of the simulator.</p>
+
+<h3>Summary badges</h3>
+<p>Three counts at the top: <strong>Modes at target</strong> (N of total), <strong>Units placed</strong>, and <strong>Highest T60 remaining</strong>. When all modes are at target, the panel turns green.</p>
+
+<h3>Per-mode recommendations</h3>
+<p>Each row shows the mode label, T60 Pre, T60 Post (with status dot), and a Recommendation:</p>
+<table class="ref-table">
+  <tr><th>Recommendation</th><th>What it means / what to do</th></tr>
+  <tr><td class="key">● X units at corners reaches target</td><td>No units placed yet. Add the suggested number of units to all four corners.</td></tr>
+  <tr><td class="key">● +X units to target</td><td>Units are placed but T60 Post is still above target. Add more units (or a second unit per corner) to reach target.</td></tr>
+  <tr><td class="key">● ✓ target met</td><td>This mode is in the target zone. No action needed.</td></tr>
+  <tr><td class="key">● Absorption cap — floor Xs</td><td>Maximum passive absorption reached at this mode. Adding more units will not help. See <a href="#symbols" style="color:var(--cyan)">Saturation symbols</a>.</td></tr>
+</table>
+
+<h3>Target T60 setting</h3>
+<p>The target field (top right, default 0.55 s) controls what "at target" means throughout the simulator. Change it to 0.35 s for mastering-room precision, or 0.45 s for critical mixing. The Recommendation panel and decay table colour-coding both update.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="zones">
+<h2>T60 zone reference</h2>
+<table class="ref-table">
+  <tr><th>Zone</th><th>T60</th><th>What you hear</th><th>Design action</th></tr>
+  <tr>
+    <td><span class="zone z-over">Over-damped</span></td>
+    <td>&lt; 0.25 s</td>
+    <td>Unnaturally dead. Bass disappears. Mix fatigue from absent room support.</td>
+    <td>Remove units or raise target. Too much treatment.</td>
+  </tr>
+  <tr>
+    <td><span class="zone z-master">Mastering</span></td>
+    <td>0.25–0.35 s</td>
+    <td>Very controlled. Every bass note is clearly defined. Ideal for critical decisions.</td>
+    <td>Optimal for mastering. Achievable with 6–8 units in most rooms.</td>
+  </tr>
+  <tr>
+    <td><span class="zone z-target">Target ✓</span></td>
+    <td>0.35–0.55 s</td>
+    <td>Controlled and even. Bass decisions translate. Room is working for you.</td>
+    <td>Professional standard. 4 units per room achieves this in most studios.</td>
+  </tr>
+  <tr>
+    <td><span class="zone z-mod">Moderate</span></td>
+    <td>0.55–0.75 s</td>
+    <td>Noticeable colouration at some frequencies. Bass still workable but imprecise.</td>
+    <td>Better than untreated. Add more units if budget allows.</td>
+  </tr>
+  <tr>
+    <td><span class="zone z-high">High</span></td>
+    <td>&gt; 0.75 s</td>
+    <td>Heavy bass bloom. Notes linger. Kick and bass merge. EQ cannot fix this.</td>
+    <td>Treatment needed. Start with 4 corner units and reassess.</td>
+  </tr>
+</table>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="symbols">
+<h2>Symbols &amp; indicators</h2>
+<table class="ref-table">
+  <tr><th>Symbol</th><th>Meaning</th><th>What to do</th></tr>
+  <tr>
+    <td><span class="sym">~</span></td>
+    <td>Approaching saturation. Predictions carry 15–30% uncertainty.</td>
+    <td>Results still useful for design decisions. Validate with REW after installation.</td>
+  </tr>
+  <tr>
+    <td><span class="sym">⊗</span></td>
+    <td>Saturation cap reached. Adding more units to existing positions will not help.</td>
+    <td>Add units at new independent positions — a different corner, or a different channel.</td>
+  </tr>
+  <tr>
+    <td><span class="sym">⊠</span></td>
+    <td>Passive treatment limit. T60 cannot go lower with passive absorbers alone.</td>
+    <td>If the floor T60 is still above target, consider PSI AVAA active treatment.</td>
+  </tr>
+  <tr>
+    <td><span class="sym">—</span></td>
+    <td>Over-damped. T60 below 0.25 s.</td>
+    <td>Remove units or raise the target — the room is too dead at this mode.</td>
+  </tr>
+  <tr>
+    <td><span class="sym">✓</span></td>
+    <td>Within mastering target (T60 ≤ 0.35 s).</td>
+    <td>No action needed.</td>
+  </tr>
+  <tr>
+    <td><span class="sym">⚠</span></td>
+    <td>Controlled zone (0.35–0.55 s). Adequate for general work.</td>
+    <td>Acceptable. Add units if mastering precision is required.</td>
+  </tr>
+</table>
+
+<h3>Why you cannot just keep adding units</h3>
+<p>Passive absorbers work by coupling to the pressure field at the room boundary. As you add more, each additional unit has a smaller fraction of the remaining pressure field to couple to — diminishing returns that compound to a physical limit. When <strong>⊠</strong> appears, that limit has been reached. The passive floor cannot be lowered without either changing the room or adding active treatment (AVAA).</p>
+</section>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="rew-overview">
+<h2>Using REW measurements</h2>
+<p>The simulator works well from dimensions alone, but importing a REW waterfall measurement makes it much more reliable — particularly for unit count projections.</p>
+
+<div class="two-col">
+  <div>
+    <h4>Without REW</h4>
+    <p>The simulator uses your construction profile to estimate T60 Pre. Predictions are based on published alpha values for that material type. Useful for initial design; confidence interval is wider.</p>
+  </div>
+  <div>
+    <h4>With REW (recommended)</h4>
+    <p>T60 Pre is set from your actual measured room. All T60 Post predictions are anchored to the real baseline. Confidence interval narrows. The "before" import also calibrates G_corner to your specific room.</p>
+  </div>
+</div>
+
+<h3>REW waterfall export settings</h3>
+<p>In REW, configure the waterfall before exporting:</p>
+<ul>
+  <li>Mode: <strong>Fourier</strong></li>
+  <li>Window: <strong>300 ms</strong></li>
+  <li>Rise Time: <strong>30 ms</strong> ← must match the simulator's Rise Time input exactly</li>
+  <li>Total Slices: <strong>1000</strong></li>
+  <li>Smoothing: <strong>1/48 oct</strong></li>
+  <li>Normalize: <strong>unchecked</strong></li>
+  <li>CSD: <strong>unchecked</strong></li>
+</ul>
+<p>Then: Waterfall graph → File → Export → <strong>Export data as text (.txt)</strong></p>
+
+<div class="callout callout-warn">
+  <span class="callout-label">Use identical settings for both measurements</span>
+  <p>Before and after measurements must use exactly the same Rise Time, Window, Slices, Smoothing, mic position, and speaker position. Any difference will cause comparison errors.</p>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="rew-before">
+<h2>Import before measurement</h2>
+<p>Take a measurement with <strong>no TDA units installed</strong>. Export the waterfall as described above, then:</p>
+
+<ol class="steps">
+  <li>Drag the <code>.txt</code> file onto the <strong>BEFORE</strong> drop zone in the REW Import panel (right sidebar, cyan border). Or click the zone to browse.</li>
+  <li>The simulator computes T60M at every axial mode frequency. A progress indicator shows during computation (takes a few seconds).</li>
+  <li>The import panel shows a per-mode table of measured T60 values. Check these against your expectation — they should reflect what you hear in the untreated room.</li>
+  <li>A <strong>G_corner calibration</strong> result appears. It shows the suggested G value and a quality rating. Click <strong>Apply G = X</strong> to set it.</li>
+  <li>The Bass Decay graph now shows a <strong>green continuous curve</strong> — your measured T60M across 20–150 Hz — alongside the model's predictions.</li>
+</ol>
+
+<h3>G_corner quality ratings</h3>
+<table class="ref-table">
+  <tr><th>Rating</th><th>MAE</th><th>What to do</th></tr>
+  <tr><td class="key">Good</td><td>&lt; 0.15 s</td><td>Apply and proceed. The model is well-calibrated to your room.</td></tr>
+  <tr><td class="key">Moderate</td><td>0.15–0.35 s</td><td>Apply. Predictions are reliable for design; validate after installation.</td></tr>
+  <tr><td class="key">Poor</td><td>&gt; 0.35 s</td><td>Check room dimensions and construction profile before applying. See troubleshooting.</td></tr>
+</table>
+
+<div class="callout callout-tip">
+  <span class="callout-label">After applying G_corner</span>
+  <p>T60 Pre in the decay table now reflects your actual room. T60 Post predictions are anchored to this measured baseline — the unit count projections in the Recommendation panel are now your best estimate of what you need to buy.</p>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="rew-after">
+<h2>Import after measurement</h2>
+<p>After units are installed and 24 hours have passed (allow time for membrane equilibration), take a new measurement using <strong>identical REW settings and mic/speaker positions</strong>, then:</p>
+
+<ol class="steps">
+  <li>Export the post-treatment waterfall using the same settings as the before measurement.</li>
+  <li>Drag onto the <strong>AFTER</strong> drop zone in the REW Import panel.</li>
+  <li>The Bass Decay graph now shows a <strong>blue continuous curve</strong> (measured after) alongside the green before curve. Zone-coloured model circles remain overlaid for direct comparison.</li>
+  <li>Check the per-mode table — each mode shows measured T60M after treatment with a percentage residual vs the model's prediction.</li>
+</ol>
+
+<h3>Interpreting residuals</h3>
+<table class="ref-table">
+  <tr><th>Residual</th><th>What it means</th></tr>
+  <tr><td class="key">Green (&lt;15%)</td><td>Good agreement. The model predicted the outcome accurately for this room.</td></tr>
+  <tr><td class="key">Amber (≥15%)</td><td>Larger than expected difference. See troubleshooting.</td></tr>
+  <tr><td class="key">Positive (measured &gt; predicted)</td><td>Treatment less effective than predicted — common near the saturation limit or with high stack counts. Consider additional units at new positions.</td></tr>
+  <tr><td class="key">Negative (measured &lt; predicted)</td><td>Treatment more effective than predicted — typical when corner units also absorb tangential mode energy that the model doesn't count. A welcome outcome.</td></tr>
+</table>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="rew-troubleshoot">
+<h2>REW troubleshooting</h2>
+
+<h3>Poor calibration fit (MAE &gt; 0.35 s)</h3>
+<ul>
+  <li>Verify room dimensions are the actual internal measurements, not nominal or exterior dimensions.</li>
+  <li>Check the construction profile — a sealed plasterboard room modelled as residential drywall will show a consistent bias (all predicted T60 values too low or too high).</li>
+  <li>Confirm there are no noise-floor warnings in REW at your problem frequencies. A compromised measurement gives bad calibration.</li>
+  <li>If the bias is consistent across all modes, try the other profile type (residential vs sealed). A consistent under-prediction usually means you need the sealed profile.</li>
+</ul>
+
+<h3>Large residuals after installation</h3>
+<ul>
+  <li>Check unit seating — corner gaps or raised edges reduce coupling. Units must be in full contact with both boundary surfaces.</li>
+  <li>Verify the Rise Time in the simulator's import panel matches the REW waterfall Rise Time exactly (both should be 30 ms).</li>
+  <li>If a mode shows a large positive residual (measured much worse than predicted), check the mode list for tangential modes at similar frequencies — a tangential mode may be masking the axial improvement.</li>
+  <li>A saturation indicator (<span class="sym">⊗</span>) in the decay table at that mode means adding more units will not help. The floor has been reached.</li>
+</ul>
+
+<h3>Before and after curves don't align as expected</h3>
+<ul>
+  <li>Confirm mic position was identical for both measurements. Even small position changes can shift individual mode amplitudes.</li>
+  <li>Allow 24 hours after installation — the Richlite membrane and MLV require equilibration time before performance is stable.</li>
+</ul>
+</section>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="stacking">
+<h2>Corner stacking</h2>
+<p>Multiple Nodal 30 units can be stacked vertically in each corner. The model accounts for the sub-linear efficiency of stacking — each additional unit contributes slightly less than the one below it.</p>
+
+<table class="ref-table">
+  <tr><th>Unit in stack</th><th>Efficiency</th><th>Cumulative</th></tr>
+  <tr><td class="key">1st</td><td>100%</td><td>1.00×</td></tr>
+  <tr><td class="key">2nd</td><td>90%</td><td>1.90× (95% of linear)</td></tr>
+  <tr><td class="key">3rd</td><td>82%</td><td>2.72× (91% of linear)</td></tr>
+  <tr><td class="key">4th</td><td>75%</td><td>3.47× (87% of linear)</td></tr>
+</table>
+
+<p>Maximum stack height is limited by ceiling height. For an 8 ft ceiling: 3 units (7.5 ft column). For a 10 ft ceiling: 4 units.</p>
+
+<div class="callout callout-tip">
+  <span class="callout-label">When to stack vs add corners</span>
+  <p>If you see a <span class="sym">⊗</span> saturation symbol at a mode, more units at the same corner positions will not help. The Recommendation panel will suggest <em>new independent positions</em> — a different corner, or a Custom Unit 2 channel at new corners. Units at different corners are spatially independent and receive full efficiency regardless of what other channels have placed there.</p>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="custom-units">
+<h2>Custom Unit 2 &amp; 3</h2>
+<p>Both expand from collapsed toggles (▶ ADVANCED — Custom Unit 2 / 3) in the sidebar. Both default to Nodal 30 parameters: 35 Hz, Q=1.0.</p>
+
+<h3>When to use them</h3>
+<ul>
+  <li><strong>Additional corner coverage:</strong> if the Nodal 30 is saturating at some corners but not all modes are at target, place Custom Unit 2 at the remaining corners with the same settings. Each new independent position resets the saturation counter.</li>
+  <li><strong>Different tuning:</strong> if a specific mode at a different frequency (e.g. 28 Hz or 42 Hz) needs targeted treatment, tune a custom unit to that mode's frequency. Set f₀ to match the mode frequency shown in the mode list.</li>
+  <li><strong>Exploring configurations:</strong> change the Q slider to see how bandwidth affects coverage of nearby modes.</li>
+</ul>
+
+<div class="callout callout-note">
+  <span class="callout-label">Q=1.0 is optimal for most uses</span>
+  <p>Lowering Q below 1.0 widens the bandwidth but reduces peak absorption — analysis shows the total absorption work decreases below Q=1.0 for this membrane mass. Stay at Q=1.0 unless you have a specific reason to change it.</p>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="gcorner">
+<h2>G_corner calibration</h2>
+<p>The G_corner slider (Calibration panel, default 4.0) represents the pressure gain from corner placement. It scales the predicted T60 improvement from corner-mounted units. The default of 4.0 is correct for typical first-order axial modes at 20–70 Hz.</p>
+
+<p>You will rarely need to adjust this manually — the REW before-measurement import calibrates it automatically. If you do adjust it manually:</p>
+
+<table class="ref-table">
+  <tr><th>G value</th><th>When appropriate</th></tr>
+  <tr><td class="key">2.0–3.0</td><td>Conservative estimate; wall boundary placement; good when model consistently over-predicts improvement</td></tr>
+  <tr><td class="key">4.0 (default)</td><td>Corner placement, first-order axial modes 20–70 Hz</td></tr>
+  <tr><td class="key">5.0–6.0</td><td>Tangential mode coincidence effects; unusually efficient corners</td></tr>
+  <tr><td class="key">Above 6.0</td><td>Rarely justified — treat as outside normal operating range</td></tr>
+</table>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="listen">
+<h2>Listening position analysis</h2>
+<p>Click or drag anywhere on the floor plan heatmap (XY view) to place a listening position marker. A per-mode table appears in the sidebar showing T60 Post and pressure at that position for each axial mode.</p>
+
+<h3>The AT POS and HEARD columns</h3>
+<table class="ref-table">
+  <tr><th>AT POS</th><th>HEARD</th><th>Meaning</th></tr>
+  <tr><td>70–100%</td><td>STRONG</td><td>Listening position is near a pressure maximum. You will strongly excite and hear this mode.</td></tr>
+  <tr><td>35–70%</td><td>PARTIAL</td><td>Moderate coupling. The mode is audible but not at its worst.</td></tr>
+  <tr><td>0–35%</td><td>WEAK</td><td>Near a pressure null. The mode is less strongly excited at this seat.</td></tr>
+</table>
+
+<div class="callout callout-warn">
+  <span class="callout-label">WEAK does not mean inaudible</span>
+  <p>A "WEAK" rating means you are near a pressure null during steady-state playback. But when a bass note stops, modal energy releases from the room boundaries and fills the space regardless of where you sit. A mode with a long T60 will still produce an audible decay tail even from a null position. Treat modes based on their T60, not their AT POS.</p>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="avaa">
+<h2>AVAA active treatment</h2>
+<p>The AVAA C20 from PSI Audio is an active absorber that uses a speaker and control loop to zero the pressure at its face. It is not subject to the same passive saturation limit as TDA units.</p>
+<p>Enable the AVAA mode with the green button in the view controls. Place AVAA units using the AVAA placement diagram. When active, the decay table adds a TDA+AVAA column showing the combined prediction.</p>
+
+<h3>When AVAA helps</h3>
+<p>If a mode shows <span class="sym">⊠</span> (passive floor reached) and the floor T60 is still above your target, AVAA can push below it. The combined passive + active floor is approximately half the passive-only floor. AVAA is most useful for the deepest modes (below 30 Hz) where passive treatment saturates soonest.</p>
+
+<div class="callout callout-note">
+  <span class="callout-label">AVAA placement note</span>
+  <p>The AVAA boost factor in this model is 2.0 (not 4.0). PSI's published 1.4 m² effective area already includes one boundary pressure doubling — corner placement adds one more, giving total boost = 2.0. Using a corner boost of 4.0 for AVAA would be double-counting.</p>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="export">
+<h2>Export &amp; sharing</h2>
+
+<h3>PDF report</h3>
+<p>Click <strong>Export Report (PDF)</strong>. The report includes: room parameters, unit configuration table, broadband panel contribution table (when a treated profile is selected), per-mode T60 analysis, Treatment Recommendation summary, and REW measurement data if loaded.</p>
+
+<h3>JSON export</h3>
+<p>Click <strong>Export JSON</strong> to save the full model state as a structured data file. The JSON includes all computed values and can be used to populate the results page (<code>results.html</code>).</p>
+
+<h3>Save &amp; share configuration</h3>
+<p>Click the <strong>🔗 Share / Save Config</strong> button to encode the current configuration into the browser URL. Copy and share the URL — opening it in any browser restores the full configuration. Configurations are version-tagged (v:61); links from this version may not restore correctly in future model versions.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="limits">
+<h2>Model limitations</h2>
+<p>The simulator is a physics-based prediction tool. It is not a certified acoustic measurement instrument. All predictions should be validated with REW before and after installation.</p>
+
+<table class="ref-table">
+  <tr><th>Limitation</th><th>What it means in practice</th></tr>
+  <tr>
+    <td class="key">Axial modes only</td>
+    <td>T60 prediction and treatment modelling covers axial modes only. Tangential and oblique modes are shown in the mode list as reference but treatment effect is not quantified for them. Above 80 Hz, the simulator's Eyring broadband RT60 is a better guide than per-mode predictions.</td>
+  </tr>
+  <tr>
+    <td class="key">Single surface material</td>
+    <td>All surfaces share one construction profile. Rooms with different materials on different walls (e.g. concrete floor, drywall walls) cannot be precisely modelled — choose the profile that best matches the dominant surface type.</td>
+  </tr>
+  <tr>
+    <td class="key">Stacking efficiency estimates</td>
+    <td>The per-unit stack factors (1.0 / 0.9 / 0.82 / 0.75) are calibrated estimates, not validated measurements for sub-100 Hz TDA arrays. At high stack counts, REW validation is especially important.</td>
+  </tr>
+  <tr>
+    <td class="key">Saturation cap</td>
+    <td>The saturation floor (<span class="sym">⊠</span>) is a model-based estimate, not a hard physical law. Actual performance at the floor may differ by ±30–70%. The floor value is a lower bound, not a guarantee.</td>
+  </tr>
+  <tr>
+    <td class="key">Sloped ceilings</td>
+    <td>Supported for slopes up to approximately 15°. Above 25° the model warns and predictions degrade. Use average height as a flat-ceiling approximation for steep cathedral ceilings.</td>
+  </tr>
+  <tr>
+    <td class="key">Panel stiffness</td>
+    <td>The model treats the membrane as a pure mass. Real Richlite + MLV panels have some stiffness that can shift actual tuning, particularly above 50 Hz. This is a secondary effect at 35 Hz.</td>
+  </tr>
+  <tr>
+    <td class="key">Broadband panel uniformity</td>
+    <td>Coverage % assumes panels are distributed evenly. In practice, panels are concentrated on specific walls. The effective alpha may differ from the area-weighted estimate, particularly at 50–80 Hz.</td>
+  </tr>
+</table>
+
+<div class="callout callout-good">
+  <span class="callout-label">The validation workflow</span>
+  <p>Import a before measurement → apply G_corner calibration → design treatment → install → wait 24 hours → import after measurement → compare residuals. This workflow turns the simulator from a design aid into a verified prediction, and gives you a documented record of performance.</p>
+</div>
+</section>
+
+</article>
+
+</div><!-- .content -->
+</div><!-- .layout -->
+
+<script>
+// Active nav link on scroll
+const sections = document.querySelectorAll('section[id]');
+const navLinks  = document.querySelectorAll('nav a[href^="#"]');
+const observer  = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => a.classList.remove('active'));
+      const a = document.querySelector(`nav a[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { rootMargin: '-30% 0px -65% 0px', threshold: 0 });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
