@@ -331,7 +331,7 @@
             bottom: 0;
             width: 100%;
             height: 0%;
-            transition: height 0.04s linear;
+            transition: none;   /* no smoothing — instant response for accurate decay display */
             z-index: 2;
         }
 
@@ -1240,7 +1240,7 @@ let pipelineActive = false;
 
 // ── Test State ────────────────────────────────────────────────────────
 const TEST_FREQS      = [25, 35, 45, 55, 60];
-const BURST_DURATION  = 0.5;   // seconds — tone on
+const BURST_DURATION  = 0.8;   // seconds — 0.8s gives 25 Hz ~20 full cycles to build and stop cleanly
 const SILENT_WINDOW   = 2.5;   // seconds — decay measurement window
 const SAMPLE_INTERVAL = 20;    // ms between T60 amplitude samples
 const NOISE_FLOOR     = 3;     // % below which we consider silence reached
@@ -1375,10 +1375,10 @@ function playBurst(hz, duration) {
     osc.type = 'sine';
     osc.frequency.setValueAtTime(hz, now);
 
-    // 20 ms attack ramp, hard gate at burst end (10 ms release)
+    // 20ms attack ramp, 25ms release — gives speaker cone time to stop cleanly at sub-bass frequencies
     gain.gain.setValueAtTime(0, now);
     gain.gain.linearRampToValueAtTime(0.75, now + 0.02);
-    gain.gain.setValueAtTime(0.75, now + duration - 0.01);
+    gain.gain.setValueAtTime(0.75, now + duration - 0.025);
     gain.gain.linearRampToValueAtTime(0, now + duration);
 
     osc.connect(gain);
@@ -1527,8 +1527,8 @@ async function runTestSequence(mode) {
         // Fire the burst (from isolated playback context)
         playBurst(hz, BURST_DURATION);
 
-        // Wait for burst to complete
-        await sleep(BURST_DURATION * 1000 + 10);
+        // Wait for burst to complete — audio clock schedules the hard stop
+        await sleep(BURST_DURATION * 1000);
 
         // Capture peak for ghost overlay before decay measurement resets things
         // (peak capture happens in renderLoop, so just record the current peak position)
