@@ -442,6 +442,166 @@
 
         /* chip colors driven by zone classes once measured */
 
+        /* ── ROOM DIMENSIONS PANEL ── */
+        .room-panel {
+            background: var(--navy-mid);
+            border: 1px solid var(--navy-border);
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+        }
+
+        .room-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .room-panel-title {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .room-panel-sub {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .room-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto auto;
+            gap: 10px;
+            align-items: end;
+        }
+
+        @media (max-width: 640px) {
+            .room-inputs { grid-template-columns: 1fr 1fr 1fr; }
+            .room-inputs .room-calc-btn,
+            .room-inputs .room-unit-toggle { grid-column: span 1; }
+        }
+
+        .room-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .room-field label {
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
+        .room-field input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-bright);
+            width: 100%;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .room-field input:focus {
+            border-color: var(--cyan);
+        }
+
+        .room-field input::placeholder {
+            color: var(--text-dim);
+            font-weight: 400;
+        }
+
+        .room-calc-btn {
+            background: var(--cyan);
+            color: var(--navy-dark);
+            border: none;
+            border-radius: 4px;
+            padding: 9px 14px;
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: opacity 0.15s;
+        }
+
+        .room-calc-btn:hover { opacity: 0.85; }
+
+        .room-unit-toggle {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            padding: 9px 10px;
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+
+        .room-unit-toggle:hover {
+            border-color: var(--text-muted);
+            color: var(--text-bright);
+        }
+
+        .mode-result {
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+            border: 1px solid rgba(0,212,232,0.1);
+            font-size: 11px;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .mode-result.visible { display: block; }
+
+        .mode-result strong { color: var(--cyan); }
+
+        .mode-freq-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .mode-freq-tag {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 3px;
+            background: rgba(0,212,232,0.1);
+            color: var(--cyan);
+            border: 1px solid rgba(0,212,232,0.25);
+        }
+
+        .mode-freq-tag.tangential {
+            background: rgba(255,107,53,0.08);
+            color: var(--orange);
+            border-color: rgba(255,107,53,0.2);
+        }
+
+        .mode-freq-tag.default {
+            background: rgba(255,255,255,0.04);
+            color: var(--text-muted);
+            border-color: rgba(255,255,255,0.08);
+        }
+
         /* ── INSIGHTS ── */
         .insights {
             background: var(--navy-mid);
@@ -968,7 +1128,7 @@
                 </div>
                 <div class="readout-row">
                     <span class="readout-label">Filter Window</span>
-                    <span class="readout-val">20–62 Hz</span>
+                    <span class="readout-val">20–80 Hz</span>
                 </div>
                 <div class="readout-row">
                     <span class="readout-label">Testing Frequency</span>
@@ -985,7 +1145,7 @@
         <div class="meters-panel">
             <div class="meters-header">
                 <span class="meters-title">SPL Energy // Time Domain</span>
-                <span class="bandpass-badge">20–62 Hz Brickwall Active</span>
+                <span class="bandpass-badge">20–80 Hz Active</span>
             </div>
 
             <div class="meter-columns">
@@ -1010,11 +1170,7 @@
                         </div>
                     </div>
                     <div class="freq-results" id="chips-baseline">
-                        <div class="freq-chip" data-hz="25"><div class="chip-hz">25 Hz</div><div class="chip-val" id="chip-b-25">—</div></div>
-                        <div class="freq-chip" data-hz="35"><div class="chip-hz">35 Hz</div><div class="chip-val" id="chip-b-35">—</div></div>
-                        <div class="freq-chip" data-hz="45"><div class="chip-hz">45 Hz</div><div class="chip-val" id="chip-b-45">—</div></div>
-                        <div class="freq-chip" data-hz="55"><div class="chip-hz">55 Hz</div><div class="chip-val" id="chip-b-55">—</div></div>
-                        <div class="freq-chip" data-hz="60"><div class="chip-hz">60 Hz</div><div class="chip-val" id="chip-b-60">—</div></div>
+                        <!-- populated dynamically by buildFreqUI() -->
                     </div>
                 </div>
 
@@ -1039,14 +1195,39 @@
                         </div>
                     </div>
                     <div class="freq-results" id="chips-verified">
-                        <div class="freq-chip" data-hz="25"><div class="chip-hz">25 Hz</div><div class="chip-val" id="chip-v-25">—</div></div>
-                        <div class="freq-chip" data-hz="35"><div class="chip-hz">35 Hz</div><div class="chip-val" id="chip-v-35">—</div></div>
-                        <div class="freq-chip" data-hz="45"><div class="chip-hz">45 Hz</div><div class="chip-val" id="chip-v-45">—</div></div>
-                        <div class="freq-chip" data-hz="55"><div class="chip-hz">55 Hz</div><div class="chip-val" id="chip-v-55">—</div></div>
-                        <div class="freq-chip" data-hz="60"><div class="chip-hz">60 Hz</div><div class="chip-val" id="chip-v-60">—</div></div>
+                        <!-- populated dynamically by buildFreqUI() -->
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ROOM DIMENSIONS -->
+    <div class="room-panel">
+        <div class="room-panel-header">
+            <span class="room-panel-title">Room Dimensions — Axial Mode Calculator</span>
+            <span class="room-panel-sub">Optional · targets test frequencies at your room's actual modes</span>
+        </div>
+        <div class="room-inputs">
+            <div class="room-field">
+                <label>Length</label>
+                <input type="number" id="dim-l" placeholder="e.g. 14" min="6" max="60" step="0.1">
+            </div>
+            <div class="room-field">
+                <label>Width</label>
+                <input type="number" id="dim-w" placeholder="e.g. 11" min="6" max="60" step="0.1">
+            </div>
+            <div class="room-field">
+                <label>Height</label>
+                <input type="number" id="dim-h" placeholder="e.g. 9" min="6" max="20" step="0.1">
+            </div>
+            <button class="room-calc-btn" onclick="calcModes()">Calculate Modes</button>
+            <button class="room-unit-toggle" id="btn-unit" onclick="toggleUnit()">ft</button>
+        </div>
+        <div class="mode-result" id="mode-result">
+            <strong>Test frequencies set to room axial modes:</strong>
+            <div class="mode-freq-list" id="mode-freq-list"></div>
+            <div style="margin-top:8px;font-size:10px;color:var(--text-dim);" id="mode-note"></div>
         </div>
     </div>
 
@@ -1088,11 +1269,7 @@
                 </tr>
             </thead>
             <tbody id="table-body">
-                <tr><td class="td-freq">25 Hz</td><td class="td-baseline" id="tb-b-25">—</td><td class="td-pending" id="tb-v-25">pending</td><td id="tb-i-25">—</td></tr>
-                <tr><td class="td-freq">35 Hz</td><td class="td-baseline" id="tb-b-35">—</td><td class="td-pending" id="tb-v-35">pending</td><td id="tb-i-35">—</td></tr>
-                <tr><td class="td-freq">45 Hz</td><td class="td-baseline" id="tb-b-45">—</td><td class="td-pending" id="tb-v-45">pending</td><td id="tb-i-45">—</td></tr>
-                <tr><td class="td-freq">55 Hz</td><td class="td-baseline" id="tb-b-55">—</td><td class="td-pending" id="tb-v-55">pending</td><td id="tb-i-55">—</td></tr>
-                <tr><td class="td-freq">60 Hz</td><td class="td-baseline" id="tb-b-60">—</td><td class="td-pending" id="tb-v-60">pending</td><td id="tb-i-60">—</td></tr>
+                <!-- populated dynamically by buildFreqUI() -->
             </tbody>
         </table>
 
@@ -1238,8 +1415,11 @@ let dataArray    = null;
 let animHandle   = null;
 let pipelineActive = false;
 
-// ── Test State ────────────────────────────────────────────────────────
-const TEST_FREQS      = [25, 35, 45, 55, 60];
+// ── Test Frequencies — populated by room calc or defaults ─────────────
+// Default sweep: 7 evenly-spaced points 20–80 Hz used when no room dims entered
+const DEFAULT_FREQS   = [25, 35, 45, 55, 65, 75, 80];
+let   TEST_FREQS      = [...DEFAULT_FREQS];
+
 const BURST_DURATION  = 0.8;   // seconds — 0.8s gives 25 Hz ~20 full cycles to build and stop cleanly
 const SILENT_WINDOW   = 2.5;   // seconds — decay measurement window
 const SAMPLE_INTERVAL = 20;    // ms between T60 amplitude samples
@@ -1291,6 +1471,157 @@ const summaryRow   = document.getElementById('summary-row');
 const decayGraphs  = document.getElementById('decay-graphs');
 
 // ═══════════════════════════════════════════════════════════════════════
+//  AXIAL MODE CALCULATOR
+// ═══════════════════════════════════════════════════════════════════════
+
+const SPEED_OF_SOUND = 343; // m/s at ~20°C
+const FREQ_MIN       = 20;
+const FREQ_MAX       = 80;
+let   unitMode       = 'ft'; // 'ft' or 'm'
+
+function ftToM(ft) { return ft * 0.3048; }
+
+function calcAxialModes(dimM) {
+    // Returns axial mode frequencies for one dimension: fn = n × c / 2L
+    const modes = [];
+    for (let n = 1; n <= 6; n++) {
+        const f = Math.round((n * SPEED_OF_SOUND) / (2 * dimM));
+        if (f >= FREQ_MIN && f <= FREQ_MAX) modes.push(f);
+        if (f > FREQ_MAX) break;
+    }
+    return modes;
+}
+
+function calcModes() {
+    const lRaw = parseFloat(document.getElementById('dim-l').value);
+    const wRaw = parseFloat(document.getElementById('dim-w').value);
+    const hRaw = parseFloat(document.getElementById('dim-h').value);
+
+    if (!lRaw || !wRaw || !hRaw || lRaw <= 0 || wRaw <= 0 || hRaw <= 0) {
+        alert('Please enter all three room dimensions.');
+        return;
+    }
+
+    // Convert to metres
+    const L = unitMode === 'ft' ? ftToM(lRaw) : lRaw;
+    const W = unitMode === 'ft' ? ftToM(wRaw) : wRaw;
+    const H = unitMode === 'ft' ? ftToM(hRaw) : hRaw;
+
+    // Axial modes per dimension
+    const lengthModes = calcAxialModes(L);
+    const widthModes  = calcAxialModes(W);
+    const heightModes = calcAxialModes(H);
+
+    // Also compute first-order tangential modes (two walls) that fall in range
+    const tangentialModes = [];
+    const dimPairs = [[L,W],[L,H],[W,H]];
+    dimPairs.forEach(([a,b]) => {
+        // Lowest tangential: f = c/2 * sqrt((1/a)^2 + (1/b)^2)
+        const f = Math.round((SPEED_OF_SOUND / 2) * Math.sqrt((1/a)**2 + (1/b)**2));
+        if (f >= FREQ_MIN && f <= FREQ_MAX) tangentialModes.push(f);
+    });
+
+    // Merge all, deduplicate (within 2 Hz), sort
+    const allRaw = [...lengthModes, ...widthModes, ...heightModes];
+    const tangSet = new Set(tangentialModes);
+
+    // Deduplicate within 2 Hz
+    const merged = [];
+    allRaw.sort((a,b) => a-b).forEach(f => {
+        if (!merged.some(m => Math.abs(m.f - f) <= 2)) {
+            merged.push({ f, type: 'axial' });
+        }
+    });
+    tangentialModes.forEach(f => {
+        if (!merged.some(m => Math.abs(m.f - f) <= 2)) {
+            merged.push({ f, type: 'tangential' });
+        }
+    });
+    merged.sort((a,b) => a.f - b.f);
+
+    if (merged.length === 0) {
+        alert('No modes found in the 20–80 Hz range for these dimensions. Check your values.');
+        return;
+    }
+
+    // Update TEST_FREQS
+    TEST_FREQS = merged.map(m => m.f);
+
+    // Update the freq grid columns to match
+    const chipsGrid = document.querySelectorAll('.freq-results');
+    chipsGrid.forEach(g => g.style.gridTemplateColumns = `repeat(${Math.min(TEST_FREQS.length, 6)}, 1fr)`);
+
+    // Rebuild UI
+    buildFreqUI();
+
+    // Show the mode result panel
+    const resultEl = document.getElementById('mode-result');
+    const listEl   = document.getElementById('mode-freq-list');
+    const noteEl   = document.getElementById('mode-note');
+
+    listEl.innerHTML = merged.map(m =>
+        `<span class="mode-freq-tag ${m.type === 'tangential' ? 'tangential' : ''}">${m.f} Hz</span>`
+    ).join('');
+
+    const axialCount = merged.filter(m => m.type === 'axial').length;
+    const tangCount  = merged.filter(m => m.type === 'tangential').length;
+    noteEl.textContent =
+        `${axialCount} axial mode${axialCount !== 1 ? 's' : ''}` +
+        (tangCount ? ` · ${tangCount} tangential mode${tangCount !== 1 ? 's' : ''} (orange)` : '') +
+        ` · ${TEST_FREQS.length} test frequencies · estimated test time: ${Math.round(TEST_FREQS.length * (BURST_DURATION + SILENT_WINDOW) / 60 * 10) / 10} min`;
+
+    resultEl.classList.add('visible');
+
+    // Update insights
+    setInsights(`Room modes calculated. The test will fire bursts at <strong>${TEST_FREQS.map(f => f + ' Hz').join(', ')}</strong> — your room's predicted axial${tangCount ? ' and tangential' : ''} modes in the 20–80 Hz range. Click <strong>Run Baseline Test</strong> when ready.`);
+}
+
+function toggleUnit() {
+    unitMode = unitMode === 'ft' ? 'm' : 'ft';
+    document.getElementById('btn-unit').textContent = unitMode;
+    // Clear inputs when switching units to avoid confusion
+    ['dim-l','dim-w','dim-h'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('mode-result').classList.remove('visible');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  DYNAMIC FREQ UI BUILDER
+//  Called on page load (with defaults) and after calcModes()
+// ═══════════════════════════════════════════════════════════════════════
+
+function buildFreqUI() {
+    const n = TEST_FREQS.length;
+    const cols = Math.min(n, 6);
+
+    // Rebuild chip containers
+    ['baseline','verified'].forEach(mode => {
+        const prefix = mode === 'baseline' ? 'b' : 'v';
+        const container = document.getElementById(`chips-${mode}`);
+        container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        container.innerHTML = TEST_FREQS.map(hz =>
+            `<div class="freq-chip" data-hz="${hz}">
+                <div class="chip-hz">${hz} Hz</div>
+                <div class="chip-val" id="chip-${prefix}-${hz}">—</div>
+            </div>`
+        ).join('');
+    });
+
+    // Rebuild results table rows
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = TEST_FREQS.map(hz =>
+        `<tr>
+            <td class="td-freq">${hz} Hz</td>
+            <td class="td-baseline" id="tb-b-${hz}">—</td>
+            <td class="td-pending"  id="tb-v-${hz}">pending</td>
+            <td id="tb-i-${hz}">—</td>
+        </tr>`
+    ).join('');
+}
+
+// ── Build initial UI with default frequencies on page load
+buildFreqUI();
+
+// ═══════════════════════════════════════════════════════════════════════
 //  MICROPHONE INIT
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -1312,12 +1643,12 @@ btnConnect.addEventListener('click', async () => {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const source = audioCtx.createMediaStreamSource(micStream);
 
-        // 4th-order brickwall bandpass: two cascaded HP at 20 Hz + two cascaded LP at 62 Hz
+        // 4th-order brickwall bandpass: two cascaded HP at 20 Hz + two cascaded LP at 85 Hz
         // Each pair gives ~24 dB/oct slope; together ~48 dB/oct effective roll-off
         const hp1 = audioCtx.createBiquadFilter(); hp1.type = 'highpass'; hp1.frequency.value = 20; hp1.Q.value = 0.707;
         const hp2 = audioCtx.createBiquadFilter(); hp2.type = 'highpass'; hp2.frequency.value = 20; hp2.Q.value = 0.707;
-        const lp1 = audioCtx.createBiquadFilter(); lp1.type = 'lowpass';  lp1.frequency.value = 62; lp1.Q.value = 0.707;
-        const lp2 = audioCtx.createBiquadFilter(); lp2.type = 'lowpass';  lp2.frequency.value = 62; lp2.Q.value = 0.707;
+        const lp1 = audioCtx.createBiquadFilter(); lp1.type = 'lowpass';  lp1.frequency.value = 85; lp1.Q.value = 0.707;
+        const lp2 = audioCtx.createBiquadFilter(); lp2.type = 'lowpass';  lp2.frequency.value = 85; lp2.Q.value = 0.707;
 
         // Large FFT for sub-bass time-domain resolution (~85ms at 48kHz)
         analyserNode = audioCtx.createAnalyser();
@@ -1346,10 +1677,7 @@ btnConnect.addEventListener('click', async () => {
         step1.classList.add('done');
         step2.classList.add('active');
 
-        setInsights('Microphone connected. When you\'re ready, click <strong>Run Baseline Test</strong>. '
-            + 'The tool will play five bass tones through your speakers and measure how long each one '
-            + 'keeps ringing in your room after it stops. This gives you a baseline of your room\'s '
-            + 'bass decay <em>before</em> any treatment is added.');
+        setInsights('Microphone connected. If you haven\'t already, enter your room dimensions above to target the test at your room\'s actual bass modes. Otherwise click <strong>Run Baseline Test</strong> to use the default sweep across 20–80 Hz.');
 
         pipelineActive = true;
         peakDecayActive = true;
@@ -1580,9 +1908,7 @@ function finalizeSequence(mode) {
 
         drawSparkline('baseline');
 
-        // Build a plain-language read of what the baseline showed
-        const freqs = [25, 35, 45, 55, 60];
-        const badFreqs = freqs.filter(hz => results.baseline[hz] && results.baseline[hz].t60 > 0.75);
+        const badFreqs = TEST_FREQS.filter(hz => results.baseline[hz] && results.baseline[hz].t60 > 0.75);
         let problemText = '';
         if (badFreqs.length === 0) {
             problemText = 'Your room\'s bass decay is already within a reasonable range. '
@@ -1592,7 +1918,7 @@ function finalizeSequence(mode) {
                 + 'This is the kind of problem that makes kick drums sound bloated and bass notes uneven across the room. '
                 + 'EQ cannot fix this — only reducing the decay time in the room itself will.';
         } else {
-            problemText = 'Your room has significant bass decay problems across the full 25–60 Hz range. '
+            problemText = `Your room has significant bass decay problems at ${badFreqs.length} of the ${TEST_FREQS.length} tested frequencies. `
                 + 'This is very common in untreated rooms and is the exact problem the Nodal 30 is designed to solve.';
         }
 
@@ -1609,24 +1935,23 @@ function finalizeSequence(mode) {
         drawSparkline('verification');
         buildSummary();
 
-        // Build a plain-language read of the improvement
-        const freqs = [25, 35, 45, 55, 60];
-        const improved = freqs.filter(hz => {
+        const improved = TEST_FREQS.filter(hz => {
             const b = results.baseline[hz], v = results.verification[hz];
             return b && v && v.t60 < b.t60;
         });
-        const inTarget = freqs.filter(hz => {
+        const inTarget = TEST_FREQS.filter(hz => {
             const v = results.verification[hz];
             return v && v.t60 <= 0.55;
         });
+        const threshold = Math.ceil(TEST_FREQS.length * 0.7); // 70% in target = good
 
         let resultText = '';
-        if (inTarget.length >= 4) {
+        if (inTarget.length >= threshold) {
             resultText = 'Your room is now within the professional monitoring target range across most of the bass spectrum. '
                 + 'Bass decisions you make in this room will translate reliably to other playback systems.';
-        } else if (improved.length >= 3) {
+        } else if (improved.length >= Math.ceil(TEST_FREQS.length * 0.6)) {
             resultText = 'The Nodal 30 units have meaningfully reduced bass decay across the full test range. '
-                + 'The improvement is visible in every frequency column — this is the Nodal 30\'s broad Q factor working across the whole 20–60 Hz window, not just at one frequency.';
+                + 'The improvement is visible across frequency columns — this is the Nodal 30\'s broad Q factor working across the whole 20–80 Hz window, not just at one frequency.';
         } else {
             resultText = 'Some improvement is visible. If results are below expectations, check that all units are correctly corner-placed and that the full 24-hour acclimation period was observed.';
         }
@@ -1650,9 +1975,7 @@ function t60Zone(seconds) {
 }
 
 function updateResultsTable() {
-    const freqs = [25, 35, 45, 55, 60];
-
-    freqs.forEach(hz => {
+    TEST_FREQS.forEach(hz => {
         const b = results.baseline[hz];
         const v = results.verification[hz];
 
@@ -1661,13 +1984,11 @@ function updateResultsTable() {
         const iEl = document.getElementById(`tb-i-${hz}`);
         if (!bEl) return;
 
-        // Baseline cell — color by T60 zone
         if (b) {
             bEl.className   = `td-baseline ${t60Zone(b.t60)}`;
             bEl.textContent = formatT60(b.t60, b.didNotDecay);
         }
 
-        // Verified cell — color by T60 zone (shows improvement visually through color shift)
         if (v) {
             vEl.className   = `td-verified ${t60Zone(v.t60)}`;
             vEl.textContent = formatT60(v.t60, v.didNotDecay);
@@ -1676,7 +1997,6 @@ function updateResultsTable() {
             vEl.textContent = 'pending';
         }
 
-        // Improvement column — percentage reduction
         if (b && v) {
             const improvement = ((b.t60 - v.t60) / b.t60) * 100;
             iEl.textContent  = improvement > 0 ? `−${improvement.toFixed(0)}%` : `+${Math.abs(improvement).toFixed(0)}%`;
@@ -1687,11 +2007,9 @@ function updateResultsTable() {
 }
 
 function buildSummary() {
-    const freqs   = [25, 35, 45, 55, 60];
-    let totalImp  = 0;
-    let count     = 0;
+    let totalImp = 0, count = 0;
 
-    freqs.forEach(hz => {
+    TEST_FREQS.forEach(hz => {
         const b = results.baseline[hz];
         const v = results.verification[hz];
         if (b && v) {
@@ -1702,12 +2020,15 @@ function buildSummary() {
 
     if (!count) return;
 
-    const avg = totalImp / count;
+    const avg    = totalImp / count;
+    const minHz  = Math.min(...TEST_FREQS);
+    const maxHz  = Math.max(...TEST_FREQS);
+
     document.getElementById('summary-improvement').textContent =
         avg > 0 ? `−${avg.toFixed(0)}%` : `+${Math.abs(avg).toFixed(0)}%`;
 
     document.getElementById('summary-sub').textContent =
-        `Average decay reduction across 25–60 Hz — Nodal 30 treatment verified`;
+        `Average decay reduction across ${minHz}–${maxHz} Hz (${count} frequencies) — Nodal 30 treatment verified`;
 
     summaryRow.style.display  = 'flex';
     decayGraphs.style.display = 'grid';
@@ -1848,36 +2169,24 @@ btnVerify.addEventListener('click', () => {
 });
 
 btnReset.addEventListener('click', () => {
-    // Clear stored results
-    [25, 35, 45, 55, 60].forEach(hz => {
+    // Clear stored results for all currently active frequencies
+    TEST_FREQS.forEach(hz => {
         delete results.baseline[hz];
         delete results.verification[hz];
     });
+    // Also clear any stale results from previous freq set
+    Object.keys(results.baseline).forEach(k => delete results.baseline[k]);
+    Object.keys(results.verification).forEach(k => delete results.verification[k]);
 
     peaks.baseline = peaks.verification = 0;
 
-    // Clear chips
-    ['b','v'].forEach(prefix => {
-        [25, 35, 45, 55, 60].forEach(hz => {
-            const el = document.getElementById(`chip-${prefix}-${hz}`);
-            if (el) { el.textContent = '—'; el.className = 'chip-val'; }
-        });
-    });
+    // Reset TEST_FREQS to defaults, rebuild UI
+    TEST_FREQS = [...DEFAULT_FREQS];
+    buildFreqUI();
 
-    // Clear chips state
-    document.querySelectorAll('.freq-chip').forEach(c => {
-        c.classList.remove('measuring','done-baseline','done-verified');
-    });
-
-    // Clear table
-    [25, 35, 45, 55, 60].forEach(hz => {
-        const b = document.getElementById(`tb-b-${hz}`);
-        const v = document.getElementById(`tb-v-${hz}`);
-        const i = document.getElementById(`tb-i-${hz}`);
-        if (b) { b.textContent = '—'; b.className = 'td-baseline'; }
-        if (v) { v.textContent = 'pending'; v.className = 'td-pending'; }
-        if (i) { i.textContent = '—'; i.className = 'td-improvement'; }
-    });
+    // Reset room dimension panel
+    ['dim-l','dim-w','dim-h'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('mode-result').classList.remove('visible');
 
     // Clear header displays
     t60BaselineDisp.textContent = '—'; t60BaselineDisp.className = '';
@@ -1893,7 +2202,7 @@ btnReset.addEventListener('click', () => {
     step1.classList.add('active');
     step2.classList.remove('active');
 
-    setInsights('All data cleared. Click <strong>Run Baseline Test</strong> to start a fresh measurement.');
+    setInsights('All data cleared. Enter your room dimensions above to target the test at your actual room modes, or click <strong>Run Baseline Test</strong> to use the default sweep.');
     btnBaseline.disabled = false;
     btnVerify.disabled   = true;
     btnBaseline.classList.add('accent');
@@ -1969,39 +2278,43 @@ function exportPDF() {
 }
 
 function buildReport() {
-    const freqs = [25, 35, 45, 55, 60];
-    const now   = new Date();
+    const now     = new Date();
     const dateStr = now.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
 
-    // Header meta
-    const hasVerification = freqs.some(hz => results.verification[hz]);
-    const hasBaseline     = freqs.some(hz => results.baseline[hz]);
+    const hasVerification = TEST_FREQS.some(hz => results.verification[hz]);
+    const hasBaseline     = TEST_FREQS.some(hz => results.baseline[hz]);
     const statusLabel     = hasVerification ? 'Baseline + Nodal 30 Verification'
                           : hasBaseline     ? 'Baseline Only'
                           : 'No data';
 
-    document.getElementById('report-meta').textContent =
-        `${statusLabel} · ${dateStr} at ${timeStr}`;
-    document.getElementById('report-footer-date').textContent = `${dateStr}`;
+    const minHz = Math.min(...TEST_FREQS);
+    const maxHz = Math.max(...TEST_FREQS);
 
-    // Build table rows
+    // Report header — include room mode note if user ran the calculator
+    const modeResult = document.getElementById('mode-result');
+    const roomNote   = modeResult.classList.contains('visible')
+        ? ` · Axial mode frequencies ${minHz}–${maxHz} Hz`
+        : ` · Default sweep ${minHz}–${maxHz} Hz`;
+
+    document.getElementById('report-meta').textContent =
+        `${statusLabel}${roomNote} · ${dateStr} at ${timeStr}`;
+    document.getElementById('report-footer-date').textContent = dateStr;
+
+    // Build table rows dynamically from TEST_FREQS
     const tbody = document.getElementById('report-table-body');
     tbody.innerHTML = '';
 
-    freqs.forEach(hz => {
+    TEST_FREQS.forEach(hz => {
         const b = results.baseline[hz];
         const v = results.verification[hz];
-
         const tr = document.createElement('tr');
 
-        // Frequency cell
         const tdFreq = document.createElement('td');
-        tdFreq.className   = 'r-freq';
+        tdFreq.className = 'r-freq';
         tdFreq.textContent = `${hz} Hz`;
         tr.appendChild(tdFreq);
 
-        // Before cell
         const tdBefore = document.createElement('td');
         if (b) {
             tdBefore.className   = `r-before ${reportZone(b.t60)}`;
@@ -2012,7 +2325,6 @@ function buildReport() {
         }
         tr.appendChild(tdBefore);
 
-        // After cell
         const tdAfter = document.createElement('td');
         if (v) {
             tdAfter.className   = `r-after ${reportZone(v.t60)}`;
@@ -2023,7 +2335,6 @@ function buildReport() {
         }
         tr.appendChild(tdAfter);
 
-        // Improvement cell
         const tdImpr = document.createElement('td');
         if (b && v) {
             const pct = ((b.t60 - v.t60) / b.t60) * 100;
@@ -2038,25 +2349,24 @@ function buildReport() {
         tbody.appendChild(tr);
     });
 
-    // Summary — only if we have both
+    // Summary
     const summarySection = document.getElementById('report-summary-section');
     const graphsSection  = document.getElementById('report-graphs-section');
 
     if (hasVerification && hasBaseline) {
         let total = 0, count = 0;
-        freqs.forEach(hz => {
+        TEST_FREQS.forEach(hz => {
             const b = results.baseline[hz], v = results.verification[hz];
             if (b && v) { total += ((b.t60 - v.t60) / b.t60) * 100; count++; }
         });
-        const avg = count ? total / count : 0;
+        const avg   = count ? total / count : 0;
         const avgEl = document.getElementById('report-avg-improvement');
         avgEl.textContent = avg > 0 ? `−${avg.toFixed(0)}%` : `+${Math.abs(avg).toFixed(0)}%`;
         avgEl.className   = `rs-number${avg <= 0 ? ' no-improvement' : ''}`;
         document.getElementById('report-summary-sub').textContent =
-            `Measured across ${count} frequencies (25–60 Hz)`;
+            `Measured across ${count} frequencies (${minHz}–${maxHz} Hz)`;
         summarySection.style.display = 'block';
 
-        // Draw report sparklines
         graphsSection.style.display = 'block';
         setTimeout(() => {
             drawReportSparkline('baseline');
