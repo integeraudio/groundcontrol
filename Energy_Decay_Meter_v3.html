@@ -717,6 +717,46 @@
         .zone-colored  { color: var(--amber) !important; } /* 0.75–1.5s — colored, unreliable */
         .zone-target   { color: var(--green) !important; } /* 0.25–0.55s — professional target */
         .zone-ok       { color: #a3d977 !important; }    /* 0.55–0.75s — acceptable, close  */
+        .zone-invalid  { color: var(--text-dim) !important; font-style: italic; } /* insufficient signal */
+
+        /* Calibration banner — shown during noise floor measurement */
+        .cal-banner {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0,212,232,0.06);
+            border: 1px solid rgba(0,212,232,0.2);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .cal-banner.visible { display: flex; }
+        .cal-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0,212,232,0.2);
+            border-top-color: var(--cyan);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .cal-banner strong { color: var(--cyan); }
+        .cal-result {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            border-radius: 6px;
+            padding: 10px 16px;
+            margin-bottom: 14px;
+            font-size: 12px;
+        }
+        .cal-result.visible { display: flex; }
+        .cal-result.ok  { background: rgba(74,222,128,0.07);  border: 1px solid rgba(74,222,128,0.2);  color: var(--green); }
+        .cal-result.bad { background: rgba(255,59,59,0.07);   border: 1px solid rgba(255,59,59,0.2);   color: var(--red); }
+        .cal-result .cal-icon { font-size: 16px; flex-shrink: 0; }
 
         /* T60 reference legend */
         .t60-legend {
@@ -1123,6 +1163,14 @@
 
             <div class="readouts">
                 <div class="readout-row">
+                    <span class="readout-label">Noise Floor</span>
+                    <span class="readout-val" id="val-noise">—</span>
+                </div>
+                <div class="readout-row">
+                    <span class="readout-label">Min Signal Required</span>
+                    <span class="readout-val" id="val-snr-req">—</span>
+                </div>
+                <div class="readout-row">
                     <span class="readout-label">Mic Status</span>
                     <span class="readout-val" id="val-dsp">Not connected</span>
                 </div>
@@ -1229,6 +1277,19 @@
             <div class="mode-freq-list" id="mode-freq-list"></div>
             <div style="margin-top:8px;font-size:10px;color:var(--text-dim);" id="mode-note"></div>
         </div>
+    </div>
+
+    <!-- CALIBRATION STATUS BANNERS -->
+    <div class="cal-banner" id="cal-banner">
+        <div class="cal-spinner"></div>
+        <div>
+            <strong>Measuring ambient noise floor…</strong>
+            Keep the room quiet for 2 seconds. This calibrates the tool to ignore background noise in your space.
+        </div>
+    </div>
+    <div class="cal-result" id="cal-result">
+        <span class="cal-icon" id="cal-icon">✓</span>
+        <span id="cal-result-text"></span>
     </div>
 
     <!-- INSIGHTS -->
@@ -1449,6 +1510,12 @@ const FFT_SIZE        = 4096;   // large buffer for sub-bass time-domain resolut
 const DB_FLOOR        = -80;    // dB — analysis floor (float32 gives true dynamic range)
 const REGRESSION_LOW  = -5;     // dB — start of linear regression window (T20 method)
 const REGRESSION_HIGH = -25;    // dB — end of linear regression window (T20 method)
+const SNR_MIN_DB      = 15;     // dB — minimum burst signal above noise floor for a valid measurement
+const NOISE_FLOOR_DUR = 2.0;    // seconds — ambient noise measurement window before each test
+
+// ── Noise floor state ─────────────────────────────────────────────────
+let noiseFloorDB       = DB_FLOOR;  // measured ambient noise in the 20–85 Hz window
+let noiseFloorMeasured = false;     // true after a successful ambient calibration
 
 // ── Measurement Storage ───────────────────────────────────────────────
 // results[mode][hz] = { t60: seconds, peakPct: 0-100, decayCurve: [] }
@@ -1869,14 +1936,59 @@ function startDecayLogging() {
 function stopDecayLogging(mode, hz, timedOut) {
     decayWindowActive = false;
 
-    // Compute T60 via linear regression
+    // ── SNR validation ────────────────────────────────────────────────
+    // Find the peak dB recorded during the burst window (first sample in decayLog
+    // is taken right at burst stop — the burst peak captured at that moment).
+    // We also track the max dB seen across the whole decay log.
+    const burstPeakDB = decayLog.length > 0
+        ? Math.max(...decayLog.slice(0, Math.min(5, decayLog.length)).map(s => s.db))
+        : DB_FLOOR;
+
+    const minValidDB  = noiseFloorDB + SNR_MIN_DB;
+    const validSignal = noiseFloorMeasured && (burstPeakDB >= minValidDB);
+
+    if (!validSignal) {
+        // Insufficient signal — mark as invalid rather than returning a spurious number
+        results[mode][hz] = {
+            t60:        null,
+            decayCurve: [],
+            didNotDecay: false,
+            invalid:    true,
+            reason:     burstPeakDB < minValidDB
+                ? `Signal ${burstPeakDB.toFixed(1)} dBFS — need >${minValidDB.toFixed(1)} dBFS`
+                : 'No noise floor reference'
+        };
+
+        const prefix = (mode === 'baseline') ? 'b' : 'v';
+        const chipEl = document.getElementById(`chip-${prefix}-${hz}`);
+        if (chipEl) {
+            chipEl.textContent = 'no signal';
+            chipEl.className   = 'chip-val zone-invalid';
+        }
+        const chipsContainer = document.getElementById(
+            `chips-${mode === 'baseline' ? 'baseline' : 'verified'}`);
+        if (chipsContainer) {
+            const chip = chipsContainer.querySelector(`[data-hz="${hz}"]`);
+            if (chip) {
+                chip.classList.remove('measuring');
+                chip.classList.add(mode === 'baseline' ? 'done-baseline' : 'done-verified');
+            }
+        }
+        updateResultsTable();
+        valPhase.textContent = 'Standby';
+        valPhase.className   = 'readout-val';
+        return;
+    }
+
+    // ── Valid signal — compute T60 via linear regression ─────────────
     const t60 = calcT60fromRegression(decayLog);
     const didNotDecay = (timedOut && (t60 === null || t60 > SILENT_WINDOW * 0.9));
 
     results[mode][hz] = {
         t60:        t60 !== null ? t60 : SILENT_WINDOW,
         decayCurve: decayLog.map(s => ({ t: s.t, amp: dbToMeterPct(s.db) })),
-        didNotDecay
+        didNotDecay,
+        invalid:    false
     };
 
     // Update UI
@@ -1905,7 +2017,8 @@ function stopDecayLogging(mode, hz, timedOut) {
     valPhase.className   = 'readout-val';
 }
 
-function formatT60(seconds, didNotDecay = false) {
+function formatT60(seconds, didNotDecay = false, invalid = false) {
+    if (invalid || seconds === null) return 'no signal';
     if (didNotDecay) return `>${seconds.toFixed(2)}s`;
     return `${seconds.toFixed(2)}s`;
 }
@@ -1925,6 +2038,77 @@ function updateT60HeaderDisplay(mode) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
+//  NOISE FLOOR CALIBRATION
+//  Measures ambient energy in the 20–85 Hz window for 2 seconds.
+//  Any burst that doesn't produce SNR_MIN_DB above this floor is invalid.
+// ═══════════════════════════════════════════════════════════════════════
+
+async function measureNoiseFloor() {
+    // Show calibration banner
+    const banner     = document.getElementById('cal-banner');
+    const resultEl   = document.getElementById('cal-result');
+    const resultText = document.getElementById('cal-result-text');
+    const calIcon    = document.getElementById('cal-icon');
+
+    banner.classList.add('visible');
+    resultEl.classList.remove('visible', 'ok', 'bad');
+
+    valPhase.textContent = 'Calibrating…';
+    valPhase.className   = 'readout-val measuring';
+
+    // Sample the analyser every animation frame for NOISE_FLOOR_DUR seconds
+    const calEndTime = audioCtx.currentTime + NOISE_FLOOR_DUR;
+    const samples    = [];
+
+    await new Promise(resolve => {
+        function sample() {
+            samples.push(readAmplitudeDB());
+            if (audioCtx.currentTime < calEndTime) {
+                requestAnimationFrame(sample);
+            } else {
+                resolve();
+            }
+        }
+        requestAnimationFrame(sample);
+    });
+
+    // Noise floor = median of samples (robust against transient spikes)
+    samples.sort((a, b) => a - b);
+    noiseFloorDB = samples[Math.floor(samples.length / 2)];
+    noiseFloorMeasured = true;
+
+    const minSignalDB  = noiseFloorDB + SNR_MIN_DB;
+    const noiseIsHigh  = noiseFloorDB > -35;  // above -35 dBFS is a loud environment
+
+    // Update status readouts
+    const valNoise  = document.getElementById('val-noise');
+    const valSnrReq = document.getElementById('val-snr-req');
+    if (valNoise)  valNoise.textContent  = `${noiseFloorDB.toFixed(1)} dBFS`;
+    if (valSnrReq) valSnrReq.textContent = `> ${minSignalDB.toFixed(1)} dBFS`;
+
+    banner.classList.remove('visible');
+
+    if (noiseIsHigh) {
+        // Warn: ambient noise may contaminate measurements
+        calIcon.textContent       = '⚠';
+        resultText.innerHTML      = `<strong>High ambient noise detected</strong> (${noiseFloorDB.toFixed(1)} dBFS).
+            Results at lower frequencies may be unreliable. Reduce background noise if possible —
+            turn off fans, HVAC, and close windows — then click the test button again to recalibrate.`;
+        resultEl.className        = 'cal-result visible bad';
+    } else {
+        // Good — show noise floor and minimum signal threshold
+        calIcon.textContent       = '✓';
+        resultText.innerHTML      = `<strong>Noise floor: ${noiseFloorDB.toFixed(1)} dBFS.</strong>
+            Measurements require a signal above <strong>${minSignalDB.toFixed(1)} dBFS</strong> to be valid.
+            Frequencies where your speakers can't produce sufficient level will show <em>no signal</em>.`;
+        resultEl.className        = 'cal-result visible ok';
+    }
+
+    valPhase.textContent = 'Standby';
+    valPhase.className   = 'readout-val';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
 //  TEST SEQUENCE RUNNER — audio-clock based, no sleep() for burst timing
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -1936,6 +2120,11 @@ async function runTestSequence(mode) {
     lockButtons(true);
     setWorkflowStep(mode);
 
+    // ── Noise floor calibration — always runs fresh before each sequence ─
+    setInsights('Measuring ambient noise floor — keep the room quiet for 2 seconds…');
+    await measureNoiseFloor();
+
+    // ── Frequency sweep ──────────────────────────────────────────────────
     for (let i = 0; i < TEST_FREQS.length; i++) {
         const hz = TEST_FREQS[i];
         currentFreq = hz;
@@ -2100,23 +2289,37 @@ function updateResultsTable() {
         if (!bEl) return;
 
         if (b) {
-            bEl.className   = `td-baseline ${t60Zone(b.t60)}`;
-            bEl.textContent = formatT60(b.t60, b.didNotDecay);
+            if (b.invalid) {
+                bEl.className   = 'td-baseline zone-invalid';
+                bEl.textContent = 'no signal';
+            } else {
+                bEl.className   = `td-baseline ${t60Zone(b.t60)}`;
+                bEl.textContent = formatT60(b.t60, b.didNotDecay);
+            }
         }
 
         if (v) {
-            vEl.className   = `td-verified ${t60Zone(v.t60)}`;
-            vEl.textContent = formatT60(v.t60, v.didNotDecay);
+            if (v.invalid) {
+                vEl.className   = 'td-verified zone-invalid';
+                vEl.textContent = 'no signal';
+            } else {
+                vEl.className   = `td-verified ${t60Zone(v.t60)}`;
+                vEl.textContent = formatT60(v.t60, v.didNotDecay);
+            }
         } else if (b) {
             vEl.className   = 'td-pending';
             vEl.textContent = 'pending';
         }
 
-        if (b && v) {
+        // Improvement — only compute for valid measurements on both sides
+        if (b && v && !b.invalid && !v.invalid) {
             const improvement = ((b.t60 - v.t60) / b.t60) * 100;
             iEl.textContent  = improvement > 0 ? `−${improvement.toFixed(0)}%` : `+${Math.abs(improvement).toFixed(0)}%`;
             iEl.className    = 'td-improvement '
                 + (improvement >= 50 ? 'good' : improvement >= 20 ? 'ok' : 'none');
+        } else if (b && v && (b.invalid || v.invalid)) {
+            iEl.textContent = '—';
+            iEl.className   = 'td-improvement none';
         }
     });
 }
@@ -2127,7 +2330,8 @@ function buildSummary() {
     TEST_FREQS.forEach(hz => {
         const b = results.baseline[hz];
         const v = results.verification[hz];
-        if (b && v) {
+        // Skip invalid measurements — they have no meaningful T60 to compare
+        if (b && v && !b.invalid && !v.invalid && b.t60 && v.t60) {
             totalImp += ((b.t60 - v.t60) / b.t60) * 100;
             count++;
         }
@@ -2135,15 +2339,22 @@ function buildSummary() {
 
     if (!count) return;
 
-    const avg    = totalImp / count;
-    const minHz  = Math.min(...TEST_FREQS);
-    const maxHz  = Math.max(...TEST_FREQS);
+    const avg   = totalImp / count;
+    const minHz = Math.min(...TEST_FREQS);
+    const maxHz = Math.max(...TEST_FREQS);
 
     document.getElementById('summary-improvement').textContent =
         avg > 0 ? `−${avg.toFixed(0)}%` : `+${Math.abs(avg).toFixed(0)}%`;
 
+    const invalidCount = TEST_FREQS.filter(hz => {
+        const b = results.baseline[hz], v = results.verification[hz];
+        return (b && b.invalid) || (v && v.invalid);
+    }).length;
+
     document.getElementById('summary-sub').textContent =
-        `Average decay reduction across ${minHz}–${maxHz} Hz (${count} frequencies) — Nodal 30 treatment verified`;
+        `Average across ${count} valid frequencies (${minHz}–${maxHz} Hz)` +
+        (invalidCount ? ` · ${invalidCount} frequency${invalidCount > 1 ? 's' : ''} excluded (insufficient signal)` : '') +
+        ` — Nodal 30 treatment verified`;
 
     summaryRow.style.display  = 'flex';
     decayGraphs.style.display = 'grid';
@@ -2432,12 +2643,15 @@ function buildReport() {
         const tr = document.createElement('tr');
 
         const tdFreq = document.createElement('td');
-        tdFreq.className = 'r-freq';
+        tdFreq.className   = 'r-freq';
         tdFreq.textContent = `${hz} Hz`;
         tr.appendChild(tdFreq);
 
         const tdBefore = document.createElement('td');
-        if (b) {
+        if (b && b.invalid) {
+            tdBefore.className   = 'r-pending';
+            tdBefore.textContent = 'no signal';
+        } else if (b) {
             tdBefore.className   = `r-before ${reportZone(b.t60)}`;
             tdBefore.textContent = formatT60(b.t60, b.didNotDecay);
         } else {
@@ -2447,7 +2661,10 @@ function buildReport() {
         tr.appendChild(tdBefore);
 
         const tdAfter = document.createElement('td');
-        if (v) {
+        if (v && v.invalid) {
+            tdAfter.className   = 'r-pending';
+            tdAfter.textContent = 'no signal';
+        } else if (v) {
             tdAfter.className   = `r-after ${reportZone(v.t60)}`;
             tdAfter.textContent = formatT60(v.t60, v.didNotDecay);
         } else {
@@ -2457,7 +2674,7 @@ function buildReport() {
         tr.appendChild(tdAfter);
 
         const tdImpr = document.createElement('td');
-        if (b && v) {
+        if (b && v && !b.invalid && !v.invalid) {
             const pct = ((b.t60 - v.t60) / b.t60) * 100;
             tdImpr.textContent = pct > 0 ? `−${pct.toFixed(0)}%` : `+${Math.abs(pct).toFixed(0)}%`;
             tdImpr.className   = 'r-impr ' + (pct >= 50 ? 'ri-good' : pct >= 20 ? 'ri-ok' : 'ri-none');
@@ -2478,7 +2695,10 @@ function buildReport() {
         let total = 0, count = 0;
         TEST_FREQS.forEach(hz => {
             const b = results.baseline[hz], v = results.verification[hz];
-            if (b && v) { total += ((b.t60 - v.t60) / b.t60) * 100; count++; }
+            if (b && v && !b.invalid && !v.invalid && b.t60 && v.t60) {
+                total += ((b.t60 - v.t60) / b.t60) * 100;
+                count++;
+            }
         });
         const avg   = count ? total / count : 0;
         const avgEl = document.getElementById('report-avg-improvement');
