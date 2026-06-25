@@ -1,0 +1,2764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GroundControl // Energy Decay Meter v8.6</title>
+<style>
+:root {
+    --navy-dark:#070F18; --navy-main:#0D1B2A; --navy-mid:#0F1E30; --navy-light:#1B2A47;
+    --border:rgba(0,212,232,0.10); --cyan:#00D4E8; --cyan-dim:rgba(0,212,232,0.12);
+    --cyan-glow:rgba(0,212,232,0.22); --orange:#FF6B35; --orange-dim:rgba(255,107,53,0.12);
+    --green:#4ade80; --green-dim:rgba(74,222,128,0.12); --red:#FF3B3B; --amber:#FFA630;
+    --bright:#f0f6fa; --muted:#7a9ab5; --dim:#3d5a72;
+    --purple:#a855f7; --purple-dim:rgba(168,85,247,0.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'SF Mono','Fira Code','Consolas',monospace;background:var(--navy-dark);color:var(--bright);min-height:100vh;padding:30px 20px 60px;}
+.app{max-width:980px;margin:0 auto;}
+.header{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:22px;}
+.header-brand{font-size:11px;font-weight:700;letter-spacing:3px;color:var(--muted);text-transform:uppercase;}
+.header-title{font-size:19px;font-weight:700;letter-spacing:-0.3px;}
+.header-title span{color:var(--cyan);}
+.header-badge{margin-left:auto;font-size:10px;letter-spacing:2px;color:var(--cyan);border:1px solid var(--cyan);padding:3px 9px;border-radius:3px;text-transform:uppercase;text-decoration:none;}
+.header-badge:hover{background:var(--cyan);color:var(--navy-dark);}
+.hw-notice{background:var(--orange-dim);border-left:3px solid var(--orange);padding:12px 16px;border-radius:0 5px 5px 0;font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+.hw-notice strong{color:var(--bright);}
+.limitation-banner{background:rgba(255,166,48,0.08);border-left:3px solid var(--amber);padding:10px 14px;border-radius:0 5px 5px 0;font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.6;display:none;}
+.limitation-banner.visible{display:block;}
+.limitation-banner strong{color:var(--bright);}
+.limitation-banner .warn{color:var(--amber);font-weight:700;}
+.limitation-banner .info{color:var(--cyan);font-weight:700;}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.step{background:var(--navy-mid);border:1px solid rgba(255,255,255,0.04);border-radius:6px;padding:12px 14px;opacity:.3;transition:all .3s;}
+.step.active{opacity:1;border-color:var(--cyan);box-shadow:0 0 18px var(--cyan-dim);}
+.step.done{opacity:.7;border-color:var(--green);}
+.step-num{font-size:10px;letter-spacing:2px;color:var(--cyan);margin-bottom:4px;}
+.step.done .step-num{color:var(--green);}
+.step-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+.room-panel{background:var(--navy-mid);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:16px;}
+.room-panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.room-panel-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.room-panel-sub{font-size:11px;color:var(--dim);}
+.room-inputs{display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:10px;align-items:end;}
+.room-field{display:flex;flex-direction:column;gap:5px;}
+.room-field label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);}
+.room-field input{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:8px 10px;font-family:inherit;font-size:13px;font-weight:700;color:var(--bright);width:100%;outline:none;transition:border-color .15s;}
+.room-field input:focus{border-color:var(--cyan);}
+.room-calc-btn{background:var(--cyan);color:var(--navy-dark);border:none;border-radius:4px;padding:9px 14px;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;white-space:nowrap;}
+.room-calc-btn:hover{opacity:.85;}
+.room-unit-toggle{background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:9px 10px;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted);cursor:pointer;white-space:nowrap;}
+.room-unit-toggle:hover{border-color:var(--muted);color:var(--bright);}
+.mode-output{margin-top:12px;padding:10px 14px;background:rgba(0,0,0,.2);border-radius:4px;border:1px solid rgba(0,212,232,.1);font-size:11px;color:var(--muted);display:none;}
+.mode-output.visible{display:block;}
+.mode-output strong{color:var(--cyan);}
+.mode-freq-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.mode-tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:3px;background:rgba(0,212,232,.10);color:var(--cyan);border:1px solid rgba(0,212,232,.25);}
+.mode-tag.tangential{background:rgba(255,107,53,.08);color:var(--orange);border-color:rgba(255,107,53,.2);}
+.mode-tag.oblique{background:rgba(168,85,247,.08);color:var(--purple);border-color:rgba(168,85,247,.2);}
+.mode-tag.standard{background:rgba(255,255,255,.04);color:var(--dim);border-color:rgba(255,255,255,.06);}
+.mode-tag.filter-limited{background:rgba(255,166,48,.12);color:var(--amber);border-color:rgba(255,166,48,.3);}
+.mode-density-wrap{background:rgba(0,0,0,.3);border-radius:4px;padding:8px 10px;margin-top:8px;overflow:hidden;}
+.mode-density-wrap canvas{width:100%;height:50px;display:block;border-radius:2px;}
+.mode-summary{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:10px;color:var(--dim);}
+.mode-summary-item{display:flex;align-items:center;gap:4px;}
+.mode-summary-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.progress-panel{background:var(--navy-mid);border:1px solid var(--border);border-radius:8px;padding:20px 22px;margin-bottom:16px;display:none;}
+.progress-panel.visible{display:block;}
+.progress-title{font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:14px;}
+.progress-phase{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.progress-phase strong{color:var(--bright);}
+.progress-bar-wrap{background:rgba(0,0,0,.3);border-radius:4px;height:6px;overflow:hidden;margin-bottom:16px;}
+.progress-bar{height:100%;width:0%;background:var(--cyan);border-radius:4px;transition:width .2s linear;}
+.progress-bar.orange{background:var(--orange);}
+.sweep-vis{width:100%;height:70px;display:block;border-radius:4px;background:rgba(0,0,0,.3);}
+.progress-note{font-size:10px;color:var(--dim);margin-top:10px;line-height:1.5;}
+.cal-banner{display:none;align-items:center;gap:12px;background:rgba(0,212,232,.05);border:1px solid rgba(0,212,232,.18);border-radius:6px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--muted);}
+.cal-banner.visible{display:flex;}
+.cal-spinner{width:15px;height:15px;border:2px solid rgba(0,212,232,.2);border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.cal-banner strong{color:var(--cyan);}
+.cal-result{display:none;align-items:center;gap:10px;border-radius:6px;padding:10px 16px;margin-bottom:14px;font-size:12px;}
+.cal-result.visible{display:flex;}
+.cal-result.ok{background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.22);color:var(--green);}
+.cal-result.bad{background:rgba(255,59,59,.07);border:1px solid rgba(255,59,59,.22);color:var(--red);}
+.insights{background:var(--navy-mid);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.6;min-height:56px;}
+.insights strong{color:var(--bright);}
+.highlight{color:var(--cyan);font-weight:700;}
+.alert-text{color:var(--orange);font-weight:700;}
+.dashboard{display:grid;grid-template-columns:240px 1fr;gap:14px;margin-bottom:16px;}
+.controls{background:var(--navy-mid);border:1px solid var(--border);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:8px;}
+.btn{background:transparent;border:1px solid var(--cyan);color:var(--cyan);padding:10px 14px;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-radius:5px;cursor:pointer;transition:all .18s;width:100%;}
+.btn:hover:not(:disabled){background:var(--cyan);color:var(--navy-dark);box-shadow:0 0 18px var(--cyan-glow);}
+.btn:disabled{border-color:var(--dim);color:var(--dim);cursor:not-allowed;}
+.btn.accent{background:var(--cyan);color:var(--navy-dark);}
+.btn.orange{border-color:var(--orange);color:var(--orange);}
+.btn.orange:hover:not(:disabled){background:var(--orange);color:var(--bright);}
+.btn.small{font-size:10px;opacity:.7;}
+.readouts{margin-top:4px;background:rgba(0,0,0,.25);border-radius:5px;padding:11px 13px;display:flex;flex-direction:column;gap:7px;}
+.readout-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;}
+.readout-label{color:var(--dim);letter-spacing:.5px;}
+.readout-val{color:var(--bright);font-weight:700;}
+.readout-val.online{color:var(--green);}
+.readout-val.measuring{color:var(--amber);}
+.ir-panel{background:var(--navy-dark);border:1px solid var(--border);border-radius:8px;padding:18px 22px;display:flex;flex-direction:column;gap:10px;}
+.ir-header{display:flex;justify-content:space-between;align-items:center;}
+.ir-title{font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;}
+.ir-badge{font-size:10px;background:rgba(255,107,53,.10);color:var(--orange);padding:3px 8px;border-radius:3px;border:1px solid rgba(255,107,53,.2);}
+.ir-canvas-wrap{position:relative;}
+canvas#ir-canvas{width:100%;height:160px;display:block;border-radius:4px;background:rgba(0,0,0,.4);}
+.ir-freq-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);margin-top:4px;padding:0 2px;}
+.zone-critical{color:var(--red)!important;}
+.zone-colored{color:var(--amber)!important;}
+.zone-ok{color:#a3d977!important;}
+.zone-target{color:var(--green)!important;}
+.zone-invalid{color:var(--dim)!important;font-style:italic;}
+.zone-filter-limited{color:var(--amber)!important;}
+.zone-corr-flag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:2px;margin-left:5px;vertical-align:middle;background:rgba(255,107,53,.15);color:var(--orange);border:1px solid rgba(255,107,53,.3);}
+.confidence-badge{display:inline-block;font-size:8px;padding:1px 5px;border-radius:8px;margin-left:4px;font-weight:700;}
+.confidence-high{background:rgba(74,222,128,0.15);color:var(--green);border:1px solid rgba(74,222,128,0.3);}
+.confidence-medium{background:rgba(255,166,48,0.15);color:var(--amber);border:1px solid rgba(255,166,48,0.3);}
+.confidence-low{background:rgba(255,59,59,0.15);color:var(--red);border:1px solid rgba(255,59,59,0.3);}
+.results-panel{background:var(--navy-mid);border:1px solid var(--border);border-radius:8px;padding:18px 20px;display:none;margin-bottom:16px;}
+.results-panel.visible{display:block;}
+.results-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.results-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--bright);}
+.results-badge{font-size:10px;letter-spacing:1px;padding:3px 10px;border-radius:20px;font-weight:700;}
+.results-badge.partial{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(0,212,232,.3);}
+.results-badge.complete{background:var(--green-dim);color:var(--green);border:1px solid rgba(74,222,128,.3);}
+.results-badge.caution{background:rgba(255,166,48,0.15);color:var(--amber);border:1px solid rgba(255,166,48,0.3);}
+.t60-legend{display:flex;flex-wrap:wrap;gap:16px;padding:9px 12px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.04);border-radius:5px;margin-bottom:14px;}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--muted);}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.t60-table{width:100%;border-collapse:collapse;font-size:12px;}
+.t60-table th{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);padding:8px 10px;text-align:left;border-bottom:2px solid rgba(255,255,255,.06);}
+.t60-table th:not(:first-child){text-align:right;}
+.t60-table td{padding:10px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.t60-table tr:last-child td{border-bottom:none;}
+.t60-table td:not(:first-child):not(.td-spark){text-align:right;}
+.td-freq{font-weight:700;color:var(--bright);font-size:13px;}
+.td-freq .freq-warn{font-size:9px;color:var(--amber);margin-left:4px;}
+.td-baseline,.td-verified{font-weight:700;}
+.td-pending{color:var(--dim);font-style:italic;}
+.td-impr{font-weight:700;}
+.td-impr.good{color:var(--green);}
+.td-impr.ok{color:var(--amber);}
+.td-impr.none{color:var(--dim);}
+.td-spark{text-align:center!important;}
+.spark-wrap{display:inline-block;width:90px;height:28px;vertical-align:middle;}
+canvas.tbl-spark{width:100%;height:100%;display:block;}
+.summary-row{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.summary-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);}
+.summary-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.summary-number{font-size:24px;font-weight:700;color:var(--green);}
+.summary-number.caution{color:var(--amber);}
+.summary-detail{font-size:10px;color:var(--dim);margin-top:2px;}
+/* ── v8.4: live input level meter ── */
+.level-meter{height:9px;background:rgba(0,0,0,.4);border-radius:5px;overflow:hidden;margin:5px 0 2px;border:1px solid rgba(255,255,255,.07);}
+.level-bar{height:100%;width:0%;background:linear-gradient(90deg,#27c463,#ffd23f,#ff6b35);transition:width .05s linear;}
+.level-meter.dead{box-shadow:0 0 0 1px var(--amber) inset;}
+.level-hint{font-size:9px;color:var(--amber);margin-top:2px;display:none;}
+.level-hint.show{display:block;}
+/* ── v8.3: primary fixed-time decay metric ── */
+.metric-panel{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);}
+.metric-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--bright);font-weight:700;}
+.metric-sub{font-size:10px;color:var(--dim);margin:2px 0 10px;line-height:1.5;}
+.metric-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.metric-big{font-size:30px;font-weight:700;color:var(--green);line-height:1;}
+.metric-big.caution{color:var(--amber);}
+.metric-big.none{color:var(--dim);}
+.metric-big-label{font-size:10px;color:var(--muted);text-align:right;max-width:230px;}
+.ft-table{width:100%;border-collapse:collapse;font-size:11px;}
+.ft-table th{text-align:right;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim);font-weight:600;padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.08);}
+.ft-table th:first-child{text-align:left;}
+.ft-table td{padding:5px 8px;text-align:right;border-bottom:1px solid rgba(255,255,255,.04);font-variant-numeric:tabular-nums;}
+.ft-table td:first-child{text-align:left;color:var(--bright);font-weight:600;}
+.ft-delta{font-weight:700;}
+.ft-delta.good{color:var(--green);}
+.ft-delta.ok{color:#a3d977;}
+.ft-delta.none{color:var(--dim);}
+.ft-delta.worse{color:var(--amber);}
+.ft-na{color:var(--dim);font-style:italic;}
+.ft-worst{position:relative;}
+.ft-worst td:first-child::after{content:'◀ worst';font-size:8px;color:var(--amber);margin-left:6px;font-weight:600;letter-spacing:.5px;}
+/* ── v8.3: before/after decay overlay chart ── */
+.overlay-panel{margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);}
+.overlay-chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px;}
+.overlay-chip{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:5px 11px;font-size:11px;color:var(--muted);cursor:pointer;transition:all .2s;font-variant-numeric:tabular-nums;}
+.overlay-chip:hover{border-color:rgba(255,255,255,.25);color:var(--bright);}
+.overlay-chip.active{border-color:var(--cyan);background:rgba(0,212,232,.12);color:var(--bright);font-weight:700;}
+.overlay-chip.flim{border-style:dashed;}
+.overlay-legend{display:flex;gap:18px;font-size:10px;color:var(--muted);margin-top:8px;align-items:center;flex-wrap:wrap;}
+.overlay-legend .ol-dot{display:inline-block;width:18px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle;}
+.overlay-canvas-wrap{width:100%;background:rgba(0,0,0,.22);border-radius:6px;padding:6px;}
+.overlay-readout{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;}
+.overlay-readout strong{color:var(--bright);}
+.accuracy-note{margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05);font-size:10px;color:var(--dim);line-height:1.6;}
+.accuracy-note .warn{color:var(--amber);font-weight:700;}
+.footer-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;}
+.footer-actions .btn{width:auto;}
+.freq-results{display:grid;gap:5px;}
+.freq-chip{background:rgba(0,0,0,.25);border-radius:4px;padding:5px 4px;text-align:center;border:1px solid rgba(255,255,255,.05);transition:all .25s;}
+.freq-chip.correlated{border-color:rgba(255,107,53,.35);background:rgba(255,107,53,.07);}
+.freq-chip.processing{border-color:var(--amber);background:rgba(255,166,48,.08);}
+.freq-chip.filter-limited{border-color:rgba(255,166,48,.35);background:rgba(255,166,48,.08);}
+.chip-hz{font-size:9px;color:var(--dim);letter-spacing:1px;}
+.chip-warn{font-size:7px;color:var(--amber);margin-left:2px;}
+.chip-val{font-size:11px;font-weight:700;color:var(--dim);margin-top:2px;}
+.diag-panel{background:var(--navy-mid);border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin-bottom:16px;}
+.diag-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;}
+.diag-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.diag-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.diag-label{font-size:11px;color:var(--dim);}
+.diag-select{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:6px 10px;font-family:inherit;font-size:11px;font-weight:700;color:var(--bright);outline:none;cursor:pointer;}
+.diag-select:focus{border-color:var(--cyan);}
+.diag-canvas-wrap{background:rgba(0,0,0,.4);border-radius:4px;border:1px solid rgba(255,255,255,.05);overflow:hidden;margin-bottom:10px;}
+canvas#diag-canvas{width:100%;height:130px;display:block;}
+.diag-zoom-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+.diag-zoom-btn{background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:3px;padding:4px 10px;font-family:inherit;font-size:10px;color:var(--muted);cursor:pointer;transition:all .15s;}
+.diag-zoom-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+.diag-zoom-btn.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim);}
+.diag-info{font-size:11px;color:var(--dim);line-height:1.6;}
+.diag-info .good{color:var(--green);font-weight:700;}
+.diag-info .bad{color:var(--red);font-weight:700;}
+.diag-info .warn{color:var(--amber);font-weight:700;}
+@media(max-width:640px){.dashboard{grid-template-columns:1fr;}.steps{grid-template-columns:1fr;}.room-inputs{grid-template-columns:1fr 1fr;}}
+#report{display:none;}
+@media print{
+body>*{display:none!important;}
+#report{display:block!important;}
+body{background:#fff;color:#111;padding:0;font-family:'Helvetica Neue',Arial,sans-serif;}
+.rpt-page{width:100%;max-width:780px;margin:0 auto;}
+.rpt-cover{background:#0D1B2A;color:#fff;padding:32px 36px 26px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.rpt-cover-brand{font-size:10px;letter-spacing:3px;color:#00D4E8;text-transform:uppercase;margin-bottom:6px;font-family:monospace;}
+.rpt-cover-title{font-size:24px;font-weight:700;margin-bottom:4px;}
+.rpt-cover-sub{font-size:13px;color:rgba(255,255,255,.55);}
+.rpt-cover-meta{margin-top:16px;display:flex;gap:28px;flex-wrap:wrap;}
+.rpt-meta-item{font-size:11px;}
+.rpt-meta-label{color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;font-size:9px;display:block;margin-bottom:2px;}
+.rpt-meta-value{color:#fff;font-weight:700;}
+.rpt-body{padding:28px 36px;}
+.rpt-section{margin-bottom:26px;}
+.rpt-section-title{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#888;border-bottom:2px solid #e8e8e8;padding-bottom:7px;margin-bottom:14px;}
+.rpt-about{font-size:12px;color:#444;line-height:1.7;}
+.rpt-accuracy{font-size:11px;color:#888;line-height:1.6;margin-top:10px;padding-top:10px;border-top:1px solid #eee;}
+.rpt-legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:12px;}
+.rpt-legend-item{display:flex;align-items:center;gap:6px;font-size:10px;color:#555;}
+.rpt-legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.rpt-table{width:100%;border-collapse:collapse;font-size:12px;page-break-inside:avoid;}
+.rpt-table th{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;padding:9px 10px;text-align:left;border-bottom:2px solid #e0e0e0;border-top:1px solid #e0e0e0;background:#f8f8f8;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.rpt-table th:not(:first-child){text-align:right;}
+.rpt-table td{padding:10px 10px;border-bottom:1px solid #f0f0f0;font-size:12px;}
+.rpt-table tr:last-child td{border-bottom:none;}
+.rpt-table td:not(:first-child):not(.rpt-spark-td){text-align:right;}
+.rpt-td-freq{font-weight:700;color:#222;font-size:13px;}
+.rpt-axial-flag{display:inline-block;font-size:8px;padding:1px 5px;border-radius:2px;margin-left:4px;vertical-align:middle;-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;}
+.rpt-z-critical{color:#c0392b;font-weight:700;}
+.rpt-z-colored{color:#d35400;font-weight:700;}
+.rpt-z-ok{color:#7f8c00;font-weight:700;}
+.rpt-z-target{color:#27ae60;font-weight:700;}
+.rpt-z-invalid{color:#bbb;font-style:italic;}
+.rpt-z-filter-limited{color:#d35400;font-weight:700;}
+.rpt-impr-good{color:#27ae60;font-weight:700;}
+.rpt-impr-ok{color:#d35400;font-weight:700;}
+.rpt-impr-none{color:#999;}
+.rpt-pending{color:#bbb;font-style:italic;}
+.rpt-spark-td{text-align:center!important;padding:6px 10px;}
+canvas.rpt-spark{display:block;border-radius:2px;}
+.rpt-summary{display:flex;align-items:center;gap:20px;background:#f7f9fc;border:1px solid #e0e0e0;border-radius:6px;padding:18px 22px;margin-top:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.rpt-summary-number{font-size:38px;font-weight:700;line-height:1;flex-shrink:0;}
+.rpt-summary-number.positive{color:#27ae60;}
+.rpt-summary-number.negative{color:#c0392b;}
+.rpt-summary-label{font-size:13px;font-weight:600;color:#333;}
+.rpt-summary-sub{font-size:11px;color:#888;margin-top:3px;}
+.rpt-notes-box{min-height:70px;border:1px solid #ddd;border-radius:4px;padding:10px;font-size:12px;color:#bbb;font-style:italic;}
+.rpt-footer{background:#f7f9fc;border-top:1px solid #e0e0e0;padding:12px 36px;display:flex;justify-content:space-between;font-size:10px;color:#bbb;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+@page{margin:0;size:A4;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header class="header">
+    <span class="header-brand">Integer Audio</span>
+    <h1 class="header-title">GroundControl <span>Energy Decay Meter v8.6</span></h1>
+    <a href="#" class="header-badge">← GroundControl</a>
+</header>
+
+<div class="hw-notice">
+    <strong>Before you start — three things to check:</strong><br>
+    <span style="display:block;margin-top:6px;line-height:1.9;">
+        1. Turn on your studio monitors or subwoofer and connect them as the default audio output.<br>
+        2. Place a measurement mic (e.g. UMIK-1) at your mix position at ear level.<br>
+        3. Keep the room quiet during the sweep — no fans, no HVAC if possible.
+    </span>
+    Your browser will request microphone permission when you click <strong>Connect &amp; Calibrate</strong>.
+</div>
+
+<div class="limitation-banner" id="limitation-banner">
+    <strong>⚠ Measurement Limitations:</strong><br>
+    <span style="font-size:10px;line-height:1.8;">
+        • <span class="warn">Below 40 Hz</span> — T60 values are <strong>filter-limited</strong> (1/3-octave filter ringing affects accuracy).<br>
+        • <span class="info">Single position</span> — Results are position-dependent. ISO 3382 recommends spatial averaging.<br>
+        • <span class="info">Multi-sweep averaging</span> — Each run averages 4 sweeps for better low-frequency SNR. Still best used for <strong>relative before/after</strong> comparison at a fixed mic/sub position.<br>
+        • <span class="warn">Subwoofer contribution</span> — Low-frequency decay includes speaker ringing, not just room modes.
+    </span>
+</div>
+
+<div class="steps">
+    <div class="step active" id="step1"><div class="step-num">STEP 01</div><div class="step-desc">Connect mic &amp; calibrate latency + noise floor</div></div>
+    <div class="step" id="step2"><div class="step-num">STEP 02</div><div class="step-desc">Run baseline sweep — untreated room</div></div>
+    <div class="step" id="step3"><div class="step-num">STEP 03</div><div class="step-desc">Install Nodal 30 treatment, then verify</div></div>
+</div>
+
+<section class="room-panel">
+    <div class="room-panel-header">
+        <span class="room-panel-title">Room Dimensions — Complete Mode Calculator</span>
+        <span class="room-panel-sub">Axial + Tangential + Oblique modes · minimum 6 frequencies</span>
+    </div>
+    <div class="room-inputs">
+        <div class="room-field"><label>Length</label><input type="number" id="dim-L" placeholder="e.g. 24" step="0.1" min="6"></div>
+        <div class="room-field"><label>Width</label><input type="number" id="dim-W" placeholder="e.g. 14" step="0.1" min="6"></div>
+        <div class="room-field"><label>Height</label><input type="number" id="dim-H" placeholder="e.g. 7.5" step="0.1" min="6"></div>
+        <button class="room-calc-btn" onclick="calcModes()">Calculate Modes</button>
+        <button class="room-unit-toggle" id="btn-unit" onclick="toggleUnit()">ft</button>
+    </div>
+    <div class="mode-output" id="mode-output"></div>
+</section>
+
+<div class="cal-banner" id="cal-banner">
+    <div class="cal-spinner"></div>
+    <div><strong id="cal-msg">Calibrating…</strong> <span id="cal-detail">Please wait.</span></div>
+</div>
+<div class="cal-result" id="cal-result">
+    <span id="cal-icon" style="font-size:16px;flex-shrink:0;">✓</span>
+    <span id="cal-text"></span>
+</div>
+
+<div class="insights" id="insights">
+    v8.6 uses a <strong>REW-style log sweep measurement</strong> with exact inverse filter deconvolution and 1/3-octave Schroeder integration.<br><br>
+    <span style="color:var(--dim);font-size:11px;">
+        <strong>v8.6 Improvements:</strong><br>
+        • <strong>Real loopback diagnostic:</strong> plays + records the sweep and variance-checks the recording for resampling/clock issues<br>
+        • Printable report now includes the primary fixed-time result, measurement details, noise-limited flags and loopback check<br>
+        • Removed the standalone-HTML download<br>
+        • Carries v8.5 Lundeby truncation, v8.4 robust capture, v8.3 fixed-time + overlay
+    </span>
+</div>
+
+<div class="dashboard">
+    <aside class="controls">
+        <button class="btn accent" id="btn-connect" onclick="initPipeline()">Connect &amp; Calibrate</button>
+        <button class="btn" id="btn-baseline" disabled onclick="runMeasurement('base')">Run Baseline Sweep</button>
+        <button class="btn orange" id="btn-verify" disabled onclick="runMeasurement('verify')">Verify Nodal 30 Treatment</button>
+        <button class="btn small" id="btn-reset" disabled onclick="resetAll()">Clear &amp; Start Over</button>
+        <div class="readouts">
+            <div class="readout-row"><span class="readout-label">Mic Status</span><span class="readout-val" id="val-hw">Not connected</span></div>
+            <div class="readout-row"><span class="readout-label">Mic Level</span><span class="readout-val" id="val-level">—</span></div>
+            <div class="level-meter" id="level-meter"><div class="level-bar" id="level-bar"></div></div>
+            <div class="level-hint" id="level-hint">⚠ No input detected — tap the mic. If this stays flat, the UMIK isn't reaching the browser.</div>
+            <div class="readout-row"><span class="readout-label">Sample Rate</span><span class="readout-val" id="val-samplerate">—</span></div>
+            <div class="readout-row"><span class="readout-label">Pip Latency</span><span class="readout-val" id="val-latency">—</span></div>
+            <div class="readout-row"><span class="readout-label">Noise Floor</span><span class="readout-val" id="val-noise">—</span></div>
+            <div class="readout-row"><span class="readout-label">Frequencies</span><span class="readout-val" id="val-freqs">—</span></div>
+            <div class="readout-row"><span class="readout-label">Method</span><span class="readout-val" style="font-size:10px;color:var(--cyan)">Log Sweep + Schroeder</span></div>
+            <div class="readout-row"><span class="readout-label">Status</span><span class="readout-val measuring" id="val-phase">Idle</span></div>
+        </div>
+    </aside>
+
+    <div class="ir-panel">
+        <div class="ir-header">
+            <span class="ir-title">Impulse Response // 20–80 Hz</span>
+            <span class="ir-badge" id="ir-badge">Awaiting sweep</span>
+        </div>
+        <div class="ir-canvas-wrap">
+            <canvas id="ir-canvas"></canvas>
+        </div>
+        <div class="ir-freq-labels">
+            <span>20 Hz</span><span>30 Hz</span><span>40 Hz</span><span>50 Hz</span><span>60 Hz</span><span>70 Hz</span><span>80 Hz</span>
+        </div>
+        <div class="freq-results" id="chips-base" style="margin-top:8px;"></div>
+        <div class="freq-results" id="chips-verify" style="margin-top:4px;"></div>
+    </div>
+</div>
+
+<!-- SWEEP PROGRESS -->
+<div class="progress-panel" id="progress-panel">
+    <div class="progress-title">Measurement in Progress</div>
+    <div class="progress-phase" id="prog-phase"><strong>Initialising…</strong></div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="prog-bar"></div></div>
+    <canvas class="sweep-vis" id="sweep-vis" width="900" height="70"></canvas>
+    <div class="progress-note" id="prog-note">Keep the room quiet. The sweep will take approximately 25 seconds.</div>
+</div>
+
+<section class="results-panel" id="results-panel">
+    <div class="results-header">
+        <span class="results-title">Bass Decay — Before &amp; After</span>
+        <span class="results-badge partial" id="results-badge">Baseline Captured</span>
+        <button class="btn" onclick="openReport()" style="margin-left:auto;width:auto;padding:6px 16px;font-size:10px;">View / Export Report</button>
+    </div>
+    <div class="t60-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>&gt; 1.5s — Heavy, unusable</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>0.75–1.5s — Colored, unreliable</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a3d977"></div>0.55–0.75s — Acceptable</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>0.25–0.55s — Professional target <span style="font-size:8px;color:var(--amber)">(below 40Hz: filter-limited)</span></div>
+    </div>
+    <table class="t60-table">
+        <thead><tr>
+            <th>Frequency</th><th>Mode Type</th>
+            <th style="text-align:right">Before — Untreated</th>
+            <th style="text-align:right">After — Nodal 30</th>
+            <th style="text-align:right">Improvement</th>
+            <th style="text-align:center">Decay Curve</th>
+        </tr></thead>
+        <tbody id="table-body"></tbody>
+    </table>
+
+    <!-- v8.3: PRIMARY METRIC — energy remaining at fixed times (no extrapolation) -->
+    <div class="metric-panel" id="metric-panel" style="display:none">
+        <div class="metric-title">Energy Still Ringing After the Tone Stops <span style="color:var(--cyan)">— primary metric</span></div>
+        <div class="metric-sub">
+            How far the bass has decayed at a fixed moment after the impulse — read directly from the measured decay, with no T60 curve-fitting or extrapolation. Higher numbers = treatment killed the ringing faster. This is the robust headline; the T60 table above is supporting detail.
+        </div>
+        <div class="metric-head">
+            <div>
+                <div class="metric-big" id="metric-big">—</div>
+                <div class="summary-label" style="margin-top:3px">median extra decay at 320&nbsp;ms</div>
+            </div>
+            <div class="metric-big-label" id="metric-big-label"></div>
+        </div>
+        <table class="ft-table">
+            <thead><tr>
+                <th>Frequency</th>
+                <th>Before @160ms</th><th>After @160ms</th>
+                <th>Before @320ms</th><th>After @320ms</th>
+                <th>Extra decay @320ms</th>
+            </tr></thead>
+            <tbody id="ft-body"></tbody>
+        </table>
+    </div>
+
+    <!-- v8.3: BEFORE/AFTER DECAY OVERLAY -->
+    <div class="overlay-panel" id="overlay-panel" style="display:none">
+        <div class="metric-title">Decay Curve — Before vs After</div>
+        <div class="metric-sub">Pick a frequency to see how the energy bleeds away over time. The steeper the drop, the tighter the bass. Dashed lines mark the 160&nbsp;ms and 320&nbsp;ms read points used above.</div>
+        <div class="overlay-chips" id="overlay-chips"></div>
+        <div class="overlay-canvas-wrap"><canvas id="overlay-canvas" width="900" height="300"></canvas></div>
+        <div class="overlay-legend">
+            <span><span class="ol-dot" style="background:#00D4E8"></span>Before (untreated)</span>
+            <span><span class="ol-dot" style="background:#FF6B35"></span>After (Nodal 30)</span>
+            <span style="color:var(--dim)">Vertical dashed = 160 / 320 ms read points · floor = −60 dB</span>
+        </div>
+        <div class="overlay-readout" id="overlay-readout"></div>
+    </div>
+
+    <div class="summary-row" id="summary-row" style="display:none">
+        <div>
+            <div class="summary-label">T60 Reduction <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">· secondary, extrapolated</span></div>
+            <div class="summary-sub" id="summary-sub"></div>
+            <div class="summary-detail" id="summary-detail"></div>
+        </div>
+        <div>
+            <div class="summary-number" id="summary-number">—</div>
+            <div class="summary-detail" id="summary-range" style="text-align:right;font-size:10px;color:var(--dim);"></div>
+        </div>
+    </div>
+    <div class="accuracy-note">
+        T60 from Schroeder backward integration of the deconvolved impulse response, with <strong>Lundeby noise truncation</strong> so the fit uses only the clean decay above the noise floor.
+        Weighted regression (REW-compatible) with method labeling (T30/T20/T10). Bands with under 20&nbsp;dB of clean decay are marked <strong>noise-limited</strong> rather than given a T60.
+        <span class="warn">Values below 40Hz are filter-limited — use for relative comparison only.</span>
+        <span style="display:block;margin-top:4px;font-size:9px;color:var(--dim);">
+            Single mic position; 4 sweeps averaged per run. ISO 3382 recommends spatial averaging for absolute values.
+        </span>
+    </div>
+</section>
+
+<!-- DIAGNOSTIC PANEL -->
+<section class="diag-panel">
+    <div class="diag-header">
+        <span class="diag-title">Sweep Diagnostic — Loopback Test</span>
+        <div class="diag-controls">
+            <button class="btn" id="btn-loopback" onclick="runLoopbackDiagnostic()" style="width:auto;padding:7px 16px;font-size:10px;">
+                Run Loopback Test
+            </button>
+        </div>
+    </div>
+    <div class="diag-canvas-wrap">
+        <canvas id="diag-canvas" width="900" height="130"></canvas>
+    </div>
+    <div class="diag-zoom-row">
+        <span class="diag-label" style="font-size:10px">Zoom:</span>
+        <button class="diag-zoom-btn active" onclick="setDiagZoom(0)" id="zoom-0">Full sweep</button>
+        <button class="diag-zoom-btn" onclick="setDiagZoom(1)" id="zoom-1">0–0.5s (20 Hz)</button>
+        <button class="diag-zoom-btn" onclick="setDiagZoom(2)" id="zoom-2">0.5–1.0s</button>
+        <button class="diag-zoom-btn" onclick="setDiagZoom(3)" id="zoom-3">7–8s (mid)</button>
+        <button class="diag-zoom-btn" onclick="setDiagZoom(4)" id="zoom-4">14–15s (80 Hz)</button>
+    </div>
+    <div class="diag-info" id="diag-info">
+        Connect &amp; Calibrate first, then click <strong>Run Loopback Test</strong>. The tool plays the sweep through
+        your sub and records it back through the mic, then inspects the captured waveform. Slow rises and dips across the
+        sweep are normal — that's your sub + room response. A fast, regular ripple riding on top of that
+        (amplitude modulation) points to sample-rate resampling or a clock mismatch in the playback/capture chain.
+    </div>
+</section>
+
+<div class="footer-actions">
+    <button class="btn" onclick="openReport()">View / Export Report</button>
+</div>
+</div>
+
+<!-- PRINT REPORT -->
+<div id="report">
+    <div class="rpt-page">
+        <div class="rpt-cover">
+            <div class="rpt-cover-brand">Integer Audio // GroundControl</div>
+            <div class="rpt-cover-title">Room Acoustic Decay Report</div>
+            <div class="rpt-cover-sub">Nodal 30 Bass Treatment — Before &amp; After Verification</div>
+            <div class="rpt-cover-meta">
+                <div class="rpt-meta-item"><span class="rpt-meta-label">Generated</span><span class="rpt-meta-value" id="rpt-date">—</span></div>
+                <div class="rpt-meta-item"><span class="rpt-meta-label">Test Status</span><span class="rpt-meta-value" id="rpt-status">—</span></div>
+                <div class="rpt-meta-item"><span class="rpt-meta-label">Method</span><span class="rpt-meta-value">Log Sweep + Schroeder Integration</span></div>
+                <div class="rpt-meta-item"><span class="rpt-meta-label">Room Dimensions</span><span class="rpt-meta-value" id="rpt-room">—</span></div>
+            </div>
+        </div>
+        <div class="rpt-body">
+            <div class="rpt-section">
+                <div class="rpt-section-title">About This Test</div>
+                <p class="rpt-about">
+                    This report measures how long bass energy lingers in the room after a tone stops, across the 20–80 Hz range.
+                    Four 15-second logarithmic sine sweeps were played through the studio monitors while a measurement microphone
+                    recorded the room's response; the recordings were pip-aligned and averaged together to improve low-frequency
+                    signal-to-noise. The averaged recording was deconvolved against the known sweep to produce the room impulse
+                    response, then Schroeder backward integration — with <strong>Lundeby noise truncation</strong> so the decay is
+                    measured only above the noise floor — was applied in 1/3-octave bands. The headline figure is the directly
+                    measured <strong>energy remaining a fixed time after the tone stops</strong>; T60 is reported as supporting
+                    detail. The professional monitoring target for T60 is <strong>0.25–0.55 seconds</strong>.
+                </p>
+                <p class="rpt-accuracy">
+                    <strong>Limitations:</strong> Single mic position; 4-sweep synchronous averaging; results are valid for relative
+                    before/after comparison at a fixed mic and sub position, not as absolute room values (ISO 3382 expects spatial
+                    averaging for those). Values below 40&nbsp;Hz are filter-limited (the 1/3-octave filter's own ringing
+                    contributes). Bands with under 20&nbsp;dB of clean decay above the noise floor are marked <strong>noise-limited</strong>
+                    and given no T60. Each band uses the same analysis method (T30/T20/T10) for both the before and after runs.
+                </p>
+            </div>
+            <div class="rpt-section">
+                <div class="rpt-section-title">Measurement Details</div>
+                <table class="rpt-table">
+                    <tbody id="rpt-details-body"></tbody>
+                </table>
+            </div>
+            <div class="rpt-section" id="rpt-primary-section" style="display:none">
+                <div class="rpt-section-title">Primary Result — Energy Remaining After the Tone Stops</div>
+                <div class="rpt-summary" style="margin-bottom:14px">
+                    <div class="rpt-summary-number positive" id="rpt-ft-big">—</div>
+                    <div>
+                        <div class="rpt-summary-label">Median extra decay 320&nbsp;ms after the tone stops (measured, no extrapolation)</div>
+                        <div class="rpt-summary-sub" id="rpt-ft-sub">—</div>
+                    </div>
+                </div>
+                <table class="rpt-table">
+                    <thead><tr><th>Frequency</th><th>Before @320ms</th><th>After @320ms</th><th>Extra decay</th></tr></thead>
+                    <tbody id="rpt-ft-body"></tbody>
+                </table>
+            </div>
+            <div class="rpt-section">
+                <div class="rpt-section-title">Decay Time Results (T60) — Supporting Detail</div>
+                <div class="rpt-legend">
+                    <div class="rpt-legend-item"><div class="rpt-legend-dot" style="background:#c0392b"></div>&gt; 1.5s — Heavy, unusable</div>
+                    <div class="rpt-legend-item"><div class="rpt-legend-dot" style="background:#d35400"></div>0.75–1.5s — Colored, unreliable</div>
+                    <div class="rpt-legend-item"><div class="rpt-legend-dot" style="background:#7f8c00"></div>0.55–0.75s — Acceptable</div>
+                    <div class="rpt-legend-item"><div class="rpt-legend-dot" style="background:#27ae60"></div>0.25–0.55s — Professional target</div>
+                    <div class="rpt-legend-item"><div class="rpt-legend-dot" style="background:#d35400"></div>⚠ Below 40Hz — filter-limited</div>
+                    <div class="rpt-legend-item"><div class="rpt-legend-dot" style="background:#bbb"></div>noise-limited — under 20 dB clean decay</div>
+                </div>
+                <table class="rpt-table">
+                    <thead><tr><th>Frequency</th><th>Mode Type</th><th>Before — Untreated</th><th>After — Nodal 30</th><th>Improvement</th><th>Decay Curve</th></tr></thead>
+                    <tbody id="rpt-table-body"></tbody>
+                </table>
+            </div>
+            <div class="rpt-section" id="rpt-summary-section" style="display:none">
+                <div class="rpt-section-title">Summary</div>
+                <div class="rpt-summary">
+                    <div class="rpt-summary-number positive" id="rpt-avg">—</div>
+                    <div>
+                        <div class="rpt-summary-label">T60-weighted average reduction (supporting metric; see primary result above)</div>
+                        <div class="rpt-summary-sub" id="rpt-avg-sub">—</div>
+                        <div class="rpt-summary-sub" id="rpt-avg-detail" style="font-size:9px;color:#999;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="rpt-section">
+                <div class="rpt-section-title">Notes</div>
+                <div class="rpt-notes-box">(Room configuration, Nodal 30 placement, date of installation…)</div>
+            </div>
+        </div>
+        <div class="rpt-footer">
+            <span>GroundControl Energy Decay Meter v8.6 · integeraudio.com</span>
+            <span id="rpt-footer-date">—</span>
+        </div>
+    </div>
+</div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════════════════
+//  GROUNDCONTROL ENERGY DECAY METER v8.6
+//  REW-COMPATIBLE Schroeder + Lundeby; real loopback diagnostic; full report
+//
+//  ENHANCEMENTS v8.6:
+//  1. Sweep diagnostic now does a REAL loopback (play + record) and
+//     variance-checks the recording for resampling / clock-drift ripple
+//  2. Printable report includes primary fixed-time result, measurement
+//     details, noise-limited flags, and the loopback chain check
+//  3. Removed standalone-HTML self-download
+//  (carries v8.5 Lundeby truncation, v8.4 capture, v8.3 fixed-time + overlay)
+// ═══════════════════════════════════════════════════════════════════════
+
+let SAMPLE_RATE = 48000;
+const SWEEP_DURATION = 15.0;
+const SWEEP_F_LOW = 20;
+const SWEEP_F_HIGH = 80;
+const TAIL_DURATION = 8.0;
+const NOISE_FLOOR_DUR = 2.0;
+const PIP_FREQ = 5000;
+const PIP_DURATION = 0.010;
+const PIP_LEAD = 0.500;
+const OCTAVE_Q = 1 / (Math.pow(2, 1/6) - Math.pow(2, -1/6));
+const MIN_FREQS = 6;
+const MAX_REASONABLE_T60 = 20.0;
+const FILTER_LIMIT_HZ = 40; // Frequencies below this are filter-limited
+const MIN_USABLE_DB = 20;   // v8.5: minimum clean decay range (peak→noise) for a trustworthy T60
+const NUM_SWEEPS = 4;       // v8.2: sweeps captured + synchronously averaged per measurement
+// v8.2: analysis method (T30/T20/T10) chosen per band at baseline and re-used at verify
+// so the before/after comparison is always like-for-like. hz -> method string.
+let LOCKED_METHODS = {};
+
+// ── ADAPTIVE SNR PARAMETERS ─────────────────────────────────────────
+function adaptiveSNRParams(noiseFloorDB, hz) {
+    const freqFactor = 1 + ((hz - 20) / 60) * 0.6;
+    
+    let baseSnr, baseMargin, alwaysLowConf;
+    if (noiseFloorDB < -50) {
+        baseSnr = 10;
+        baseMargin = 8;
+        alwaysLowConf = false;
+    } else if (noiseFloorDB < -40) {
+        baseSnr = 8;
+        baseMargin = 6;
+        alwaysLowConf = false;
+    } else if (noiseFloorDB < -35) {
+        baseSnr = 6;
+        baseMargin = 4;
+        alwaysLowConf = true;
+    } else {
+        baseSnr = 5;
+        baseMargin = 3;
+        alwaysLowConf = true;
+    }
+    
+    const noiseMargin = Math.max(2, baseMargin / freqFactor);
+    return { snrMin: baseSnr, noiseMargin: noiseMargin, alwaysLowConf: alwaysLowConf };
+}
+
+const NOISE_MARGIN = 8;
+
+// ── FREQUENCY ADVISORY ──────────────────────────────────────────────
+function getFrequencyAdvisory(hz) {
+    if (hz < 25) return { level: 'critical', text: '⚠ Strongly filter-limited — absolute T60 unreliable', short: '⚠' };
+    if (hz < 40) return { level: 'warning', text: '⚠ Filter-limited — use for relative comparison only', short: '⚠' };
+    if (hz < 50) return { level: 'caution', text: 'Caution: reduced accuracy below 50Hz', short: '~' };
+    return { level: 'good', text: 'Full accuracy band', short: '' };
+}
+
+function isFilterLimited(hz) { return hz < FILTER_LIMIT_HZ; }
+
+// ── LOG SWEEP ──────────────────────────────────────────────────────────
+function generateLogSweep(sampleRate, duration, f1, f2) {
+    const N = Math.round(sampleRate * duration);
+    const K = Math.log(f2 / f1) / duration;
+    const buf = new Float32Array(N);
+    let phi = 0;
+    for (let i = 0; i < N; i++) {
+        const t = i / sampleRate;
+        const fInst = f1 * Math.exp(K * t);
+        const dPhi = 2 * Math.PI * fInst / sampleRate;
+        buf[i] = Math.sin(phi);
+        phi += dPhi;
+    }
+    const fade = Math.round(sampleRate * 0.05);
+    for (let i = 0; i < fade; i++) {
+        const w = 0.5 * (1 - Math.cos(Math.PI * i / fade));
+        buf[i] *= w;
+        buf[N - 1 - i] *= w;
+    }
+    return buf;
+}
+
+// ── EXACT INVERSE FILTER ─────────────────────────────────────────────
+function generateExactInverseFilter(sampleRate, duration, f1, f2) {
+    const N = Math.round(sampleRate * duration);
+    const K = Math.log(f2 / f1) / duration;
+    const inv = new Float32Array(N);
+
+    let phiEnd = 0;
+    for (let i = 0; i < N; i++) {
+        const t = i / sampleRate;
+        const fInst = f1 * Math.exp(K * t);
+        const dPhi = 2 * Math.PI * fInst / sampleRate;
+        phiEnd += dPhi;
+    }
+
+    let totalPhase = 0;
+    for (let i = 0; i < N; i++) {
+        const tRev = (N - 1 - i) / sampleRate;
+        const fInstRev = f1 * Math.exp(K * tRev);
+        const dPhiRev = 2 * Math.PI * fInstRev / sampleRate;
+        const phaseAtPoint = phiEnd - totalPhase;
+        const ampComp = Math.exp(K * tRev);
+        inv[i] = ampComp * Math.sin(phaseAtPoint);
+        totalPhase += dPhiRev;
+    }
+
+    let maxVal = 0;
+    for (let i = 0; i < N; i++) if (Math.abs(inv[i]) > maxVal) maxVal = Math.abs(inv[i]);
+    if (maxVal > 0) for (let i = 0; i < N; i++) inv[i] /= maxVal;
+    return inv;
+}
+
+// ── PLAYBACK BUFFER ──────────────────────────────────────────────────
+function generatePlaybackBuffer(sweep) {
+    const pipSamples = Math.round(PIP_DURATION * SAMPLE_RATE);
+    const leadSamples = Math.round(PIP_LEAD * SAMPLE_RATE);
+    const preSweepSamps = pipSamples + leadSamples;
+    const totalSamples = preSweepSamps + sweep.length;
+    const buf = new Float32Array(totalSamples);
+    for (let i = 0; i < pipSamples; i++) {
+        const window = Math.sin(Math.PI * i / pipSamples);
+        buf[i] = 0.9 * Math.sin(2 * Math.PI * PIP_FREQ * i / SAMPLE_RATE) * window;
+    }
+    for (let i = 0; i < sweep.length; i++) buf[preSweepSamps + i] = sweep[i];
+    return { buf, preSweepSamps };
+}
+
+// ── BANDPASS FILTER ──────────────────────────────────────────────────
+function biquadBandpassFilter(signal, hz, sampleRate, Q) {
+    const w0 = 2 * Math.PI * hz / sampleRate;
+    const alpha = Math.sin(w0) / (2 * Q);
+    const B0 = alpha / (1 + alpha);
+    const B1 = 0;
+    const B2 = -alpha / (1 + alpha);
+    const A1 = -2 * Math.cos(w0) / (1 + alpha);
+    const A2 = (1 - alpha) / (1 + alpha);
+
+    const out = new Float32Array(signal.length);
+    let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    for (let i = 0; i < signal.length; i++) {
+        const x0 = signal[i];
+        const y0 = B0 * x0 + B1 * x1 + B2 * x2 - A1 * y1 - A2 * y2;
+        out[i] = y0;
+        x2 = x1; x1 = x0; y2 = y1; y1 = y0;
+    }
+    const out2 = new Float32Array(signal.length);
+    x1 = 0; x2 = 0; y1 = 0; y2 = 0;
+    for (let i = signal.length - 1; i >= 0; i--) {
+        const x0 = out[i];
+        const y0 = B0 * x0 + B1 * x1 + B2 * x2 - A1 * y1 - A2 * y2;
+        out2[i] = y0;
+        x2 = x1; x1 = x0; y2 = y1; y1 = y0;
+    }
+    return out2;
+}
+
+// ── PIP DETECTION ─────────────────────────────────────────────────────
+function findPipInRecording(recording) {
+    const pipSamples = Math.round(PIP_DURATION * SAMPLE_RATE);
+    const refPip = new Float32Array(pipSamples);
+    for (let i = 0; i < pipSamples; i++) {
+        const window = Math.sin(Math.PI * i / pipSamples);
+        refPip[i] = Math.sin(2 * Math.PI * PIP_FREQ * i / SAMPLE_RATE) * window;
+    }
+    const filtered = biquadBandpassFilter(recording, PIP_FREQ, SAMPLE_RATE, 20);
+    const searchStart = Math.round(0.005 * SAMPLE_RATE);
+    const searchEnd = Math.min(Math.round(1.0 * SAMPLE_RATE), filtered.length - pipSamples);
+    let maxCorr = 0, maxIdx = searchStart;
+    for (let i = searchStart; i < searchEnd; i++) {
+        let corr = 0;
+        for (let j = 0; j < pipSamples && i + j < filtered.length; j++) {
+            corr += filtered[i + j] * refPip[j];
+        }
+        if (corr > maxCorr) { maxCorr = corr; maxIdx = i; }
+    }
+    return maxIdx;
+}
+
+// ── SCHROEDER INTEGRATION ── WITH FILTER SETTLING SKIP ──────────────
+// ── LUNDEBY CROSSPOINT (v8.5) ───────────────────────────────────────
+// Finds where the decay meets the noise floor so the Schroeder integral can
+// be truncated there instead of integrating the non-decaying noise tail
+// (which otherwise inflates T60). Lundeby et al. 1995, iterative form.
+// Operates on the squared (energy) signal starting just after the peak.
+function lundebyCrosspoint(squared, fs) {
+    const N = squared.length;
+    if (N < Math.round(fs * 0.15)) return null;
+
+    // peak energy reference: mean of first 5 ms
+    const peW = Math.max(1, Math.round(fs * 0.005));
+    let pe = 0; for (let i = 0; i < Math.min(peW, N); i++) pe += squared[i];
+    const peak = Math.max(pe / Math.min(peW, N), 1e-30);
+
+    const mean = (a, b) => {
+        a = Math.max(0, a | 0); b = Math.min(N, b | 0);
+        if (b <= a) return 1e-30;
+        let s = 0; for (let i = a; i < b; i++) s += squared[i];
+        return s / (b - a);
+    };
+    const regress = (arr, i0, i1) => {
+        let n = 0, sx = 0, sy = 0, sxy = 0, sxx = 0;
+        for (let i = i0; i < i1; i++) { const p = arr[i]; n++; sx += p.t; sy += p.db; sxy += p.t * p.db; sxx += p.t * p.t; }
+        const d = n * sxx - sx * sx;
+        if (n < 2 || Math.abs(d) < 1e-12) return null;
+        const slope = (n * sxy - sx * sy) / d;
+        return { slope, intercept: (sy - slope * sx) / n };
+    };
+    const buildDb = (win) => {
+        const pts = [];
+        for (let i = 0; i + win <= N; i += win) {
+            pts.push({ t: (i + win / 2) / fs, db: 10 * Math.log10(Math.max(1e-30, mean(i, i + win) / peak)) });
+        }
+        return pts;
+    };
+
+    // 1–3. initial noise (last 10%), 30 ms averaging, first regression to noise+10 dB
+    let noise = mean(Math.floor(N * 0.9), N);
+    let noiseDB = 10 * Math.log10(Math.max(1e-30, noise / peak));
+    let win = Math.max(1, Math.round(fs * 0.03));
+    let pts = buildDb(win);
+    if (pts.length < 5) return null;
+    let regEnd = pts.length;
+    for (let i = 0; i < pts.length; i++) { if (pts[i].db < noiseDB + 10) { regEnd = i; break; } }
+    if (regEnd < 5) regEnd = Math.min(pts.length, Math.max(5, Math.floor(pts.length * 0.5)));
+    let fit = regress(pts, 0, regEnd);
+    if (!fit || fit.slope >= 0) return null;
+    let slope = fit.slope, intercept = fit.intercept;
+    let crossT = (noiseDB - intercept) / slope;
+
+    // 4. iterate: refine window, noise estimate, late-decay slope, crosspoint
+    for (let iter = 0; iter < 5; iter++) {
+        const dbPerSec = -slope;
+        if (!(dbPerSec > 0)) break;
+        win = Math.max(1, Math.round(fs * Math.min(0.1, Math.max(0.01, (10 / dbPerSec) / 8))));
+        let noiseStartIdx = Math.round((crossT + 5 / dbPerSec) * fs);
+        if (N - noiseStartIdx < N * 0.1) noiseStartIdx = Math.floor(N * 0.9);
+        noiseStartIdx = Math.max(0, Math.min(N - 1, noiseStartIdx));
+        noise = mean(noiseStartIdx, N);
+        noiseDB = 10 * Math.log10(Math.max(1e-30, noise / peak));
+        pts = buildDb(win);
+        if (pts.length < 5) break;
+        let i0 = 0; while (i0 < pts.length && pts[i0].db > -5) i0++;
+        let i1 = i0; while (i1 < pts.length && pts[i1].db > noiseDB + 5) i1++;
+        if (i1 - i0 < 3) { i0 = 0; i1 = Math.min(pts.length, Math.max(5, Math.floor(pts.length * 0.6))); }
+        fit = regress(pts, i0, i1);
+        if (!fit || fit.slope >= 0) break;
+        slope = fit.slope; intercept = fit.intercept;
+        crossT = (noiseDB - intercept) / slope;
+    }
+
+    // ROBUST truncation point: the first time the (finely smoothed) decay drops
+    // to within 5 dB of the noise floor — capped against the regression-line
+    // intersection. The bare line intersection diverges for fast decays at low
+    // SNR (yielding fabricated multi-second T60s); the direct crossing does not.
+    const fineWin = Math.max(1, Math.round(fs * 0.01));
+    const finePts = buildDb(fineWin);
+    let directCrossT = null;
+    for (const p of finePts) { if (p.db <= noiseDB + 5) { directCrossT = p.t; break; } }
+    const regCrossT = (noiseDB - intercept) / slope;
+    let useT;
+    if (directCrossT != null && isFinite(regCrossT)) useT = Math.min(regCrossT, directCrossT);
+    else if (directCrossT != null) useT = directCrossT;
+    else useT = regCrossT;
+
+    let crossIdx = Math.round(useT * fs);
+    crossIdx = Math.max(Math.round(fs * 0.02), Math.min(N, crossIdx));
+    return { crossIdx, noiseLin: noise, slopeDbPerSec: slope, usableRangeDB: -noiseDB };
+}
+
+function schroederIntegrate(ir, hz, sampleRate, noiseFloorDB, noiseMarginOverride) {
+    const margin = noiseMarginOverride !== undefined ? noiseMarginOverride : NOISE_MARGIN;
+    
+    // 1. Bandpass filter the IR
+    const filtered = biquadBandpassFilter(ir, hz, sampleRate, OCTAVE_Q);
+    
+    // 2. Find the peak - search 5 cycles or 300ms minimum
+    const searchWindow = Math.max(0.3, 5 / hz);
+    const searchSamples = Math.min(Math.round(searchWindow * sampleRate), filtered.length);
+    let peakIdx = 0;
+    let peakVal = 0;
+    for (let i = 0; i < searchSamples; i++) {
+        const abs = Math.abs(filtered[i]);
+        if (abs > peakVal) {
+            peakVal = abs;
+            peakIdx = i;
+        }
+    }
+    
+    if (peakVal <= 0) return null;
+    
+    // ── SKIP FILTER SETTLING TIME (2τ) ──────────────────────────────
+    const filterSettleTime = 2 * OCTAVE_Q / (Math.PI * hz);
+    const settleSamples = Math.round(filterSettleTime * sampleRate);
+    
+    let startIdx = Math.min(peakIdx + settleSamples, filtered.length - 1);
+    
+    // Ensure we have at least 50ms of data after the settle point
+    const minDataSamples = Math.round(0.05 * sampleRate);
+    if (startIdx + minDataSamples >= filtered.length) {
+        // Try with 1τ skip
+        const fallbackSettle = Math.round(1 * OCTAVE_Q / (Math.PI * hz) * sampleRate);
+        startIdx = Math.min(peakIdx + fallbackSettle, filtered.length - 1);
+        // Ultimate fallback: use from peak
+        if (startIdx + Math.round(0.02 * sampleRate) >= filtered.length) {
+            startIdx = peakIdx;
+        }
+    }
+    
+    // Trim from startIdx to end
+    const trimmed = new Float32Array(filtered.length - startIdx);
+    for (let i = startIdx; i < filtered.length; i++) {
+        trimmed[i - startIdx] = filtered[i];
+    }
+    
+    // Square
+    const squared = new Float32Array(trimmed.length);
+    for (let i = 0; i < trimmed.length; i++) {
+        squared[i] = trimmed[i] * trimmed[i];
+    }
+
+    // ── v8.5: LUNDEBY TRUNCATION ────────────────────────────────────
+    // Find the knee where the decay meets the noise, subtract the noise
+    // power, and integrate only up to the knee. This stops the Schroeder
+    // curve from fitting the non-decaying noise tail (which inflated T60),
+    // and lets us flag bands that don't have enough clean decay range.
+    const lun = lundebyCrosspoint(squared, sampleRate);
+    let intEnd = squared.length;
+    let noiseLin = 0, usableRangeDB = 60, noiseLimited = false;
+    if (lun) {
+        noiseLin = lun.noiseLin;
+        usableRangeDB = lun.usableRangeDB;
+        intEnd = Math.max(Math.round(sampleRate * 0.05), Math.min(squared.length, lun.crossIdx));
+        noiseLimited = !(usableRangeDB >= MIN_USABLE_DB);
+    } else {
+        noiseLimited = true; // couldn't separate decay from noise → not trustworthy
+    }
+    const truncTime = intEnd / sampleRate;
+
+    // Schroeder backward integration over the truncated, noise-subtracted energy
+    const integrated = new Float32Array(intEnd);
+    let acc = 0;
+    for (let i = intEnd - 1; i >= 0; i--) {
+        acc += Math.max(0, squared[i] - noiseLin);
+        integrated[i] = acc;
+    }
+
+    const peakEnergy = integrated[0];
+    if (peakEnergy <= 0) return null;
+
+    // Build decay curve with fixed -60dB relative cutoff
+    const decayCurve = [];
+    const step = Math.max(1, Math.round(sampleRate / 200));
+
+    for (let i = 0; i < integrated.length; i += step) {
+        const t = i / sampleRate;
+        const db = 10 * Math.log10(Math.max(1e-30, integrated[i] / peakEnergy));
+        if (db > -60) {
+            decayCurve.push({ t, db });
+        } else {
+            break;
+        }
+    }
+
+    return { decayCurve, peakIdx: 0, usableRangeDB, noiseLimited, truncTime, lundeby: !!lun };
+}
+
+// ── WEIGHTED T60 REGRESSION ── REW-COMPATIBLE ──────────────────────
+function calcT60WeightedRegression(pts, noiseCutoffDB) {
+    if (!pts || pts.length < 4) return null;
+    
+    let n = 0, sx = 0, sy = 0, sxy = 0, sxx = 0, sw = 0;
+    
+    for (const p of pts) {
+        const distToNoise = p.db - noiseCutoffDB;
+        const weight = Math.min(1.0, Math.max(0.3, distToNoise / 10));
+        
+        n += weight;
+        sw += weight;
+        sx += p.t * weight;
+        sy += p.db * weight;
+        sxy += p.t * p.db * weight;
+        sxx += p.t * p.t * weight;
+    }
+    
+    if (n < 4) return null;
+    
+    const denom = n * sxx - sx * sx;
+    if (Math.abs(denom) < 1e-10) return null;
+    
+    const slope = (n * sxy - sx * sy) / denom;
+    if (slope >= 0) return null;
+    
+    const meanY = sy / n;
+    let ssTot = 0, ssRes = 0;
+    for (const p of pts) {
+        const distToNoise = p.db - noiseCutoffDB;
+        const weight = Math.min(1.0, Math.max(0.3, distToNoise / 10));
+        ssTot += (p.db - meanY) * (p.db - meanY) * weight;
+        const pred = slope * p.t + (sy - slope * sx) / n;
+        ssRes += (p.db - pred) * (p.db - pred) * weight;
+    }
+    const rSquared = ssTot > 0 ? 1 - (ssRes / ssTot) : 0;
+    
+    const t60 = Math.abs(-60 / slope);
+    if (t60 > MAX_REASONABLE_T60 || t60 < 0.05) return null;
+    
+    return { t60, rSquared, numPoints: pts.length, slope, weightSum: n };
+}
+
+// ── T60 REGRESSION ──────────────────────────────────────────────────
+// v8.2: accepts an optional forcedMethod ('T30'|'T20'|'T10'). When supplied
+// (used on the verify run) the exact same dB window as the baseline band is
+// used — no auto-switching — so before/after are measured identically.
+function calcT60fromSchroeder(schroederResult, noiseFloorDB, noiseMarginOverride, forcedMethod) {
+    const margin = noiseMarginOverride !== undefined ? noiseMarginOverride : NOISE_MARGIN;
+    
+    if (!schroederResult || !schroederResult.decayCurve || schroederResult.decayCurve.length < 6) {
+        return null;
+    }
+    
+    const curve = schroederResult.decayCurve;
+    const peakDB = curve[0].db;
+    const noiseCutoffDB = noiseFloorDB + margin;
+
+    // dB window for each method (relative to peak)
+    const windowFor = (m) => {
+        if (m === 'T30') return [-35, -5];
+        if (m === 'T20') return [-25, -5];
+        if (m === 'T10') return [-15, -5];
+        return [-Infinity, -3]; // Fallback
+    };
+    const ptsFor = (m) => {
+        const [lo, hi] = windowFor(m);
+        return curve.filter(s => { const rel = s.db - peakDB; return rel <= hi && rel >= lo; });
+    };
+
+    let method, pts;
+
+    if (forcedMethod) {
+        // ── LOCKED to the baseline band's method (no switching) ─────────
+        method = forcedMethod;
+        pts = ptsFor(forcedMethod);
+        // Tolerate fewer points than the baseline auto-gate (treatment may have
+        // shortened the decay) but keep the SAME window, so it's still the same
+        // measurement. Below 4 usable points there is nothing to fit.
+        if (pts.length < 4) return null;
+    } else {
+        // ── AUTO cascade (baseline): pick the longest window that has data ──
+        method = 'T30'; pts = ptsFor('T30');
+        if (pts.length < 6) { method = 'T20'; pts = ptsFor('T20'); }
+        if (pts.length < 6) { method = 'T10'; pts = ptsFor('T10'); }
+        if (pts.length < 4) { method = 'Fallback'; pts = ptsFor('Fallback'); }
+        if (pts.length < 4) return null;
+    }
+
+    const result = calcT60WeightedRegression(pts, noiseCutoffDB);
+    if (!result) return null;
+    
+    result.method = method;
+    return result;
+}
+
+// ── FFT CONVOLUTION ──────────────────────────────────────────────────
+async function convolveFFT(signal, kernel, sampleRate) {
+    const outLength = signal.length + kernel.length - 1;
+    const offline = new OfflineAudioContext(1, outLength, sampleRate);
+    const sigBuf = offline.createBuffer(1, signal.length, sampleRate);
+    sigBuf.getChannelData(0).set(signal);
+    const kerBuf = offline.createBuffer(1, kernel.length, sampleRate);
+    kerBuf.getChannelData(0).set(kernel);
+    const src = offline.createBufferSource();
+    src.buffer = sigBuf;
+    const conv = offline.createConvolver();
+    conv.normalize = false;
+    conv.buffer = kerBuf;
+    src.connect(conv);
+    conv.connect(offline.destination);
+    src.start(0);
+    const rendered = await offline.startRendering();
+    return rendered.getChannelData(0);
+}
+
+// ── AUDIOWORKLET RECORDER ────────────────────────────────────────────
+const WORKLET_CODE = `
+class RecorderProcessor extends AudioWorkletProcessor {
+    constructor() { super(); this._chunks = []; this._total = 0; this._target = 0; this._done = false;
+        this.port.onmessage = (e) => { if (e.data.type === 'start') this._target = e.data.target; };
+    }
+    process(inputs) {
+        if (this._done || this._target === 0) return true;
+        const ch = inputs[0][0];
+        if (!ch) return true;
+        this._chunks.push(ch.slice());
+        this._total += ch.length;
+        if (this._total >= this._target) {
+            this._done = true;
+            const full = new Float32Array(this._total);
+            let off = 0;
+            for (const c of this._chunks) { full.set(c, off); off += c.length; }
+            this.port.postMessage({ type: 'done', buffer: full.buffer }, [full.buffer]);
+        }
+        return true;
+    }
+}
+registerProcessor('recorder-processor', RecorderProcessor);
+`;
+
+// v8.4: race any promise against a timeout so a stalled load/record can't hang forever
+function withTimeout(promise, ms, label) {
+    let t;
+    const timeout = new Promise((_, rej) => { t = setTimeout(() => rej(new Error((label || 'operation') + ' timed out')), ms); });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(t));
+}
+
+// Returns true if the AudioWorklet recorder is available, false if we should
+// fall back to ScriptProcessor. Never throws, never hangs (4 s load cap).
+async function ensureWorkletLoaded() {
+    if (audioCtx._workletLoaded) return true;
+    if (audioCtx._workletFailed) return false;
+    if (!audioCtx.audioWorklet) { audioCtx._workletFailed = true; return false; }
+    if (audioCtx.state === 'suspended') { try { await withTimeout(audioCtx.resume(), 3000, 'resume'); } catch (_) {} }
+    const blob = new Blob([WORKLET_CODE], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    try {
+        await withTimeout(audioCtx.audioWorklet.addModule(url), 4000, 'AudioWorklet addModule');
+        audioCtx._workletLoaded = true;
+        return true;
+    } catch (e) {
+        console.warn('AudioWorklet unavailable — using ScriptProcessor fallback:', e);
+        audioCtx._workletFailed = true;
+        return false;
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
+function assembleChunks(chunks, total) {
+    const full = new Float32Array(total);
+    let off = 0;
+    for (const c of chunks) { full.set(c, off); off += c.length; }
+    return full;
+}
+
+// AudioWorklet capture path
+function recordViaWorklet(totalSamples, durationSeconds) {
+    return new Promise((resolve, reject) => {
+        let settled = false;
+        const worklet = new AudioWorkletNode(audioCtx, 'recorder-processor');
+        const silentGain = audioCtx.createGain();
+        silentGain.gain.value = 0;
+        const cleanup = () => {
+            try { worklet.disconnect(); } catch (_) {}
+            try { micSource.disconnect(worklet); } catch (_) {}
+            try { silentGain.disconnect(); } catch (_) {}
+        };
+        const timeoutId = setTimeout(() => {
+            if (settled) return; settled = true; cleanup();
+            reject(new Error('Worklet recording timed out'));
+        }, (durationSeconds + 5) * 1000);
+        worklet.port.onmessage = (e) => {
+            if (e.data.type === 'done' && !settled) {
+                settled = true; clearTimeout(timeoutId); cleanup();
+                resolve(new Float32Array(e.data.buffer));
+            }
+        };
+        micSource.connect(worklet);
+        worklet.connect(silentGain);
+        silentGain.connect(audioCtx.destination);
+        worklet.port.postMessage({ type: 'start', target: totalSamples });
+        recProcessor = worklet;
+    });
+}
+
+// ScriptProcessor capture path — deprecated but loads everywhere (incl. file://)
+// and reliably delivers mic input in Firefox where the worklet may not.
+function recordViaScriptProcessor(totalSamples, durationSeconds) {
+    return new Promise((resolve, reject) => {
+        let settled = false;
+        const sp = audioCtx.createScriptProcessor(4096, 1, 1);
+        const silentGain = audioCtx.createGain();
+        silentGain.gain.value = 0;
+        const chunks = []; let total = 0;
+        const cleanup = () => {
+            sp.onaudioprocess = null;
+            try { sp.disconnect(); } catch (_) {}
+            try { micSource.disconnect(sp); } catch (_) {}
+            try { silentGain.disconnect(); } catch (_) {}
+        };
+        const timeoutId = setTimeout(() => {
+            if (settled) return; settled = true; cleanup();
+            if (total > SAMPLE_RATE) resolve(assembleChunks(chunks, total)); // salvage what we got
+            else reject(new Error('No microphone input detected'));
+        }, (durationSeconds + 5) * 1000);
+        sp.onaudioprocess = (ev) => {
+            if (settled) return;
+            const ch = ev.inputBuffer.getChannelData(0);
+            chunks.push(new Float32Array(ch)); total += ch.length;
+            if (total >= totalSamples) {
+                settled = true; clearTimeout(timeoutId); cleanup();
+                resolve(assembleChunks(chunks, total));
+            }
+        };
+        micSource.connect(sp);
+        sp.connect(silentGain);
+        silentGain.connect(audioCtx.destination);
+        recProcessor = sp;
+    });
+}
+
+// v8.4: robust entry point. Tries the worklet (with caps), falls back to
+// ScriptProcessor on stall/failure/no-input. Always settles.
+async function startRecording(durationSeconds) {
+    const totalSamples = Math.ceil(durationSeconds * SAMPLE_RATE) + SAMPLE_RATE;
+    if (audioCtx.state === 'suspended') { try { await withTimeout(audioCtx.resume(), 3000, 'resume'); } catch (_) {} }
+    const useWorklet = await ensureWorkletLoaded();
+    if (useWorklet) {
+        try {
+            return await recordViaWorklet(totalSamples, durationSeconds);
+        } catch (e) {
+            console.warn('Worklet capture failed, falling back to ScriptProcessor:', e);
+            audioCtx._workletFailed = true; // don't retry the worklet this session
+        }
+    }
+    return await recordViaScriptProcessor(totalSamples, durationSeconds);
+}
+
+// ── NOISE FLOOR ──────────────────────────────────────────────────────
+async function measureNoiseFloor() {
+    showCal('Measuring ambient noise floor…', 'Keep the room quiet for 2 seconds.');
+    let recording;
+    try {
+        recording = await startRecording(NOISE_FLOOR_DUR + 0.5);
+    } catch(e) {
+        console.error('Noise floor recording failed:', e);
+        showCalResult(false, 'Recording failed: ' + e.message);
+        TEST_FREQS.forEach(hz => { noiseFloorMap[hz] = -60; });
+        noiseFloorMeasured = true;
+        $('val-noise').textContent = 'fallback −60 dBFS';
+        return;
+    }
+    TEST_FREQS.forEach(hz => {
+        const filtered = biquadBandpassFilter(recording, hz, SAMPLE_RATE, OCTAVE_Q);
+        let rms = 0;
+        for (let i = 0; i < filtered.length; i++) rms += filtered[i] * filtered[i];
+        rms = Math.sqrt(rms / filtered.length);
+        noiseFloorMap[hz] = rms < 1e-10 ? -80 : Math.max(-80, 20 * Math.log10(rms));
+    });
+    noiseFloorMeasured = true;
+    const maxNoise = Math.max(...TEST_FREQS.map(hz => noiseFloorMap[hz]));
+    $('val-noise').textContent = `${maxNoise.toFixed(1)} dBFS`;
+    const params = adaptiveSNRParams(maxNoise, 50);
+    if (maxNoise <= -79.5) {
+        // -80 is the clamp rail: the capture recorded silence — the mic isn't reaching the tool
+        $('val-noise').textContent = '−80 dBFS ⚠ (silent)';
+        $('val-noise').style.color = 'var(--amber)';
+        showCalResult(false,
+            'Input reads silent (−80 dBFS rail). The mic signal isn\'t reaching the tool — watch the Mic Level meter and tap the mic. Check the input device/level, close other apps using the UMIK, and prefer serving over http://localhost rather than opening the file directly.');
+    } else {
+        showCalResult(maxNoise < -35,
+            `Noise floor: ${maxNoise.toFixed(1)} dBFS. Min SNR: ${params.snrMin} dB.`);
+    }
+}
+
+// ── DOM REFS ──────────────────────────────────────────────────────────
+let audioCtx = null;
+let micStream = null;
+let micSource = null;
+let pipelineReady = false;
+let noiseFloorMeasured = false;
+let recProcessor = null;
+let analyser = null;        // v8.4: live input level meter
+let _meterRAF = null;
+const noiseFloorMap = {};
+const results = { base: {}, verify: {} };
+let TEST_FREQS = [25, 31.5, 40, 50, 63, 80];
+let correlatedSet = new Set();
+let modeInfoMap = new Map();
+let unitMode = 'ft';
+let _diagRecording = null;   // v8.6: last loopback recording
+let _diagResult = null;      // v8.6: { rippleRMS, responseVarDB, peakDBFS } for the report
+let _diagZoom = 0;
+const DIAG_ZOOMS = [[0,15,'Full sweep'],[0,0.5,'20 Hz'],[0.5,1.0,'0.5-1s'],[7,8,'mid'],[14,15,'80 Hz']];
+const $ = id => document.getElementById(id);
+
+// ── SINGLE SWEEP CAPTURE ─────────────────────────────────────────────
+// v8.2: plays pip+sweep once, records, and returns the recording sliced so
+// that sample 0 == sweep start (pip-aligned). Called NUM_SWEEPS times by
+// runMeasurement and the results are synchronously averaged.
+async function captureAlignedSweep(playBuf, sweepIndex, sweepCount) {
+    const totalRecordTime = (PIP_DURATION + PIP_LEAD) + SWEEP_DURATION + TAIL_DURATION + 2.0;
+    const recPromise = startRecording(totalRecordTime);
+    await sleep(300);
+    animateSweepVis(SWEEP_DURATION + TAIL_DURATION);
+
+    const playbackBuf = audioCtx.createBuffer(1, playBuf.length, SAMPLE_RATE);
+    playbackBuf.getChannelData(0).set(playBuf);
+    const sweepSrc = audioCtx.createBufferSource();
+    sweepSrc.buffer = playbackBuf;
+    sweepSrc.connect(audioCtx.destination);
+    sweepSrc.start(audioCtx.currentTime);
+
+    const sweepStartWall = Date.now() + (PIP_DURATION + PIP_LEAD) * 1000;
+    const sweepTotalMs = (SWEEP_DURATION + TAIL_DURATION) * 1000;
+    const base = 10 + (sweepIndex / sweepCount) * 80;     // 10..90 across all sweeps
+    const span = 80 / sweepCount;
+    const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - sweepStartWall;
+        const frac = Math.min(1, Math.max(0, elapsed) / sweepTotalMs);
+        const pct = Math.min(91, base + frac * span);
+        if (elapsed < 0) setPhase(`🎯 Sweep ${sweepIndex + 1}/${sweepCount} — pip sent, aligning…`, pct);
+        else if (elapsed < SWEEP_DURATION * 1000) setPhase(`🔊 Sweep ${sweepIndex + 1}/${sweepCount} active — ${(SWEEP_DURATION - elapsed / 1000).toFixed(0)}s remaining…`, pct);
+        else setPhase(`🔇 Sweep ${sweepIndex + 1}/${sweepCount} — capturing room ringdown…`, pct);
+    }, 250);
+
+    const recording = await recPromise;
+    clearInterval(progressInterval);
+
+    const pipArrivalSample = findPipInRecording(recording);
+    const sweepStartInRec = pipArrivalSample + Math.round((PIP_DURATION + PIP_LEAD) * SAMPLE_RATE);
+    const recLeadSamples = Math.round(0.300 * SAMPLE_RATE);
+    const roundTrip = Math.max(0, pipArrivalSample - recLeadSamples);
+    return { aligned: recording.slice(sweepStartInRec), roundTrip };
+}
+
+// ── MAIN MEASUREMENT ──────────────────────────────────────────────────
+async function runMeasurement(mode) {
+    if (!pipelineReady) return;
+    if (mode === 'base') LOCKED_METHODS = {}; // v8.2: a fresh baseline re-establishes the lock
+    $('btn-baseline').disabled = true;
+    $('btn-verify').disabled = true;
+    $('btn-reset').disabled = true;
+    setStep(mode);
+
+    // Show limitation banner
+    $('limitation-banner').classList.add('visible');
+
+    const pp = $('progress-panel');
+    pp.classList.add('visible');
+    setPhase('Generating sweep signal…', 0);
+    $('val-phase').textContent = 'Running sweep';
+    $('val-phase').className = 'readout-val measuring';
+
+    const sweep = generateLogSweep(SAMPLE_RATE, SWEEP_DURATION, SWEEP_F_LOW, SWEEP_F_HIGH);
+    const invFilt = generateExactInverseFilter(SAMPLE_RATE, SWEEP_DURATION, SWEEP_F_LOW, SWEEP_F_HIGH);
+    const { buf: playBuf, preSweepSamps } = generatePlaybackBuffer(sweep);
+
+    $('prog-note').textContent = `Keep the room quiet. ${NUM_SWEEPS} sweeps will run back-to-back (~${Math.round(NUM_SWEEPS * (SWEEP_DURATION + TAIL_DURATION + 1) / 6) * 6}s total) and are averaged together to lift low-frequency SNR.`;
+
+    setPhase('Ready to sweep — keep room quiet…', 5);
+    await sleep(1500);
+
+    // ── v8.2: capture NUM_SWEEPS pip-aligned recordings ─────────────────
+    const captures = [];
+    let lastRoundTrip = 0;
+    for (let s = 0; s < NUM_SWEEPS; s++) {
+        const cap = await captureAlignedSweep(playBuf, s, NUM_SWEEPS);
+        captures.push(cap.aligned);
+        lastRoundTrip = cap.roundTrip;
+        if (s < NUM_SWEEPS - 1) await sleep(700); // short gap between sweeps
+    }
+    $('val-latency').textContent = `${(lastRoundTrip / SAMPLE_RATE * 1000).toFixed(1)} ms (pip-aligned)`;
+
+    // ── v8.2: synchronous time-domain averaging of the aligned recordings ──
+    // Deconvolution is linear, so averaging the pip-aligned recordings and
+    // deconvolving once is equivalent to averaging N impulse responses. The
+    // sweep response adds coherently while uncorrelated noise drops ~√N
+    // (≈ +6 dB at 4 sweeps), which is exactly where the 20–40 Hz bands need it.
+    setPhase(`Averaging ${NUM_SWEEPS} sweeps (synchronous)…`, 92);
+    await sleep(50);
+    let minLen = Infinity;
+    for (const c of captures) if (c.length < minLen) minLen = c.length;
+    const alignedRec = new Float32Array(minLen);
+    for (const c of captures) {
+        for (let i = 0; i < minLen; i++) alignedRec[i] += c[i];
+    }
+    for (let i = 0; i < minLen; i++) alignedRec[i] /= NUM_SWEEPS;
+
+    setPhase('Processing: FFT deconvolution (1–2 seconds)…', 96);
+    await sleep(50);
+
+    const rawIR = await convolveFFT(alignedRec, invFilt, SAMPLE_RATE);
+
+    const expectedIROffset = invFilt.length;
+    const searchHalf = 2 * SAMPLE_RATE;
+    const searchStart = Math.max(0, expectedIROffset - searchHalf);
+    const searchEnd = Math.min(rawIR.length, expectedIROffset + searchHalf);
+    let irPeakIdx = searchStart, irPeakVal = 0;
+    for (let i = searchStart; i < searchEnd; i++) {
+        if (Math.abs(rawIR[i]) > irPeakVal) { irPeakVal = Math.abs(rawIR[i]); irPeakIdx = i; }
+    }
+
+    // Pre-response trimming (2τ)
+    const preTrim = Math.round(2 * OCTAVE_Q / (Math.PI * (SWEEP_F_LOW + SWEEP_F_HIGH) / 2) * SAMPLE_RATE);
+    const irStartIdx = Math.max(0, irPeakIdx - preTrim);
+    for (let i = irStartIdx; i < irPeakIdx; i++) rawIR[i] = 0;
+
+    const irLength = Math.round(TAIL_DURATION * SAMPLE_RATE);
+    const ir = rawIR.slice(irPeakIdx, irPeakIdx + irLength);
+    let irMax = 0;
+    for (let i = 0; i < ir.length; i++) if (Math.abs(ir[i]) > irMax) irMax = Math.abs(ir[i]);
+    if (irMax > 0) for (let i = 0; i < ir.length; i++) ir[i] /= irMax;
+
+    setPhase('Computing Schroeder integration per frequency band…', 98);
+    await sleep(50);
+
+    drawIRCanvas(ir, mode);
+
+    TEST_FREQS.forEach(hz => {
+        const noiseDB = noiseFloorMap[hz] ?? -60;
+        const snrParams = adaptiveSNRParams(noiseDB, hz);
+
+        const schroederResult = schroederIntegrate(ir, hz, SAMPLE_RATE, noiseDB, snrParams.noiseMargin);
+
+        let snrDB = 0, valid = false, lowConf = snrParams.alwaysLowConf;
+        if (schroederResult) {
+            const signalWindow = Math.round(0.1 * SAMPLE_RATE);
+            const noiseWindow = Math.round(1.0 * SAMPLE_RATE);
+            
+            const filteredIR = biquadBandpassFilter(ir, hz, SAMPLE_RATE, OCTAVE_Q);
+            
+            let rmsSignal = 0;
+            const sigEnd = Math.min(signalWindow, filteredIR.length);
+            for (let i = 0; i < sigEnd; i++) rmsSignal += filteredIR[i] * filteredIR[i];
+            rmsSignal = Math.sqrt(rmsSignal / sigEnd);
+            
+            let rmsNoise = 0;
+            const noiseStart = Math.max(0, filteredIR.length - noiseWindow);
+            for (let i = noiseStart; i < filteredIR.length; i++) rmsNoise += filteredIR[i] * filteredIR[i];
+            rmsNoise = Math.sqrt(rmsNoise / (filteredIR.length - noiseStart));
+            
+            snrDB = rmsNoise > 1e-10 ? 20 * Math.log10(rmsSignal / rmsNoise) : 60;
+            valid = noiseFloorMeasured && snrDB >= snrParams.snrMin;
+            if (valid && snrDB < 12) lowConf = true;
+        }
+
+        // v8.2: on verify, force the same method this band used at baseline so
+        // the before/after comparison is like-for-like; on baseline, auto-select.
+        const forcedMethod = (mode === 'verify') ? (LOCKED_METHODS[hz] || null) : null;
+        const t60Result = valid && schroederResult
+            ? calcT60fromSchroeder(schroederResult, noiseDB, snrParams.noiseMargin, forcedMethod)
+            : null;
+        if (mode === 'base' && t60Result) LOCKED_METHODS[hz] = t60Result.method;
+
+        results[mode][hz] = {
+            t60: t60Result ? t60Result.t60 : null,
+            invalid: !valid || t60Result === null,
+            lowConf: lowConf || (t60Result ? t60Result.rSquared < 0.8 : false),
+            schroederCurve: schroederResult ? schroederResult.decayCurve : [],
+            rSquared: t60Result ? t60Result.rSquared : 0,
+            numPoints: t60Result ? t60Result.numPoints : 0,
+            snrDB: snrDB,
+            noiseDB: noiseDB,
+            method: t60Result ? t60Result.method || 'T30' : 'none',
+            methodLocked: mode === 'verify' && !!forcedMethod,
+            snrValid: valid,
+            noiseLimited: schroederResult ? !!schroederResult.noiseLimited : true,  // v8.5
+            usableRangeDB: schroederResult ? schroederResult.usableRangeDB : 0,     // v8.5
+            numSweeps: NUM_SWEEPS,
+            filterLimited: isFilterLimited(hz)
+        };
+        updateChip(mode, hz);
+    });
+
+    setPhase('Complete.', 100);
+    await sleep(200);
+    pp.classList.remove('visible');
+
+    $('val-phase').textContent = 'Idle';
+    $('val-phase').className = 'readout-val';
+    updateResultsTable();
+    finalise(mode);
+
+    $('btn-baseline').disabled = false;
+    $('btn-verify').disabled = false;
+    $('btn-reset').disabled = false;
+}
+
+// ── UI FUNCTIONS ──────────────────────────────────────────────────────
+
+function t60Zone(s, hz) {
+    if (s === null || s === undefined) return 'zone-invalid';
+    if (isFilterLimited(hz)) return 'zone-filter-limited';
+    if (s > 1.5) return 'zone-critical';
+    if (s > 0.75) return 'zone-colored';
+    if (s > 0.55) return 'zone-ok';
+    return 'zone-target';
+}
+
+function getModeType(hz) {
+    const g = modeInfoMap.get(hz);
+    if (!g) return 'Standard';
+    if (g.hasAxial) return 'Axial';
+    if (g.modes.some(m => m.type === 'tangential')) return 'Tangential';
+    if (g.modes.some(m => m.type === 'oblique')) return 'Oblique';
+    return 'Standard';
+}
+
+function buildChipUI() {
+    ['base', 'verify'].forEach(m => {
+        const c = $(`chips-${m}`);
+        if (!c) return;
+        c.style.gridTemplateColumns = `repeat(${Math.min(TEST_FREQS.length, 6)}, 1fr)`;
+        c.innerHTML = TEST_FREQS.map(hz => {
+            const type = getModeType(hz);
+            const adv = getFrequencyAdvisory(hz);
+            const filterClass = isFilterLimited(hz) ? ' filter-limited' : '';
+            let typeLabel = '';
+            if (type === 'Axial') typeLabel = '<br><span style="color:var(--orange);font-size:8px">AXIAL</span>';
+            else if (type === 'Tangential') typeLabel = '<br><span style="color:var(--amber);font-size:8px">TANG</span>';
+            else if (type === 'Oblique') typeLabel = '<br><span style="color:var(--purple);font-size:8px">OBL</span>';
+            const warnLabel = isFilterLimited(hz) ? '<br><span style="color:var(--amber);font-size:7px">⚠ FILTER-LIMITED</span>' : '';
+            return `<div class="freq-chip${filterClass}" id="chip-${m}-${hz}">
+                <div class="chip-hz">${hz}Hz${typeLabel}${warnLabel}</div>
+                <div class="chip-val" id="cval-${m}-${hz}">—</div></div>`;
+        }).join('');
+    });
+}
+
+function updateChip(mode, hz) {
+    const r = results[mode][hz];
+    const el = $(`cval-${mode}-${hz}`);
+    if (!el) return;
+    if (!r || r.invalid || r.t60 === null) {
+        el.textContent = 'no signal';
+        el.className = 'chip-val zone-invalid';
+    } else {
+        const r2conf = r.rSquared > 0.9 ? '✓' : r.rSquared > 0.75 ? '~' : '⚠';
+        const methodLabel = r.method !== 'T30' ? ` ${r.method}` : '';
+        const filterLabel = r.filterLimited ? ' ⚠' : '';
+        el.textContent = `${r.t60.toFixed(2)}s${methodLabel}${filterLabel} ${r2conf}`;
+        el.className = `chip-val ${t60Zone(r.t60, hz)}`;
+    }
+}
+
+function updateResultsTable() {
+    const tbody = $('table-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    TEST_FREQS.forEach(hz => {
+        const b = results.base[hz];
+        const v = results.verify[hz];
+        const type = getModeType(hz);
+        const adv = getFrequencyAdvisory(hz);
+        const filterLimited = isFilterLimited(hz);
+
+        const bNL = b && !b.invalid && b.noiseLimited;
+        const vNL = v && !v.invalid && v.noiseLimited;
+        const bTxt = b ? (b.invalid ? 'no signal' : (bNL ? 'noise-limited' : `${b.t60.toFixed(2)}s`)) : '—';
+        const vTxt = v ? (v.invalid ? 'no signal' : (vNL ? 'noise-limited' : `${v.t60.toFixed(2)}s`)) : '—';
+        const bCls = b && !b.invalid && !bNL ? t60Zone(b.t60, hz) : 'zone-invalid';
+        const vCls = v && !v.invalid && !vNL ? t60Zone(v.t60, hz) : (v && !v.invalid && vNL ? 'zone-invalid' : 'td-pending');
+
+        let bBadge = '';
+        if (b && !b.invalid && !bNL && b.rSquared !== undefined) {
+            const conf = b.rSquared > 0.9 ? 'high' : b.rSquared > 0.75 ? 'medium' : 'low';
+            const methodLabel = b.method !== 'T30' ? ` ${b.method}` : '';
+            const filterLabel = b.filterLimited ? ' ⚠' : '';
+            bBadge = `<span class="confidence-badge confidence-${conf}">R²=${b.rSquared.toFixed(3)}${methodLabel}${filterLabel}</span>`;
+        } else if (bNL) {
+            bBadge = `<span class="confidence-badge confidence-low" title="Decay range ${b.usableRangeDB.toFixed(0)} dB — below ${MIN_USABLE_DB} dB, no reliable T60">&lt;${MIN_USABLE_DB}dB range</span>`;
+        }
+        let vBadge = '';
+        if (v && !v.invalid && !vNL && v.rSquared !== undefined) {
+            const conf = v.rSquared > 0.9 ? 'high' : v.rSquared > 0.75 ? 'medium' : 'low';
+            const methodLabel = v.method !== 'T30' ? ` ${v.method}` : '';
+            const filterLabel = v.filterLimited ? ' ⚠' : '';
+            vBadge = `<span class="confidence-badge confidence-${conf}">R²=${v.rSquared.toFixed(3)}${methodLabel}${filterLabel}</span>`;
+        } else if (vNL) {
+            vBadge = `<span class="confidence-badge confidence-low" title="Decay range ${v.usableRangeDB.toFixed(0)} dB — below ${MIN_USABLE_DB} dB, no reliable T60">&lt;${MIN_USABLE_DB}dB range</span>`;
+        }
+
+        let imprTxt = '—', imprCls = 'td-impr none';
+        if (b && v && !b.invalid && !v.invalid && !bNL && !vNL && b.t60 && v.t60) {
+            const pct = ((b.t60 - v.t60) / b.t60) * 100;
+            imprTxt = pct > 0 ? `−${pct.toFixed(0)}%` : `+${Math.abs(pct).toFixed(0)}%`;
+            imprCls = `td-impr ${pct >= 50 ? 'good' : pct >= 20 ? 'ok' : 'none'}`;
+        }
+
+        const freqWarn = filterLimited ? `<span class="freq-warn" title="Filter-limited below 40Hz">⚠</span>` : '';
+        const sparkId = `spark-tbl-${hz}`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="td-freq">${hz} Hz ${freqWarn}</td>
+            <td style="color:var(--dim);font-size:11px">${type}</td>
+            <td class="td-baseline ${bCls}">${bTxt} ${bBadge}</td>
+            <td class="${v ? `td-verified ${vCls}` : 'td-pending'}">${vTxt} ${vBadge}</td>
+            <td class="${imprCls}">${imprTxt}</td>
+            <td class="td-spark"><div class="spark-wrap"><canvas class="tbl-spark" id="${sparkId}"></canvas></div></td>`;
+        tbody.appendChild(tr);
+        setTimeout(() => drawTableSparkline(sparkId, hz), 50);
+    });
+
+    // ── ENHANCED SUMMARY WITH EXCLUDED BANDS ──────────────────────────
+    const pairs = TEST_FREQS.filter(hz => {
+        const b = results.base[hz];
+        const v = results.verify[hz];
+        return b && v && !b.invalid && !v.invalid && !b.noiseLimited && !v.noiseLimited && b.t60 && v.t60 && b.rSquared > 0.75 && v.rSquared > 0.75;
+    });
+    
+    const allBands = TEST_FREQS.filter(hz => {
+        const b = results.base[hz];
+        const v = results.verify[hz];
+        return b && v && !b.invalid && !v.invalid && !b.noiseLimited && !v.noiseLimited && b.t60 && v.t60;
+    });
+
+    if (pairs.length) {
+        const weightedAvg = pairs.reduce((a, hz) => {
+            const b = results.base[hz], v = results.verify[hz];
+            const weight = (b.rSquared + v.rSquared) / 2;
+            return a + ((b.t60 - v.t60) / b.t60) * 100 * weight;
+        }, 0) / pairs.reduce((a, hz) => {
+            const b = results.base[hz], v = results.verify[hz];
+            return a + (b.rSquared + v.rSquared) / 2;
+        }, 0);
+        
+        const excluded = TEST_FREQS.length - pairs.length;
+        const excludedBands = TEST_FREQS.filter(hz => !pairs.includes(hz)).join(' Hz, ');
+        
+        const numberEl = $('summary-number');
+        numberEl.textContent = weightedAvg > 0 ? `−${weightedAvg.toFixed(0)}%` : `+${Math.abs(weightedAvg).toFixed(0)}%`;
+        numberEl.className = `summary-number ${weightedAvg > 0 ? '' : 'caution'}`;
+        
+        // Show valid/excluded count
+        $('summary-sub').textContent = `${pairs.length} valid bands${excluded > 0 ? ` (${excluded} excluded)` : ''} · Nodal 30 treatment verified`;
+        
+        // Show T60 range
+        const afterValues = pairs.map(hz => results.verify[hz].t60);
+        const range = Math.max(...afterValues) - Math.min(...afterValues);
+        const rangeText = range < 0.2 ? 'very consistent' : range < 0.5 ? 'moderate variation' : 'significant variation';
+        $('summary-detail').textContent = `T60 range: ${Math.min(...afterValues).toFixed(2)}–${Math.max(...afterValues).toFixed(2)}s (${rangeText})`;
+        
+        if (excluded > 0) {
+            $('summary-detail').textContent += ` · Excluded: ${excludedBands} Hz`;
+        }
+        
+        // Check if any filter-limited bands were included
+        const limitedIncluded = pairs.filter(hz => isFilterLimited(hz));
+        if (limitedIncluded.length > 0) {
+            $('summary-detail').textContent += ` · ⚠ ${limitedIncluded.length} filter-limited band(s)`;
+            numberEl.className = 'summary-number caution';
+        }
+        
+        $('summary-row').style.display = 'flex';
+    } else if (allBands.length > 0) {
+        // Some valid bands but none passed R² threshold
+        const numberEl = $('summary-number');
+        numberEl.textContent = '⚠ Low confidence';
+        numberEl.className = 'summary-number caution';
+        $('summary-sub').textContent = `${allBands.length} bands measured, but none met R² > 0.75 criteria`;
+        $('summary-detail').textContent = 'Results should be treated as qualitative only';
+        $('summary-row').style.display = 'flex';
+    }
+
+    // v8.3: primary fixed-time metric + before/after overlay
+    renderFixedTimeMetric();
+    renderOverlay();
+}
+
+function drawTableSparkline(canvasId, hz) {
+    const canvas = $(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.offsetWidth || 90, H = canvas.offsetHeight || 28;
+    canvas.width = W; canvas.height = H;
+    ctx.clearRect(0, 0, W, H);
+    const draw = (curve, color) => {
+        if (!curve || !curve.length) return;
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        curve.forEach((p, i) => {
+            const x = (p.t / TAIL_DURATION) * W;
+            const y = H - Math.max(0, ((p.db + 60) / 60) * (H - 4)) - 2;
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+    };
+    const b = results.base[hz], v = results.verify[hz];
+    if (b && !b.invalid) draw(b.schroederCurve, '#00D4E8');
+    if (v && !v.invalid) draw(v.schroederCurve, '#FF6B35');
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  v8.3: FIXED-TIME DECAY METRIC + BEFORE/AFTER OVERLAY
+// ════════════════════════════════════════════════════════════════════
+const FIXED_TIMES_MS = [160, 320];   // read points into the decay
+const DECAY_FLOOR_DB = -60;
+let overlaySelectedHz = null;
+
+// Level remaining (dB rel. to peak) at a given time, read straight off the
+// Schroeder curve by linear interpolation. No regression, no extrapolation.
+// Beyond the end of the curve the energy has dropped to the floor.
+function energyRemainingAt(curve, tSec) {
+    if (!curve || curve.length < 2) return null;
+    if (tSec <= curve[0].t) return curve[0].db;
+    const last = curve[curve.length - 1];
+    if (tSec >= last.t) return DECAY_FLOOR_DB; // ran past the measurable decay → at/below floor
+    for (let i = 1; i < curve.length; i++) {
+        if (curve[i].t >= tSec) {
+            const a = curve[i - 1], c = curve[i];
+            const f = (tSec - a.t) / (c.t - a.t || 1);
+            return Math.max(DECAY_FLOOR_DB, a.db + f * (c.db - a.db));
+        }
+    }
+    return DECAY_FLOOR_DB;
+}
+
+function median(arr) {
+    if (!arr.length) return null;
+    const s = [...arr].sort((x, y) => x - y);
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+// A band is usable for the fixed-time metric if it had enough SNR and a real
+// decay curve on BOTH runs — independent of whether T60 extrapolation succeeded.
+function ftUsable(hz) {
+    const b = results.base[hz], v = results.verify[hz];
+    return b && v && b.snrValid && v.snrValid &&
+           !b.noiseLimited && !v.noiseLimited &&   // v8.5: skip below-fundamental / noise-limited bands
+           b.schroederCurve && b.schroederCurve.length > 3 &&
+           v.schroederCurve && v.schroederCurve.length > 3;
+}
+
+function deltaClass(d) {
+    if (d === null) return 'none';
+    if (d < -1) return 'worse';
+    if (d >= 15) return 'good';
+    if (d >= 6) return 'ok';
+    return 'none';
+}
+
+function renderFixedTimeMetric() {
+    const body = $('ft-body');
+    const panel = $('metric-panel');
+    if (!body || !panel) return;
+    body.innerHTML = '';
+
+    const usable = TEST_FREQS.filter(ftUsable);
+    if (!usable.length) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+
+    // worst band = least decayed at 320 ms on the BEFORE (untreated) run
+    let worstHz = null, worstBeforeDb = -Infinity;
+    const deltas320 = [];
+
+    usable.forEach(hz => {
+        const b = results.base[hz], v = results.verify[hz];
+        const b160 = energyRemainingAt(b.schroederCurve, 0.160);
+        const v160 = energyRemainingAt(v.schroederCurve, 0.160);
+        const b320 = energyRemainingAt(b.schroederCurve, 0.320);
+        const v320 = energyRemainingAt(v.schroederCurve, 0.320);
+        const d320 = (b320 !== null && v320 !== null) ? (b320 - v320) : null; // +ve = more decayed after
+        if (d320 !== null) deltas320.push(d320);
+        if (b320 !== null && b320 > worstBeforeDb) { worstBeforeDb = b320; worstHz = hz; }
+
+        const fmt = (x) => x === null ? '<span class="ft-na">—</span>'
+            : (x <= DECAY_FLOOR_DB ? '≤−60' : x.toFixed(1)) + ' dB';
+        const dTxt = d320 === null ? '—'
+            : (d320 >= 0 ? `+${d320.toFixed(1)} dB` : `${d320.toFixed(1)} dB`);
+
+        const tr = document.createElement('tr');
+        if (hz === worstHz) tr.className = 'ft-worst';
+        tr.innerHTML = `
+            <td>${hz} Hz${isFilterLimited(hz) ? ' <span style="color:var(--amber);font-size:9px">⚠</span>' : ''}</td>
+            <td>${fmt(b160)}</td><td>${fmt(v160)}</td>
+            <td>${fmt(b320)}</td><td>${fmt(v320)}</td>
+            <td class="ft-delta ${deltaClass(d320)}">${dTxt}</td>`;
+        body.appendChild(tr);
+    });
+    // mark worst row after the fact (worstHz known only after loop on first pass)
+    [...body.children].forEach((tr, i) => {
+        tr.classList.toggle('ft-worst', usable[i] === worstHz);
+    });
+
+    const med = median(deltas320);
+    const big = $('metric-big');
+    const lbl = $('metric-big-label');
+    if (med === null) {
+        big.textContent = '—'; big.className = 'metric-big none'; lbl.textContent = '';
+    } else {
+        big.textContent = `${med >= 0 ? '+' : ''}${med.toFixed(1)} dB`;
+        big.className = `metric-big ${med >= 6 ? '' : med < -1 ? 'caution' : 'none'}`;
+        const worstTxt = worstHz !== null
+            ? ` Worst-offending band before treatment: <strong style="color:var(--bright)">${worstHz} Hz</strong>.`
+            : '';
+        lbl.innerHTML = `Across ${deltas320.length} band${deltas320.length === 1 ? '' : 's'}, 320 ms after the tone stops the room is a median <strong style="color:var(--bright)">${med >= 0 ? med.toFixed(1) : '0'} dB</strong> quieter than before.${worstTxt}`;
+    }
+
+    if (overlaySelectedHz === null || !usable.includes(overlaySelectedHz)) {
+        overlaySelectedHz = worstHz ?? usable[0];
+    }
+    renderOverlay();
+}
+
+function renderOverlay() {
+    const panel = $('overlay-panel');
+    const chips = $('overlay-chips');
+    if (!panel || !chips) return;
+
+    const drawable = TEST_FREQS.filter(hz => {
+        const b = results.base[hz], v = results.verify[hz];
+        return (b && b.schroederCurve && b.schroederCurve.length > 1) ||
+               (v && v.schroederCurve && v.schroederCurve.length > 1);
+    });
+    if (!drawable.length) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+
+    if (overlaySelectedHz === null || !drawable.includes(overlaySelectedHz)) {
+        overlaySelectedHz = drawable[0];
+    }
+
+    chips.innerHTML = '';
+    drawable.forEach(hz => {
+        const chip = document.createElement('div');
+        chip.className = `overlay-chip${hz === overlaySelectedHz ? ' active' : ''}${isFilterLimited(hz) ? ' flim' : ''}`;
+        chip.textContent = `${hz} Hz`;
+        chip.onclick = () => { overlaySelectedHz = hz; renderOverlay(); };
+        chips.appendChild(chip);
+    });
+
+    drawOverlayChart(overlaySelectedHz);
+}
+
+function drawOverlayChart(hz) {
+    const canvas = $('overlay-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const cssW = canvas.parentElement.offsetWidth - 12 || 880;
+    const W = cssW, H = 300;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    const b = results.base[hz], v = results.verify[hz];
+    const bCurve = b && b.schroederCurve && b.schroederCurve.length > 1 ? b.schroederCurve : null;
+    const vCurve = v && v.schroederCurve && v.schroederCurve.length > 1 ? v.schroederCurve : null;
+
+    const padL = 46, padR = 14, padT = 16, padB = 30;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+
+    // x range: enough to see the decay, capped sensibly
+    let maxT = 0.5;
+    if (bCurve) maxT = Math.max(maxT, bCurve[bCurve.length - 1].t);
+    if (vCurve) maxT = Math.max(maxT, vCurve[vCurve.length - 1].t);
+    maxT = Math.min(2.0, Math.max(0.5, maxT));
+    const xOf = (t) => padL + Math.min(1, t / maxT) * plotW;
+    const yOf = (db) => padT + (Math.min(0, Math.max(DECAY_FLOOR_DB, db)) / DECAY_FLOOR_DB) * plotH;
+
+    // grid + axes
+    ctx.strokeStyle = 'rgba(255,255,255,.07)';
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    ctx.lineWidth = 1;
+    ctx.font = '9px ui-monospace,monospace';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    for (let db = 0; db >= DECAY_FLOOR_DB; db -= 10) {
+        const y = yOf(db);
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+        ctx.fillText(`${db}`, padL - 6, y);
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    const tStep = maxT <= 0.6 ? 0.1 : maxT <= 1.2 ? 0.2 : 0.4;
+    for (let t = 0; t <= maxT + 1e-6; t += tStep) {
+        const x = xOf(t);
+        ctx.strokeStyle = 'rgba(255,255,255,.05)';
+        ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + plotH); ctx.stroke();
+        ctx.fillText(`${Math.round(t * 1000)}`, x, padT + plotH + 6);
+    }
+    ctx.save(); ctx.translate(12, padT + plotH / 2); ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'rgba(255,255,255,.4)';
+    ctx.fillText('dB below peak', 0, 0); ctx.restore();
+    ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+    ctx.fillText('ms into decay', W - padR, H - 4);
+
+    // fixed-time read lines
+    FIXED_TIMES_MS.forEach(ms => {
+        const t = ms / 1000;
+        if (t > maxT) return;
+        const x = xOf(t);
+        ctx.strokeStyle = 'rgba(255,255,255,.28)';
+        ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + plotH); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(`${ms}ms`, x, padT + 1);
+    });
+
+    const plot = (curve, color) => {
+        if (!curve) return;
+        ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2;
+        curve.forEach((p, i) => {
+            const x = xOf(p.t), y = yOf(p.db);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+    };
+    plot(bCurve, '#00D4E8');
+    plot(vCurve, '#FF6B35');
+
+    // title
+    ctx.fillStyle = 'var(--bright)'; ctx.fillStyle = '#e8eef2';
+    ctx.font = '600 12px system-ui,sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText(`${hz} Hz${isFilterLimited(hz) ? '  ⚠ filter-limited' : ''}`, padL + 4, padT + 2);
+
+    // readout sentence
+    const ro = $('overlay-readout');
+    if (ro) {
+        const b320 = bCurve ? energyRemainingAt(bCurve, 0.320) : null;
+        const v320 = vCurve ? energyRemainingAt(vCurve, 0.320) : null;
+        const nlNote = ((b && b.noiseLimited) || (v && v.noiseLimited))
+            ? ` <span style="color:var(--amber)">⚠ Noise-limited (under ${MIN_USABLE_DB} dB of clean decay) — T60 not reported here; the curve is truncated at the noise floor.</span>` : '';
+        if (b320 !== null && v320 !== null) {
+            const d = b320 - v320;
+            const bTxt = b320 <= DECAY_FLOOR_DB ? 'fully decayed' : `${b320.toFixed(1)} dB down`;
+            const vTxt = v320 <= DECAY_FLOOR_DB ? 'fully decayed' : `${v320.toFixed(1)} dB down`;
+            ro.innerHTML = `At <strong>${hz} Hz</strong>, 320 ms after the tone stops: before treatment the energy was <strong>${bTxt}</strong>, after it was <strong>${vTxt}</strong> — ${d >= 0 ? `<strong>${d.toFixed(1)} dB more decayed</strong>` : `<strong>${Math.abs(d).toFixed(1)} dB less decayed</strong>`} with the Nodal 30 in place.${nlNote}`;
+        } else if (b320 !== null) {
+            ro.innerHTML = `Baseline captured at <strong>${hz} Hz</strong>. Run the After measurement to overlay the treated decay.${nlNote}`;
+        } else {
+            ro.textContent = '';
+        }
+    }
+}
+
+function drawIRCanvas(ir, mode) {
+    const canvas = $('ir-canvas');
+    const W = canvas.offsetWidth || 700, H = canvas.offsetHeight || 160;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    [-10, -20, -30, -40, -50, -60].forEach(db => {
+        const y = ((-db) / 60) * H;
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = '8px monospace';
+        ctx.fillText(`${db}`, 2, y - 2);
+    });
+    const colors = ['#00D4E8', '#4ade80', '#FFA630', '#FF6B35', '#a855f7', '#ec4899'];
+    TEST_FREQS.forEach((hz, idx) => {
+        const r = results[mode] && results[mode][hz];
+        if (!r || !r.schroederCurve || !r.schroederCurve.length) return;
+        const curve = r.schroederCurve;
+        const maxT = TAIL_DURATION;
+        ctx.beginPath();
+        ctx.strokeStyle = colors[idx % colors.length];
+        ctx.lineWidth = 1.5;
+        curve.forEach((p, i) => {
+            const x = (p.t / maxT) * W;
+            const y = Math.min(H - 1, ((-p.db) / 60) * H);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.fillStyle = colors[idx % colors.length];
+        ctx.font = '9px monospace';
+        const warn = isFilterLimited(hz) ? '⚠' : '';
+        ctx.fillText(`${hz}Hz${warn}`, (idx * W / TEST_FREQS.length) + 3, H - 4);
+    });
+    $('ir-badge').textContent = `IR captured · ${mode === 'base' ? 'Baseline' : 'Treatment'}`;
+}
+
+function animateSweepVis(totalSeconds) {
+    const canvas = $('sweep-vis');
+    const W = canvas.width, H = canvas.height;
+    const ctx = canvas.getContext('2d');
+    const start = Date.now();
+    function frame() {
+        const elapsed = (Date.now() - start) / 1000;
+        if (elapsed > totalSeconds + 0.5) return;
+        ctx.fillStyle = 'rgba(7,15,24,0.4)';
+        ctx.fillRect(0, 0, W, H);
+        if (elapsed <= SWEEP_DURATION) {
+            const t = elapsed / SWEEP_DURATION;
+            const K = Math.log(SWEEP_F_HIGH / SWEEP_F_LOW) / SWEEP_DURATION;
+            const fNow = SWEEP_F_LOW * Math.exp(K * elapsed);
+            const xFrac = Math.log(fNow / SWEEP_F_LOW) / Math.log(SWEEP_F_HIGH / SWEEP_F_LOW);
+            const x = xFrac * W;
+            const grad = ctx.createLinearGradient(Math.max(0, x - 80), 0, x, 0);
+            grad.addColorStop(0, 'rgba(0,212,232,0)');
+            grad.addColorStop(1, 'rgba(0,212,232,0.6)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(Math.max(0, x - 80), 0, 80, H);
+            ctx.strokeStyle = '#00D4E8';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+            ctx.fillStyle = '#00D4E8';
+            ctx.font = '9px monospace';
+            ctx.fillText(`${fNow.toFixed(0)} Hz`, Math.min(x + 4, W - 50), 14);
+        } else {
+            ctx.fillStyle = 'rgba(255,107,53,0.15)';
+            ctx.fillRect(0, 0, W, H);
+            ctx.fillStyle = 'var(--orange)';
+            ctx.font = '10px monospace';
+            ctx.fillText('SILENT TAIL — measuring room ringdown…', W / 2 - 120, H / 2 + 4);
+        }
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+}
+
+// ── MODE CALCULATOR ──────────────────────────────────────────────────
+function calcModes() {
+    const lRaw = parseFloat($('dim-L').value);
+    const wRaw = parseFloat($('dim-W').value);
+    const hRaw = parseFloat($('dim-H').value);
+    
+    if (!lRaw || !wRaw || !hRaw) {
+        alert('Enter all three dimensions.');
+        return;
+    }
+    
+    const toM = v => unitMode === 'ft' ? v * 0.3048 : v;
+    const L = toM(lRaw), W = toM(wRaw), H = toM(hRaw);
+    const C = 343;
+    
+    const axial = [];
+    [[L, 'Length'], [W, 'Width'], [H, 'Height']].forEach(([d, label]) => {
+        for (let n = 1; n <= 6; n++) {
+            const f = (n * C) / (2 * d);
+            if (f >= 20 && f <= 80) {
+                axial.push({ f: Math.round(f), label: `${label} F${n}`, type: 'axial' });
+            }
+            if (f > 80) break;
+        }
+    });
+    
+    const tang = [];
+    const pairs = [[L, W, 'Length-Width'], [L, H, 'Length-Height'], [W, H, 'Width-Height']];
+    pairs.forEach(([a, b, label]) => {
+        for (let n = 1; n <= 4; n++) {
+            for (let m = 1; m <= 4; m++) {
+                const f = (C / 2) * Math.sqrt((n / a) ** 2 + (m / b) ** 2);
+                if (f >= 20 && f <= 80) {
+                    tang.push({ f: Math.round(f), label: `${label} (${n},${m})`, type: 'tangential' });
+                }
+                if (f > 80) break;
+            }
+        }
+    });
+    
+    const oblique = [];
+    for (let n = 1; n <= 3; n++) {
+        for (let m = 1; m <= 3; m++) {
+            for (let p = 1; p <= 3; p++) {
+                const f = (C / 2) * Math.sqrt((n / L) ** 2 + (m / W) ** 2 + (p / H) ** 2);
+                if (f >= 20 && f <= 80) {
+                    oblique.push({ f: Math.round(f), label: `Oblique (${n},${m},${p})`, type: 'oblique' });
+                }
+                if (f > 80) break;
+            }
+        }
+    }
+    
+    const all = [...axial, ...tang, ...oblique];
+    const groups = [];
+    all.sort((a, b) => a.f - b.f);
+    
+    for (const mode of all) {
+        let found = false;
+        for (const g of groups) {
+            if (Math.abs(g.f - mode.f) <= 3) {
+                g.modes.push(mode);
+                if (mode.type === 'axial' && !g.hasAxial) {
+                    g.hasAxial = true;
+                    g.label = mode.label;
+                }
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            groups.push({
+                f: mode.f,
+                modes: [mode],
+                hasAxial: mode.type === 'axial',
+                label: mode.label,
+                type: mode.type
+            });
+        }
+    }
+    
+    const rewFreqs = [20, 25, 31.5, 40, 50, 63, 80];
+    const selected = new Set();
+    const modeMap = new Map();
+    
+    for (const g of groups) {
+        let best = rewFreqs[0];
+        let bestDist = Infinity;
+        for (const rf of rewFreqs) {
+            const dist = Math.abs(rf - g.f);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = rf;
+            }
+        }
+        if (bestDist <= 10) {
+            selected.add(best);
+            if (!modeMap.has(best) || g.hasAxial) {
+                modeMap.set(best, g);
+            }
+        }
+    }
+    
+    let finalFreqs = Array.from(selected).sort((a, b) => a - b);
+    
+    if (finalFreqs.length < MIN_FREQS) {
+        const candidates = rewFreqs.filter(f => !finalFreqs.includes(f));
+        candidates.sort((a, b) => {
+            const distA = Math.min(...finalFreqs.map(f => Math.abs(f - a)));
+            const distB = Math.min(...finalFreqs.map(f => Math.abs(f - b)));
+            return distB - distA;
+        });
+        
+        for (const f of candidates) {
+            if (finalFreqs.length >= MIN_FREQS) break;
+            finalFreqs.push(f);
+            if (!modeMap.has(f)) {
+                modeMap.set(f, {
+                    f: f,
+                    modes: [{ f: f, label: `Standard ${f}Hz`, type: 'standard' }],
+                    hasAxial: false,
+                    label: `Standard ${f}Hz`,
+                    type: 'standard'
+                });
+            }
+        }
+        finalFreqs.sort((a, b) => a - b);
+    }
+    
+    TEST_FREQS = finalFreqs;
+    modeInfoMap = modeMap;
+    correlatedSet = new Set(
+        Array.from(modeMap.entries())
+            .filter(([_, g]) => g.hasAxial || g.type === 'tangential' || g.type === 'oblique')
+            .map(([f, _]) => f)
+    );
+    
+    updateModeUI(groups, modeMap, finalFreqs);
+    clearResults();
+    buildChipUI();
+    updateFreqDisplay();
+    setInsights(`🔊 <strong>${finalFreqs.length} frequencies</strong> identified from room modes. Click <strong>Run Baseline Sweep</strong> when ready.`);
+    if (pipelineReady) recalibrateNoise();
+}
+
+function updateModeUI(groups, modeMap, finalFreqs) {
+    let countByType = { axial: 0, tangential: 0, oblique: 0, standard: 0 };
+    for (const f of finalFreqs) {
+        const g = modeMap.get(f);
+        if (g) {
+            const types = g.modes.map(m => m.type);
+            if (types.includes('axial')) countByType.axial++;
+            else if (types.includes('tangential')) countByType.tangential++;
+            else if (types.includes('oblique')) countByType.oblique++;
+            else countByType.standard++;
+        }
+    }
+    
+    const listHtml = finalFreqs.map(f => {
+        const g = modeMap.get(f);
+        const filterClass = isFilterLimited(f) ? ' filter-limited' : '';
+        if (!g) return `<span class="mode-tag standard${filterClass}">${f} Hz ${isFilterLimited(f) ? '⚠' : ''}</span>`;
+        let typeClass = '';
+        let typeLabel = g.label;
+        if (g.hasAxial) {
+            typeClass = '';
+        } else if (g.modes.some(m => m.type === 'tangential')) {
+            typeClass = 'tangential';
+            const tangMode = g.modes.find(m => m.type === 'tangential');
+            typeLabel = tangMode ? tangMode.label : 'Tangential';
+        } else if (g.modes.some(m => m.type === 'oblique')) {
+            typeClass = 'oblique';
+            const oblMode = g.modes.find(m => m.type === 'oblique');
+            typeLabel = oblMode ? oblMode.label : 'Oblique';
+        }
+        const warn = isFilterLimited(f) ? ' ⚠' : '';
+        return `<span class="mode-tag ${typeClass}${filterClass}">${f} Hz${warn} <span style="opacity:.6;font-size:9px">(${typeLabel})</span></span>`;
+    }).join('');
+    
+    const summaryHtml = `
+        <div class="mode-summary">
+            <span class="mode-summary-item"><span class="mode-summary-dot" style="background:var(--cyan)"></span>${finalFreqs.length} frequencies</span>
+            <span class="mode-summary-item"><span class="mode-summary-dot" style="background:var(--orange)"></span>${countByType.axial} axial</span>
+            <span class="mode-summary-item"><span class="mode-summary-dot" style="background:var(--amber)"></span>${countByType.tangential} tangential</span>
+            <span class="mode-summary-item"><span class="mode-summary-dot" style="background:var(--purple)"></span>${countByType.oblique} oblique</span>
+            <span class="mode-summary-item"><span class="mode-summary-dot" style="background:var(--dim)"></span>${countByType.standard} standard</span>
+            <span class="mode-summary-item"><span class="mode-summary-dot" style="background:var(--amber)"></span>${finalFreqs.filter(f => isFilterLimited(f)).length} filter-limited</span>
+        </div>
+    `;
+    
+    const densityCanvas = drawModeDensity(groups);
+    const densityHtml = densityCanvas ? `<div class="mode-density-wrap">${densityCanvas.outerHTML}</div>` : '';
+    
+    $('mode-output').innerHTML = `
+        <strong>Room modes mapped to ${finalFreqs.length} measurement frequencies:</strong>
+        <div class="mode-freq-list" style="margin-top:6px">${listHtml}</div>
+        ${densityHtml}
+        ${summaryHtml}
+        <div style="font-size:10px;color:var(--dim);margin-top:6px;">Minimum ${MIN_FREQS} frequencies ensured</div>
+        <div style="font-size:9px;color:var(--amber);margin-top:2px;">⚠ Frequencies below ${FILTER_LIMIT_HZ}Hz are filter-limited</div>
+    `;
+    $('mode-output').classList.add('visible');
+}
+
+function drawModeDensity(groups) {
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 900;
+        canvas.height = 50;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillRect(0, 0, W, H);
+        const freqRange = 80 - 20;
+        const maxCount = Math.max(1, ...groups.map(g => g.modes.length));
+        for (const g of groups) {
+            const x = ((g.f - 20) / freqRange) * W;
+            const barHeight = (g.modes.length / maxCount) * (H - 8);
+            const y = H - 4 - barHeight;
+            let color = 'var(--cyan)';
+            if (g.hasAxial) color = '#FF6B35';
+            else if (g.modes.some(m => m.type === 'tangential')) color = '#FFA630';
+            else if (g.modes.some(m => m.type === 'oblique')) color = '#a855f7';
+            if (isFilterLimited(g.f)) color = '#d35400';
+            ctx.fillStyle = color;
+            ctx.fillRect(Math.max(0, x - 3), y, 6, barHeight);
+            if (g.modes.length > 1) {
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.font = '7px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(g.modes.length, x, y - 2);
+            }
+        }
+        // Filter-limited zone indicator
+        const limitX = ((FILTER_LIMIT_HZ - 20) / freqRange) * W;
+        ctx.fillStyle = 'rgba(255,166,48,0.15)';
+        ctx.fillRect(0, 0, limitX, H);
+        ctx.fillStyle = 'rgba(255,166,48,0.3)';
+        ctx.font = '7px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('⚠ Filter-limited', 2, 8);
+        
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.font = '7px monospace';
+        ctx.textAlign = 'center';
+        [20, 30, 40, 50, 60, 70, 80].forEach(f => {
+            const x = ((f - 20) / freqRange) * W;
+            ctx.fillText(f, x, H - 1);
+        });
+        return canvas;
+    } catch(e) {
+        return null;
+    }
+}
+
+function updateFreqDisplay() {
+    $('val-freqs').textContent = TEST_FREQS.length + ' bands';
+}
+
+function toggleUnit() {
+    unitMode = unitMode === 'ft' ? 'm' : 'ft';
+    $('btn-unit').textContent = unitMode;
+    ['dim-L', 'dim-W', 'dim-H'].forEach(id => $(id).value = '');
+    $('mode-output').classList.remove('visible');
+}
+
+// ── INIT PIPELINE ─────────────────────────────────────────────────────
+async function initPipeline() {
+    if (audioCtx) return;
+    try {
+        micStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+        });
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        micSource = audioCtx.createMediaStreamSource(micStream);
+        analyser = audioCtx.createAnalyser();      // v8.4: independent live level tap
+        analyser.fftSize = 2048;
+        micSource.connect(analyser);
+        startLevelMeter();
+        SAMPLE_RATE = audioCtx.sampleRate;
+        $('val-samplerate').textContent = `${SAMPLE_RATE} Hz`;
+        if (SAMPLE_RATE !== 48000) {
+            $('val-samplerate').textContent = `${SAMPLE_RATE} Hz ⚠`;
+            $('val-samplerate').style.color = 'var(--amber)';
+        }
+        $('btn-connect').disabled = true;
+        $('btn-reset').disabled = false;
+        pipelineReady = true;
+        await measureNoiseFloor();
+        $('val-hw').textContent = 'Connected';
+        $('val-hw').className = 'readout-val online';
+        $('btn-baseline').disabled = false;
+        $('btn-baseline').classList.add('accent');
+        $('step1').className = 'step done';
+        $('step2').className = 'step active';
+        updateFreqDisplay();
+        setInsights('Microphone connected and noise floor measured. Enter room dimensions or click <strong>Run Baseline Sweep</strong>.');
+        $('limitation-banner').classList.add('visible');
+    } catch (e) {
+        setInsights(`<span class="alert-text">Microphone access denied.</span> Check browser permissions.`);
+        console.error(e);
+    }
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────
+function setPhase(text, pct) {
+    $('prog-phase').innerHTML = `<strong>${text}</strong>`;
+    $('prog-bar').style.width = `${pct}%`;
+}
+
+function showCal(msg, detail) {
+    $('cal-banner').classList.add('visible');
+    $('cal-result').classList.remove('visible', 'ok', 'bad');
+    $('cal-msg').textContent = msg;
+    $('cal-detail').textContent = detail || '';
+}
+
+function showCalResult(ok, text) {
+    $('cal-banner').classList.remove('visible');
+    $('cal-icon').textContent = ok ? '✓' : '⚠';
+    $('cal-text').textContent = text;
+    $('cal-result').className = `cal-result visible ${ok ? 'ok' : 'bad'}`;
+}
+
+function setStep(mode) {
+    if (mode === 'base') { $('step1').className = 'step done'; $('step2').className = 'step active'; }
+    else { $('step2').className = 'step done'; $('step3').className = 'step active'; }
+}
+
+function setInsights(html) { $('insights').innerHTML = html; }
+
+// v8.4: continuous input-level meter, independent of the recording path.
+// Lets you confirm the mic is alive (tap it and watch the bar) before measuring.
+function startLevelMeter() {
+    if (!analyser) return;
+    const buf = new Float32Array(analyser.fftSize);
+    const tick = () => {
+        analyser.getFloatTimeDomainData(buf);
+        let s = 0; for (let i = 0; i < buf.length; i++) s += buf[i] * buf[i];
+        const rms = Math.sqrt(s / buf.length);
+        const db = rms < 1e-7 ? -90 : 20 * Math.log10(rms);
+        const pct = Math.max(0, Math.min(100, ((db + 60) / 60) * 100));
+        const bar = $('level-bar'); if (bar) bar.style.width = pct + '%';
+        const v = $('val-level'); if (v) v.textContent = db <= -89 ? 'no signal' : `${db.toFixed(0)} dBFS`;
+        const m = $('level-meter'); if (m) m.classList.toggle('dead', db <= -75);
+        const h = $('level-hint'); if (h) h.classList.toggle('show', db <= -75);
+        _meterRAF = requestAnimationFrame(tick);
+    };
+    cancelAnimationFrame(_meterRAF);
+    tick();
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function resetAll() {
+    TEST_FREQS.forEach(hz => { delete results.base[hz]; delete results.verify[hz]; });
+    Object.keys(results.base).forEach(k => delete results.base[k]);
+    Object.keys(results.verify).forEach(k => delete results.verify[k]);
+    LOCKED_METHODS = {}; // v8.2
+    TEST_FREQS = [25, 31.5, 40, 50, 63, 80];
+    correlatedSet = new Set();
+    modeInfoMap = new Map();
+    buildChipUI();
+    ['dim-L', 'dim-W', 'dim-H'].forEach(id => $(id).value = '');
+    $('mode-output').classList.remove('visible');
+    $('results-panel').classList.remove('visible');
+    $('summary-row').style.display = 'none';
+    $('metric-panel').style.display = 'none';   // v8.3
+    $('overlay-panel').style.display = 'none';  // v8.3
+    overlaySelectedHz = null;                   // v8.3
+    $('limitation-banner').classList.remove('visible');
+    ['step1', 'step2', 'step3'].forEach(s => $(s).className = 'step');
+    $('step1').className = 'step active';
+    $('btn-baseline').disabled = false;
+    $('btn-verify').disabled = true;
+    updateFreqDisplay();
+    setInsights('All data cleared. Click <strong>Run Baseline Sweep</strong> to start fresh.');
+}
+
+function clearResults() {
+    $('results-panel').classList.remove('visible');
+    $('summary-row').style.display = 'none';
+    $('metric-panel').style.display = 'none';
+    $('overlay-panel').style.display = 'none';
+}
+
+// v8.3: keep the overlay chart sharp on resize
+let _overlayResizeTimer = null;
+window.addEventListener('resize', () => {
+    if (overlaySelectedHz === null) return;
+    clearTimeout(_overlayResizeTimer);
+    _overlayResizeTimer = setTimeout(() => drawOverlayChart(overlaySelectedHz), 120);
+});
+
+function finalise(mode) {
+    $('results-panel').classList.add('visible');
+    if (mode === 'base') {
+        $('step2').className = 'step done';
+        $('step3').className = 'step active';
+        $('results-badge').textContent = 'Baseline Captured';
+        $('results-badge').className = 'results-badge partial';
+        $('btn-verify').disabled = false;
+        $('btn-verify').classList.add('accent');
+        setInsights(`<strong>Baseline complete.</strong> Click <strong>Verify Nodal 30 Treatment</strong> after installation.`);
+    } else {
+        $('step3').className = 'step done';
+        const hasFilterLimited = TEST_FREQS.some(hz => {
+            const v = results.verify[hz];
+            return v && !v.invalid && v.filterLimited;
+        });
+        $('results-badge').textContent = hasFilterLimited ? 'Assessment Complete ⚠' : 'Assessment Complete';
+        $('results-badge').className = `results-badge ${hasFilterLimited ? 'caution' : 'complete'}`;
+        setInsights(`<strong>Verification complete.</strong> Compare Before and After columns below. ${hasFilterLimited ? '⚠ Some frequencies are filter-limited.' : ''}`);
+    }
+}
+
+// ── DIAGNOSTIC (v8.6: real loopback) ─────────────────────────────────
+// Plays the sweep through the output and records it back through the mic,
+// then variance-checks the RECORDING (not the synthesized sweep) for the
+// fast amplitude ripple that signals sample-rate resampling / clock drift.
+async function runLoopbackDiagnostic() {
+    const info = $('diag-info');
+    if (!pipelineReady) {
+        info.innerHTML = '<span class="bad">⚠ Connect &amp; Calibrate first</span> — the loopback test needs the microphone running.';
+        return;
+    }
+    const btn = $('btn-loopback');
+    btn.disabled = true;
+    info.innerHTML = '<span class="warn">Playing &amp; recording sweep… keep the room quiet (~16 s).</span>';
+    try {
+        const rec = await captureLoopback();
+        _diagRecording = rec;
+        if (!rec || rec.length < Math.round(0.5 * SAMPLE_RATE)) {
+            info.innerHTML = '<span class="bad">⚠ Could not capture the sweep.</span> Check that the sub is playing and the mic can hear it.';
+            return;
+        }
+        drawDiagCanvas(_diagZoom);
+        analyseLoopback(rec, SAMPLE_RATE);
+    } catch (e) {
+        console.error(e);
+        info.innerHTML = '<span class="bad">⚠ Loopback test failed.</span> ' + (e && e.message ? e.message : '');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+// Self-contained play + record + pip-align, independent of the measurement flow.
+async function captureLoopback() {
+    const sweep = generateLogSweep(SAMPLE_RATE, SWEEP_DURATION, SWEEP_F_LOW, SWEEP_F_HIGH);
+    const { buf: playBuf } = generatePlaybackBuffer(sweep);
+    const totalRecordTime = (PIP_DURATION + PIP_LEAD) + SWEEP_DURATION + 1.0;
+    const recPromise = startRecording(totalRecordTime);
+    await sleep(300);
+    const playbackBuf = audioCtx.createBuffer(1, playBuf.length, SAMPLE_RATE);
+    playbackBuf.getChannelData(0).set(playBuf);
+    const src = audioCtx.createBufferSource();
+    src.buffer = playbackBuf;
+    src.connect(audioCtx.destination);
+    src.start(audioCtx.currentTime);
+    const recording = await recPromise;
+    const pip = findPipInRecording(recording);
+    const sweepStart = pip + Math.round((PIP_DURATION + PIP_LEAD) * SAMPLE_RATE);
+    const sweepSamps = Math.round(SWEEP_DURATION * SAMPLE_RATE);
+    return recording.slice(sweepStart, Math.min(sweepStart + sweepSamps, recording.length));
+}
+
+// Variance-check the recording: separate the slow response envelope (sub+room,
+// expected) from fast residual ripple (resampling/clock, not expected).
+function analyseLoopback(rec, sr) {
+    const info = $('diag-info');
+    const fineWin = Math.round(0.03 * sr);     // 30 ms peak-envelope windows
+    const fine = [];
+    for (let i = 0; i + fineWin <= rec.length; i += fineWin) {
+        let pk = 0;
+        for (let j = i; j < i + fineWin; j++) { const a = Math.abs(rec[j]); if (a > pk) pk = a; }
+        fine.push(pk);
+    }
+    if (fine.length < 10) { info.innerHTML = '<span class="bad">⚠ Recording too short to analyse.</span>'; return; }
+
+    const overallPeak = Math.max(...fine);
+    if (overallPeak < 0.003) { // ~ -50 dBFS
+        info.innerHTML = '<span class="bad">⚠ Captured level is very low.</span> The mic barely heard the sweep — raise the sub level or move the mic closer, then retry.';
+        return;
+    }
+
+    // coarse envelope = moving average of the fine envelope (≈270 ms) → the response trend
+    const span = 9, half = (span - 1) / 2;
+    const coarse = fine.map((_, i) => {
+        let s = 0, n = 0;
+        for (let k = i - half; k <= i + half; k++) { if (k >= 0 && k < fine.length) { s += fine[k]; n++; } }
+        return s / n;
+    });
+
+    // overall response variation (slow) — informational
+    const minC = Math.min(...coarse), maxC = Math.max(...coarse);
+    const responseVarDB = 20 * Math.log10(maxC / Math.max(1e-9, minC));
+
+    // fast residual ripple relative to local trend — the resampling indicator
+    let sumsq = 0, n = 0;
+    for (let i = 0; i < fine.length; i++) {
+        if (coarse[i] > 1e-6) { const r = (fine[i] - coarse[i]) / coarse[i]; sumsq += r * r; n++; }
+    }
+    const rippleRMS = Math.sqrt(sumsq / Math.max(1, n)) * 100;
+
+    const peakDBFS = 20 * Math.log10(overallPeak);
+    _diagResult = { rippleRMS, responseVarDB, peakDBFS, sr };  // v8.6: for the report
+    const srNote = `Captured at ${sr} Hz · peak ${peakDBFS.toFixed(1)} dBFS · response varies ${responseVarDB.toFixed(0)} dB across the band (sub + room).`;
+    let verdict;
+    if (rippleRMS < 6) {
+        verdict = `<span class="good">✓ Chain looks clean.</span> Fast ripple ${rippleRMS.toFixed(1)}% — no resampling signature.`;
+    } else if (rippleRMS < 12) {
+        verdict = `<span class="warn">~ Mild ripple (${rippleRMS.toFixed(1)}%).</span> Could be room reflections or slight resampling. If T60s look noisy, check that playback and capture share one device/clock.`;
+    } else {
+        verdict = `<span class="bad">⚠ Strong fast ripple (${rippleRMS.toFixed(1)}%).</span> Likely sample-rate resampling or a clock mismatch between playback and capture. Put both on the same interface, or match the OS output rate to ${sr} Hz.`;
+    }
+    info.innerHTML = `${verdict}<br><span style="color:var(--dim);font-size:10px">${srNote} Note: a live room always adds some ripple from reflections; this flags the fast, regular kind.</span>`;
+}
+
+function setDiagZoom(idx) {
+    _diagZoom = idx;
+    for (let i = 0; i < DIAG_ZOOMS.length; i++) {
+        const btn = $(`zoom-${i}`);
+        if (btn) btn.className = `diag-zoom-btn${i === idx ? ' active' : ''}`;
+    }
+    if (_diagRecording) drawDiagCanvas(idx);
+}
+
+function drawDiagCanvas(zoomIdx) {
+    const canvas = $('diag-canvas');
+    const W = canvas.offsetWidth || 900, H = canvas.offsetHeight || 130;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, W, H);
+    const sig = _diagRecording;
+    if (!sig) return;
+    const sr = SAMPLE_RATE;
+    const [startSec, endSec] = DIAG_ZOOMS[zoomIdx];
+    const startSamp = Math.round(startSec * sr);
+    const endSamp = Math.min(Math.round(endSec * sr), sig.length);
+    const numSamps = endSamp - startSamp;
+    if (numSamps <= 0) return;
+
+    // normalize display so the recorded sweep (which may be well below full scale) is visible
+    let dispMax = 0;
+    for (let i = startSamp; i < endSamp; i++) { const a = Math.abs(sig[i]); if (a > dispMax) dispMax = a; }
+    const norm = dispMax > 1e-6 ? 0.48 / dispMax : 0.48;
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    [0.25, 0.5, 0.75].forEach(frac => { const y = frac * H; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); });
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke();
+
+    const pixelsPerSamp = W / numSamps;
+    ctx.beginPath();
+    ctx.strokeStyle = '#00D4E8';
+    ctx.lineWidth = pixelsPerSamp > 1.5 ? 1.5 : 1;
+    if (pixelsPerSamp >= 0.5) {
+        for (let i = 0; i < numSamps; i++) {
+            const x = (i / numSamps) * W;
+            const y = (0.5 - sig[startSamp + i] * norm) * H;
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+    } else {
+        const sampsPerPixel = numSamps / W;
+        for (let px = 0; px < W; px++) {
+            const s0 = startSamp + Math.round(px * sampsPerPixel);
+            const s1 = startSamp + Math.round((px + 1) * sampsPerPixel);
+            let mn = Infinity, mx = -Infinity;
+            for (let s = s0; s < Math.min(s1, sig.length); s++) { if (sig[s] < mn) mn = sig[s]; if (sig[s] > mx) mx = sig[s]; }
+            const yMin = (0.5 - mx * norm) * H;
+            const yMax = (0.5 - mn * norm) * H;
+            if (px === 0) ctx.moveTo(px, (yMin + yMax) / 2);
+            ctx.lineTo(px, yMin);
+            ctx.lineTo(px, yMax);
+        }
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '9px monospace';
+    ctx.fillText(`${startSec.toFixed(1)}s`, 4, H - 4);
+    ctx.fillText(`${endSec.toFixed(1)}s`, W - 28, H - 4);
+    ctx.fillText(`recorded · ${sr} Hz`, W / 2 - 36, H - 4);
+}
+
+// ── REPORT ──────────────────────────────────────────────────────────
+function openReport() { buildReport(); window.print(); }
+
+function buildReport() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const hasBase = TEST_FREQS.some(hz => results.base[hz] && !results.base[hz].invalid);
+    const hasVerify = TEST_FREQS.some(hz => results.verify[hz] && !results.verify[hz].invalid);
+    const status = hasVerify ? 'Baseline + Nodal 30 Verification' : hasBase ? 'Baseline Only' : 'No data';
+    const L = $('dim-L').value, W = $('dim-W').value, H = $('dim-H').value;
+    const roomStr = (L && W && H) ? `${L} × ${W} × ${H} ${unitMode}` : 'Not entered';
+    $('rpt-date').textContent = `${dateStr} at ${timeStr}`;
+    $('rpt-status').textContent = status;
+    $('rpt-room').textContent = roomStr;
+    $('rpt-footer-date').textContent = dateStr;
+
+    // ── Measurement details ─────────────────────────────────────────
+    const maxNoise = noiseFloorMeasured ? Math.max(...TEST_FREQS.map(hz => noiseFloorMap[hz] ?? -60)) : null;
+    const modeStr = (() => {
+        const axial = TEST_FREQS.filter(hz => getModeType(hz) === 'Axial');
+        return axial.length ? axial.map(h => h + ' Hz').join(', ') : '—';
+    })();
+    const loopStr = _diagResult
+        ? `peak ${_diagResult.peakDBFS.toFixed(1)} dBFS, fast ripple ${_diagResult.rippleRMS.toFixed(1)}% ${_diagResult.rippleRMS < 6 ? '(clean)' : _diagResult.rippleRMS < 12 ? '(mild)' : '(resampling suspected)'}`
+        : 'Not run';
+    const detail = (label, val) => `<tr><td style="font-weight:600;color:#444;width:42%">${label}</td><td style="text-align:left!important;color:#222">${val}</td></tr>`;
+    $('rpt-details-body').innerHTML =
+        detail('Frequencies tested', TEST_FREQS.map(h => h + ' Hz').join(', ')) +
+        detail('Axial room modes', modeStr) +
+        detail('Sample rate', (audioCtx && audioCtx.sampleRate ? audioCtx.sampleRate : SAMPLE_RATE) + ' Hz') +
+        detail('Sweeps averaged per run', `${NUM_SWEEPS} × ${SWEEP_DURATION}s log sweep (20–80 Hz)`) +
+        detail('Noise floor', maxNoise !== null ? `${maxNoise.toFixed(1)} dBFS (worst band)` : '—') +
+        detail('Loopback chain check', loopStr) +
+        detail('Analysis', 'Schroeder + Lundeby truncation; T30/T20/T10 locked baseline→verify');
+
+    // ── Primary fixed-time result ───────────────────────────────────
+    const ftSec = $('rpt-primary-section');
+    const ftBody = $('rpt-ft-body');
+    const usable = TEST_FREQS.filter(ftUsable);
+    if (usable.length && hasVerify) {
+        ftBody.innerHTML = '';
+        const deltas = [];
+        usable.forEach(hz => {
+            const bb = results.base[hz], vv = results.verify[hz];
+            const b320 = energyRemainingAt(bb.schroederCurve, 0.320);
+            const v320 = energyRemainingAt(vv.schroederCurve, 0.320);
+            const d = (b320 !== null && v320 !== null) ? b320 - v320 : null;
+            if (d !== null) deltas.push(d);
+            const fmt = x => x === null ? '—' : (x <= -60 ? '≤−60 dB' : `${x.toFixed(1)} dB`);
+            const dCls = d === null ? 'rpt-impr-none' : d >= 15 ? 'rpt-impr-good' : d >= 6 ? 'rpt-impr-ok' : (d < -1 ? 'rpt-z-colored' : 'rpt-impr-none');
+            ftBody.innerHTML += `<tr><td class="rpt-td-freq">${hz} Hz</td><td>${fmt(b320)}</td><td>${fmt(v320)}</td><td class="${dCls}">${d === null ? '—' : (d >= 0 ? '+' : '') + d.toFixed(1) + ' dB'}</td></tr>`;
+        });
+        const med = median(deltas);
+        const big = $('rpt-ft-big');
+        big.textContent = med === null ? '—' : `${med >= 0 ? '+' : ''}${med.toFixed(1)} dB`;
+        big.className = `rpt-summary-number ${med !== null && med >= 6 ? 'positive' : 'negative'}`;
+        $('rpt-ft-sub').textContent = `Across ${deltas.length} band${deltas.length === 1 ? '' : 's'} with sufficient signal · positive = treatment shortened the ring`;
+        ftSec.style.display = 'block';
+    } else ftSec.style.display = 'none';
+
+    function rptZone(t60, hz) {
+        if (!t60) return 'rpt-z-invalid';
+        if (isFilterLimited(hz)) return 'rpt-z-filter-limited';
+        if (t60 > 1.5) return 'rpt-z-critical';
+        if (t60 > 0.75) return 'rpt-z-colored';
+        if (t60 > 0.55) return 'rpt-z-ok';
+        return 'rpt-z-target';
+    }
+
+    const tbody = $('rpt-table-body');
+    tbody.innerHTML = '';
+    TEST_FREQS.forEach((hz, idx) => {
+        const b = results.base[hz], v = results.verify[hz];
+        const type = getModeType(hz);
+        const filterLimited = isFilterLimited(hz);
+        const bNL = b && !b.invalid && b.noiseLimited;
+        const vNL = v && !v.invalid && v.noiseLimited;
+        const bTxt = b ? (b.invalid ? 'no signal' : (bNL ? 'noise-limited' : `${b.t60.toFixed(2)}s`)) : '—';
+        const vTxt = v ? (v.invalid ? 'no signal' : (vNL ? 'noise-limited' : `${v.t60.toFixed(2)}s`)) : (hasVerify ? '—' : 'pending');
+        const bCls = b && !b.invalid && !bNL ? rptZone(b.t60, hz) : 'rpt-z-invalid';
+        const vCls = v && !v.invalid && !vNL ? rptZone(v.t60, hz) : 'rpt-pending';
+        let imprTxt = '—', imprCls = 'rpt-impr-none';
+        if (b && v && !b.invalid && !v.invalid && !bNL && !vNL && b.t60 && v.t60) {
+            const pct = ((b.t60 - v.t60) / b.t60) * 100;
+            imprTxt = pct > 0 ? `−${pct.toFixed(0)}%` : `+${Math.abs(pct).toFixed(0)}%`;
+            imprCls = pct >= 50 ? 'rpt-impr-good' : pct >= 20 ? 'rpt-impr-ok' : 'rpt-impr-none';
+        }
+        const sparkId = `rpt-spark-${hz}`;
+        const tr = document.createElement('tr');
+        if (idx % 2 === 0) tr.style.background = '#fafafa';
+        const filterLabel = filterLimited ? ' ⚠' : '';
+        tr.innerHTML = `
+            <td class="rpt-td-freq">${hz} Hz${filterLabel}</td>
+            <td style="font-size:11px;color:#888">${type}</td>
+            <td class="${bCls}">${bTxt}${b && !b.invalid && !bNL && b.rSquared ? `<br><span style="font-size:8px;color:#999">R²=${b.rSquared.toFixed(3)}</span>` : (bNL ? `<br><span style="font-size:8px;color:#999">${b.usableRangeDB.toFixed(0)} dB range</span>` : '')}</td>
+            <td class="${v ? vCls : 'rpt-pending'}">${vTxt}${v && !v.invalid && !vNL && v.rSquared ? `<br><span style="font-size:8px;color:#999">R²=${v.rSquared.toFixed(3)}</span>` : (vNL ? `<br><span style="font-size:8px;color:#999">${v.usableRangeDB.toFixed(0)} dB range</span>` : '')}</td>
+            <td class="${imprCls}">${imprTxt}</td>
+            <td class="rpt-spark-td"><canvas class="rpt-spark" id="${sparkId}" width="100" height="28"></canvas></td>`;
+        tbody.appendChild(tr);
+        setTimeout(() => {
+            const c = $(sparkId);
+            if (!c) return;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#f7f9fc';
+            ctx.fillRect(0, 0, 100, 28);
+            const drawS = (curve, color) => {
+                if (!curve || !curve.length) return;
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                curve.forEach((p, i) => {
+                    const x = (p.t / TAIL_DURATION) * 100;
+                    const y = 28 - Math.max(0, ((p.db + 60) / 60) * 24) - 2;
+                    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+            };
+            if (b && !b.invalid) drawS(b.schroederCurve, '#0077aa');
+            if (v && !v.invalid) drawS(v.schroederCurve, '#c05000');
+        }, 60);
+    });
+
+    const pairs = TEST_FREQS.filter(hz => {
+        const b = results.base[hz], v = results.verify[hz];
+        return b && v && !b.invalid && !v.invalid && !b.noiseLimited && !v.noiseLimited && b.t60 && v.t60 && b.rSquared > 0.75 && v.rSquared > 0.75;
+    });
+    const summSec = $('rpt-summary-section');
+    if (pairs.length && hasVerify) {
+        const weightedAvg = pairs.reduce((a, hz) => {
+            const b = results.base[hz], v = results.verify[hz];
+            const weight = (b.rSquared + v.rSquared) / 2;
+            return a + ((b.t60 - v.t60) / b.t60) * 100 * weight;
+        }, 0) / pairs.reduce((a, hz) => {
+            const b = results.base[hz], v = results.verify[hz];
+            return a + (b.rSquared + v.rSquared) / 2;
+        }, 0);
+        const numEl = $('rpt-avg');
+        numEl.textContent = weightedAvg > 0 ? `−${weightedAvg.toFixed(0)}%` : `+${Math.abs(weightedAvg).toFixed(0)}%`;
+        numEl.className = `rpt-summary-number ${weightedAvg > 0 ? 'positive' : 'negative'}`;
+        const excluded = TEST_FREQS.length - pairs.length;
+        const limitedIncluded = pairs.filter(hz => isFilterLimited(hz));
+        $('rpt-avg-sub').textContent = `${pairs.length} valid frequencies${excluded > 0 ? ` (${excluded} excluded)` : ''} · Nodal 30 treatment verified`;
+        const detailText = `${limitedIncluded.length > 0 ? `⚠ ${limitedIncluded.length} filter-limited bands · ` : ''}T60 range: ${Math.min(...pairs.map(hz => results.verify[hz].t60)).toFixed(2)}–${Math.max(...pairs.map(hz => results.verify[hz].t60)).toFixed(2)}s`;
+        $('rpt-avg-detail').textContent = detailText;
+        summSec.style.display = 'block';
+    } else summSec.style.display = 'none';
+}
+
+// ── INIT ────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => { buildChipUI(); updateFreqDisplay(); });
+</script>
+</body>
+</html>
