@@ -159,6 +159,11 @@ canvas.tbl-spark{width:100%;height:100%;display:block;}
 .level-meter.dead{box-shadow:0 0 0 1px var(--amber) inset;}
 .level-hint{font-size:9px;color:var(--amber);margin-top:2px;display:none;}
 .level-hint.show{display:block;}
+/* ── v9.1: mains hum ── */
+.hum-banner{background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.5);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:11px;line-height:1.6;color:var(--bright);}
+.hum-banner strong{color:var(--amber);}
+.mains-notch-row{display:inline-flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);margin:0 0 10px;cursor:pointer;}
+.mains-notch-row input{accent-color:var(--cyan);}
 /* ── v9: continuous decay grid ── */
 .grid-panel{margin:6px 0 18px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.08);}
 .grid-readout{font-size:11px;color:var(--muted);margin:8px 0;line-height:1.6;}
@@ -311,6 +316,9 @@ canvas.rpt-spark{display:block;border-radius:2px;}
         • <span class="warn">Subwoofer contribution</span> — Low-frequency decay includes speaker ringing, not just room modes.
     </span>
 </div>
+
+<div class="hum-banner" id="hum-banner" style="display:none"></div>
+<label class="mains-notch-row"><input type="checkbox" id="mains-notch" checked> Notch AC mains hum (50/60&nbsp;Hz) before analysis</label>
 
 <div class="steps">
     <div class="step active" id="step1"><div class="step-num">STEP 01</div><div class="step-desc">Connect mic &amp; calibrate latency + noise floor</div></div>
@@ -645,6 +653,11 @@ canvas.rpt-spark{display:block;border-radius:2px;}
 //     (matched before/after) for the Nodal model
 //  5. Fix: grid graphs no longer render at zero width (drew before the results
 //     panel was visible) — width guarded + redrawn in finalise()
+//  6. v9.1: AC mains-hum (50/60 Hz) detection + zero-phase notch — a ground
+//     loop puts a sustained line in the IR that made bands near it read 10+ s;
+//     detected, notched, and warned (fix at source recommended)
+//  7. v9.1: physical-sanity guard — T60 > 3 s at 20–80 Hz flagged as a
+//     non-decaying-tail artifact instead of being reported
 //  (carries v8.6 loopback diagnostic + full report, v8.5 Lundeby truncation,
 //   v8.4 robust capture, v8.3 fixed-time metric + overlay)
 // ═══════════════════════════════════════════════════════════════════════
@@ -664,6 +677,7 @@ const MAX_FREQS = 10;   // v8.6: cap measurement bands when a room has many mode
 const MAX_REASONABLE_T60 = 20.0;
 const FILTER_LIMIT_HZ = 40; // Frequencies below this are filter-limited
 const MIN_USABLE_DB = 20;   // v8.5: minimum clean decay range (peak→noise) for a trustworthy T60
+const MAX_PHYSICAL_T60 = 3.0; // v9: T60 above this at 20–80 Hz is an artifact (non-decaying tail), not a real room
 const NUM_SWEEPS = 4;       // v8.2: sweeps captured + synchronously averaged per measurement
 // v8.2: analysis method (T30/T20/T10) chosen per band at baseline and re-used at verify
 // so the before/after comparison is always like-for-like. hz -> method string.
@@ -916,6 +930,52 @@ function lundebyCrosspoint(squared, fs) {
     let crossIdx = Math.round(useT * fs);
     crossIdx = Math.max(Math.round(fs * 0.02), Math.min(N, crossIdx));
     return { crossIdx, noiseLin: noise, slopeDbPerSec: slope, usableRangeDB: -noiseDB };
+}
+
+// ── v9.1: AC MAINS HUM (50/60 Hz) ───────────────────────────────────
+// A ground loop or hum pickup puts a sustained mains tone in the recording.
+// Deconvolution maps it into the IR as a non-decaying component centred on
+// 50/60 Hz, which makes the bands nearest it report wildly inflated decay
+// (the Schroeder fit never sees the energy fall). We detect it and offer a
+// zero-phase notch so those bands become measurable — but the real fix is at
+// the source (grounding/cabling).
+function zeroPhaseNotch(x, sr, f0, Q) {
+    const w0 = 2 * Math.PI * f0 / sr, c = Math.cos(w0), alpha = Math.sin(w0) / (2 * Q);
+    const a0 = 1 + alpha;
+    const B0 = 1 / a0, B1 = (-2 * c) / a0, B2 = 1 / a0, A1 = (-2 * c) / a0, A2 = (1 - alpha) / a0;
+    const y = new Float32Array(x.length);
+    let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    for (let i = 0; i < x.length; i++) { const xi = x[i]; const yi = B0 * xi + B1 * x1 + B2 * x2 - A1 * y1 - A2 * y2; y[i] = yi; x2 = x1; x1 = xi; y2 = y1; y1 = yi; }
+    let X1 = 0, X2 = 0, Y1 = 0, Y2 = 0;
+    for (let i = y.length - 1; i >= 0; i--) { const xi = y[i]; const yi = B0 * xi + B1 * X1 + B2 * X2 - A1 * Y1 - A2 * Y2; y[i] = yi; X2 = X1; X1 = xi; Y2 = Y1; Y1 = yi; }
+    return y;
+}
+
+function notchMains(ir, sr, f0) {
+    let y = zeroPhaseNotch(ir, sr, f0, 30);       // fundamental — narrow so 56 Hz etc. survive
+    if (f0 * 2 <= sr / 2) y = zeroPhaseNotch(y, sr, f0 * 2, 30); // 2nd harmonic (100/120 Hz)
+    return y;
+}
+
+// Returns the strongest mains line if a sustained tone sits on it. The tell is
+// late-tail energy AT the line standing well above its non-mains neighbours
+// (where, this late, only the noise floor remains once room modes have decayed).
+function detectMainsHum(ir, sr) {
+    const lateE = (f) => {
+        const b = biquadBandpassFilter(ir, f, sr, 8);
+        let s = 0; const i0 = Math.round(4 * sr), i1 = Math.min(b.length, Math.round(7 * sr));
+        for (let i = i0; i < i1; i++) s += b[i] * b[i];
+        return s / Math.max(1, i1 - i0);
+    };
+    let best = null;
+    for (const f of [50, 60]) {
+        const on = lateE(f);
+        const off = [f - 13, f - 8, f + 8, f + 13].map(lateE).sort((a, b) => a - b);
+        const offMed = off[Math.floor(off.length / 2)];
+        const ratioDB = 10 * Math.log10(on / Math.max(offMed, 1e-20));
+        if (ratioDB > 8 && (!best || ratioDB > best.ratioDB)) best = { hz: f, ratioDB };
+    }
+    return best;
 }
 
 function schroederIntegrate(ir, hz, sampleRate, noiseFloorDB, noiseMarginOverride) {
@@ -1336,6 +1396,7 @@ let _meterRAF = null;
 const noiseFloorMap = {};
 const results = { base: {}, verify: {} };
 const gridData = { base: null, verify: null };   // v9: continuous-frequency decay grid
+let lastHum = null;                               // v9.1: detected mains hum {hz, ratioDB}
 let TEST_FREQS = [25, 31.5, 40, 50, 63, 80];
 let correlatedSet = new Set();
 let modeInfoMap = new Map();
@@ -1459,10 +1520,21 @@ async function runMeasurement(mode) {
     for (let i = irStartIdx; i < irPeakIdx; i++) rawIR[i] = 0;
 
     const irLength = Math.round(TAIL_DURATION * SAMPLE_RATE);
-    const ir = rawIR.slice(irPeakIdx, irPeakIdx + irLength);
+    let ir = rawIR.slice(irPeakIdx, irPeakIdx + irLength);
     let irMax = 0;
     for (let i = 0; i < ir.length; i++) if (Math.abs(ir[i]) > irMax) irMax = Math.abs(ir[i]);
     if (irMax > 0) for (let i = 0; i < ir.length; i++) ir[i] /= irMax;
+
+    // v9.1: detect AC mains hum and (optionally) notch it before analysis
+    const hum = detectMainsHum(ir, SAMPLE_RATE);
+    lastHum = hum;
+    const notchOn = !$('mains-notch') || $('mains-notch').checked;
+    if (hum && notchOn) {
+        ir = notchMains(ir, SAMPLE_RATE, hum.hz);
+        let m = 0; for (let i = 0; i < ir.length; i++) if (Math.abs(ir[i]) > m) m = Math.abs(ir[i]);
+        if (m > 0) for (let i = 0; i < ir.length; i++) ir[i] /= m;
+    }
+    showHumWarning(hum, notchOn);
 
     setPhase('Computing Schroeder integration per frequency band…', 98);
     await sleep(50);
@@ -1505,6 +1577,12 @@ async function runMeasurement(mode) {
             : null;
         if (mode === 'base' && t60Result) LOCKED_METHODS[hz] = t60Result.method;
 
+        // v9: physical-sanity guard. No small room rings for >3 s at 20–80 Hz; a
+        // reading that large means the T60 fit landed in a non-decaying tail the
+        // noise truncation failed to cut. Flag it as unreliable instead of
+        // reporting a fabricated value.
+        const tailArtifact = t60Result && t60Result.t60 > MAX_PHYSICAL_T60;
+
         results[mode][hz] = {
             t60: t60Result ? t60Result.t60 : null,
             invalid: !valid || t60Result === null,
@@ -1517,8 +1595,9 @@ async function runMeasurement(mode) {
             method: t60Result ? t60Result.method || 'T30' : 'none',
             methodLocked: mode === 'verify' && !!forcedMethod,
             snrValid: valid,
-            noiseLimited: schroederResult ? !!schroederResult.noiseLimited : true,  // v8.5
+            noiseLimited: (schroederResult ? !!schroederResult.noiseLimited : true) || tailArtifact,  // v8.5/v9
             usableRangeDB: schroederResult ? schroederResult.usableRangeDB : 0,     // v8.5
+            tailArtifact: !!tailArtifact,   // v9
             numSweeps: NUM_SWEEPS,
             filterLimited: isFilterLimited(hz)
         };
@@ -1821,7 +1900,7 @@ function analyzeGrid(ir, onProgress) {
             usable.push(sr.usableRangeDB);
             noiseLim.push(!!sr.noiseLimited);
             const t = sr.noiseLimited ? null : calcT60fromSchroeder(sr, -60, undefined);
-            t60.push(t ? t.t60 : null);
+            t60.push((t && t.t60 <= MAX_PHYSICAL_T60) ? t.t60 : null);  // v9: drop non-decaying-tail artifacts
             heat.push(times.map(tt => energyRemainingAt(sr.decayCurve, tt)));
         }
         if (onProgress) onProgress((fi + 1) / freqs.length);
@@ -1843,6 +1922,18 @@ function heatColor(db) {
     const i = Math.min(stops.length - 2, Math.floor(seg));
     const t = seg - i, c = (a, b) => Math.round(a + (b - a) * t);
     return `rgb(${c(stops[i][0],stops[i+1][0])},${c(stops[i][1],stops[i+1][1])},${c(stops[i][2],stops[i+1][2])})`;
+}
+
+function showHumWarning(hum, notchOn) {
+    const el = $('hum-banner');
+    if (!el) return;
+    if (!hum) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    el.innerHTML = `<strong>⚠ ${hum.hz} Hz mains hum detected</strong> (${hum.ratioDB.toFixed(0)} dB above neighbouring frequencies). ` +
+        (notchOn
+            ? `A ${hum.hz} Hz notch was applied so the bands near it are measurable. `
+            : `The notch is OFF — bands near ${hum.hz} Hz will read falsely long. `) +
+        `This is an electrical problem in the signal chain (a ground loop, or the sub/amp/mic picking up mains). Fixing it at the source — balanced connections, breaking the ground loop, re-routing cables away from power — gives the cleanest result.`;
 }
 
 function renderGridViews() {
@@ -2609,6 +2700,7 @@ function clearResults() {
     $('metric-panel').style.display = 'none';
     $('overlay-panel').style.display = 'none';
     $('grid-panel').style.display = 'none';   // v9
+    if ($('hum-banner')) $('hum-banner').style.display = 'none';  // v9.1
 }
 
 // v8.3: keep the overlay chart sharp on resize
