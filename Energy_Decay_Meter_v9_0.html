@@ -531,7 +531,7 @@ canvas.rpt-spark{display:block;border-radius:2px;}
 
 <div class="footer-actions">
     <button class="btn" onclick="openReport()">View / Export Report</button>
-    <button class="btn" onclick="exportForModel()" title="Export measured T60 as a REW-compatible .txt for the Nodal Modal Simulation model">Export for Model (.txt)</button>
+    <button class="btn" onclick="exportForModel()" title="Export detected decay resonances as a REW-compatible .txt for the Nodal model">Export for Model (.txt)</button>
 </div>
 </div>
 
@@ -640,6 +640,11 @@ canvas.rpt-spark{display:block;border-radius:2px;}
 //     real ringing is shown rather than trusting predicted modes
 //  2. Predicted modes overlaid on the profile as reference markers
 //  3. Worst-ringing frequency identified from the measured data
+//  4. "Export for Model": dense decay-vs-frequency profile (the demand spectrum)
+//     to 80 Hz with detected-resonance flags, as a REW-compatible .txt
+//     (matched before/after) for the Nodal model
+//  5. Fix: grid graphs no longer render at zero width (drew before the results
+//     panel was visible) — width guarded + redrawn in finalise()
 //  (carries v8.6 loopback diagnostic + full report, v8.5 Lundeby truncation,
 //   v8.4 robust capture, v8.3 fixed-time metric + overlay)
 // ═══════════════════════════════════════════════════════════════════════
@@ -1871,7 +1876,8 @@ function renderGridViews() {
 function drawDecayProfile() {
     const canvas = $('grid-profile'); if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const W = (canvas.parentElement.offsetWidth - 12) || 880, H = 230;
+    let W = canvas.parentElement.offsetWidth - 12; if (!(W > 60)) W = 880;
+    const H = 230;
     const dpr = window.devicePixelRatio || 1;
     canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
@@ -1902,7 +1908,8 @@ function drawDecayProfile() {
 function drawDecayHeatmap(canvasId, grid) {
     const canvas = $(canvasId); if (!canvas || !grid) return;
     const ctx = canvas.getContext('2d');
-    const W = (canvas.parentElement.offsetWidth - 12) || 880, H = 150;
+    let W = canvas.parentElement.offsetWidth - 12; if (!(W > 60)) W = 880;
+    const H = 150;
     const dpr = window.devicePixelRatio || 1;
     canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
@@ -2616,6 +2623,7 @@ window.addEventListener('resize', () => {
 
 function finalise(mode) {
     $('results-panel').classList.add('visible');
+    if (gridData.base || gridData.verify) renderGridViews();  // v9: redraw now the panel has width
     if (mode === 'base') {
         $('step2').className = 'step done';
         $('step3').className = 'step active';
@@ -2815,34 +2823,76 @@ function drawDiagCanvas(zoomIdx) {
 // represent — and interpolates between the points we provide to reach its
 // own mode frequencies. Only trustworthy bands are included: a real decay,
 // not noise-limited, and at/above the 40 Hz filter limit.
-function buildModelRows(modeKey) {
-    const src = results[modeKey];
-    const rows = [];
-    TEST_FREQS.forEach(hz => {
-        const b = src[hz];
-        if (!b || b.invalid || b.noiseLimited) return;
-        if (isFilterLimited(hz)) return;       // < 40 Hz is filter-limited — don't feed the model fiction
-        if (b.t60 == null) return;
-        rows.push({ f: hz, t60: b.t60, r2: b.rSquared || 0, method: b.method || 'T30' });
+// v9: detect resonances (decay peaks) from the continuous-frequency grid.
+// Peaks are found in the energy-remaining-@320ms profile (robust everywhere);
+// filter-skirt leakage shows as a shoulder, not a local maximum, so it does
+// not create false peaks. Each peak carries a mode-quality T60, its prominence
+// above the local baseline, and a confidence flag.
+const RES_MIN_PROMINENCE = 1.5; // dB above local baseline to flag a resonance peak
+
+function detectResonances(grid) {
+    if (!grid || !grid.freqs) return [];
+    const f = grid.freqs, e = grid.eRead, n = f.length;
+    const cand = [];
+    for (let i = 1; i < n - 1; i++) {
+        if (e[i] == null || e[i - 1] == null || e[i + 1] == null) continue;
+        if (e[i] >= e[i - 1] && e[i] >= e[i + 1] && (e[i] > e[i - 1] || e[i] > e[i + 1])) cand.push(i);
+    }
+    const recs = cand.map(pi => {
+        // topographic prominence: peak minus the higher of the two flanking valleys
+        let lv = e[pi];
+        for (let j = pi - 1; j >= 0; j--) { if (e[j] == null) break; if (e[j] > e[pi]) break; if (e[j] < lv) lv = e[j]; }
+        let rv = e[pi];
+        for (let j = pi + 1; j < n; j++) { if (e[j] == null) break; if (e[j] > e[pi]) break; if (e[j] < rv) rv = e[j]; }
+        let t60 = grid.t60[pi], estimated = false;
+        if (t60 == null) { t60 = 19.2 / Math.max(1, Math.abs(e[pi])); estimated = true; }
+        return { f: f[pi], eRead: e[pi], t60, estimated, usable: grid.usable[pi] || 0, prominence: e[pi] - Math.max(lv, rv) };
     });
-    return rows.sort((a, b) => a.f - b.f);
+    recs.sort((a, b) => a.f - b.f);
+    const merged = [];
+    for (const r of recs) {
+        const last = merged[merged.length - 1];
+        if (last && r.f / last.f < Math.pow(2, 1 / 6)) { if (r.prominence > last.prominence) merged[merged.length - 1] = r; }
+        else merged.push(r);
+    }
+    return merged.filter(r => r.prominence >= RES_MIN_PROMINENCE).map(r => {
+        const filterLimited = r.f < FILTER_LIMIT_HZ;
+        let confidence = 'low';
+        if (!r.estimated && !filterLimited && r.usable >= 25 && r.prominence >= 3) confidence = 'high';
+        else if (!r.estimated && !filterLimited && r.usable >= 20) confidence = 'medium';
+        return {
+            f: Math.round(r.f * 10) / 10,
+            t60: Math.round(r.t60 * 1000) / 1000,
+            prominence: Math.round(r.prominence * 10) / 10,
+            confidence
+        };
+    });
 }
 
-function buildModelTxt(modeKey, rows) {
-    const now = new Date();
-    const date = now.toISOString().slice(0, 10);
+function buildProfileTxt(modeKey, grid, peaks) {
+    const now = new Date(), date = now.toISOString().slice(0, 10);
     const L = $('dim-L').value.trim(), W = $('dim-W').value.trim(), H = $('dim-H').value.trim();
     const room = (L && W && H) ? `${L} x ${W} x ${H} ${unitMode}` : 'not entered';
     const slot = modeKey === 'base' ? 'untreated (baseline)' : 'treated (Nodal 30)';
+    const peakAt = f => peaks.find(p => Math.abs(p.f - f) < 0.6);
     let t = '';
     t += `* GroundControl Energy Decay Meter v9.0 — ${slot}\n`;
     t += `* Measurement: GroundControl ${slot} ${date}\n`;
     t += `* Date: ${date}\n`;
     t += `* Room: ${room}  (set the SAME dimensions in the model)\n`;
+    t += `* Continuous decay profile across frequency (the demand spectrum), measured from the impulse response.\n`;
+    t += `* Peak column flags detected resonances (decay-vs-frequency local maxima). Resolution ~1/3 octave.\n`;
     t += `* T30 column = 60 dB-equivalent decay time in seconds (REW convention).\n`;
-    t += `* Only trustworthy bands included: real decay, not noise-limited, >= 40 Hz.\n`;
-    t += `Frequency (Hz)\tT30 (s)\n`;
-    rows.forEach(r => { t += `${r.f.toFixed(1)}\t${r.t60.toFixed(3)}\n`; });
+    t += `Frequency (Hz)\tT30 (s)\tPeak\tProminence (dB)\tConfidence\n`;
+    grid.freqs.forEach((f, i) => {
+        if (f < FILTER_LIMIT_HZ) return;                 // below 40 Hz the filter rings — not measured
+        let t60 = grid.t60[i];
+        if (t60 == null) { const e = grid.eRead[i]; if (e == null) return; t60 = 19.2 / Math.max(1, Math.abs(e)); }
+        const pk = peakAt(f);
+        const prom = pk ? pk.prominence.toFixed(1) : '';
+        const conf = pk ? pk.confidence : '';
+        t += `${f.toFixed(1)}\t${t60.toFixed(3)}\t${pk ? 'yes' : 'no'}\t${prom}\t${conf}\n`;
+    });
     return t;
 }
 
@@ -2855,32 +2905,28 @@ function downloadText(text, filename) {
 }
 
 function exportForModel() {
-    const hasBase = Object.keys(results.base).length > 0;
-    if (!hasBase) { alert('Run a baseline (untreated) measurement first — that is the data the model needs.'); return; }
+    if (!gridData.base) { alert('Run a baseline (untreated) measurement first — its continuous decay profile is what the model needs.'); return; }
 
-    const baseRows = buildModelRows('base');
+    const baseRes = detectResonances(gridData.base);
     const date = new Date().toISOString().slice(0, 10);
     let msg = '';
 
-    if (baseRows.length < 3) {
-        msg += `⚠ Only ${baseRows.length} trustworthy baseline band(s) — the model needs at least 3.\n`;
-        msg += `Bands that are noise-limited or below 40 Hz are excluded because they can't be measured reliably here.\n`;
-        msg += `Improve the baseline: raise the sub level, keep the room quiet, run the loopback test, then re-measure.\n\n`;
-    }
-    downloadText(buildModelTxt('base', baseRows), `GC_baseline_untreated_${date}.txt`);
-    msg += `Exported baseline (untreated): ${baseRows.length} band(s)` +
-           (baseRows.length ? ` — ${baseRows.map(r => Math.round(r.f) + 'Hz ' + r.t60.toFixed(2) + 's').join(', ')}` : '') + '.\n';
+    downloadText(buildProfileTxt('base', gridData.base, baseRes), `GC_baseline_untreated_${date}.txt`);
+    const fmt = r => `${Math.round(r.f)}Hz ${r.t60.toFixed(2)}s${r.confidence === 'low' ? ' (low-conf)' : ''}`;
+    msg += `Exported baseline (untreated): full decay profile to 80 Hz, ${baseRes.length} resonance peak(s) flagged`;
+    msg += baseRes.length ? ` — ${baseRes.map(fmt).join(', ')}.\n` : `.\n`;
+    if (baseRes.length === 0) msg += `No distinct resonance peaks — the decay profile is relatively flat (or signal was low). The profile itself is still exported for dosing.\n`;
 
-    const hasVerify = Object.keys(results.verify).length > 0;
-    if (hasVerify) {
-        const vRows = buildModelRows('verify');
-        downloadText(buildModelTxt('verify', vRows), `GC_treated_nodal30_${date}.txt`);
-        msg += `Exported treated (Nodal 30): ${vRows.length} band(s).\n`;
+    if (gridData.verify) {
+        // Treated profile on the SAME grid, peaks flagged at the baseline frequencies so the
+        // model can pair before/after at matched frequencies even if peaks have flattened.
+        downloadText(buildProfileTxt('verify', gridData.verify, baseRes), `GC_treated_nodal30_${date}.txt`);
+        msg += `Exported treated (Nodal 30): matched decay profile on the same frequency grid.\n`;
     }
 
     msg += `\nIn the model: set the same room dimensions, then drop the baseline file into the REW Import “Untreated” slot` +
-           (hasVerify ? `, and the treated file into the “Treated” slot` : ``) +
-           `. The model reads the T30 column as the measured 60 dB decay time and interpolates to its mode frequencies.`;
+           (gridData.verify ? `, and the treated file into the “Treated” slot` : ``) +
+           `. The model reads the T30 column as the measured decay across frequency; the Peak column flags detected resonances.`;
     alert(msg);
 }
 
