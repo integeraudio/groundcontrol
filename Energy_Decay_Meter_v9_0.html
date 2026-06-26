@@ -540,6 +540,7 @@ canvas.rpt-spark{display:block;border-radius:2px;}
 <div class="footer-actions">
     <button class="btn" onclick="openReport()">View / Export Report</button>
     <button class="btn" onclick="exportForModel()" title="Export detected decay resonances as a REW-compatible .txt for the Nodal model">Export for Model (.txt)</button>
+    <button class="btn" onclick="downloadIR('base')" title="Debug: export the raw baseline impulse response as a 32-bit float WAV for offline analysis">IR WAV (debug)</button>
 </div>
 </div>
 
@@ -1397,6 +1398,7 @@ const noiseFloorMap = {};
 const results = { base: {}, verify: {} };
 const gridData = { base: null, verify: null };   // v9: continuous-frequency decay grid
 let lastHum = null;                               // v9.1: detected mains hum {hz, ratioDB}
+const lastIR = { base: null, verify: null };      // v9.1: raw IR kept for the debug export
 let TEST_FREQS = [25, 31.5, 40, 50, 63, 80];
 let correlatedSet = new Set();
 let modeInfoMap = new Map();
@@ -1535,6 +1537,7 @@ async function runMeasurement(mode) {
         if (m > 0) for (let i = 0; i < ir.length; i++) ir[i] /= m;
     }
     showHumWarning(hum, notchOn);
+    lastIR[mode] = ir;   // v9.1: keep for the debug WAV export
 
     setPhase('Computing Schroeder integration per frequency band…', 98);
     await sleep(50);
@@ -2978,11 +2981,18 @@ function buildProfileTxt(modeKey, grid, peaks) {
     t += `Frequency (Hz)\tT30 (s)\tPeak\tProminence (dB)\tConfidence\n`;
     grid.freqs.forEach((f, i) => {
         if (f < FILTER_LIMIT_HZ) return;                 // below 40 Hz the filter rings — not measured
-        let t60 = grid.t60[i];
+        let t60 = grid.t60[i], reliable = (t60 != null);
         if (t60 == null) { const e = grid.eRead[i]; if (e == null) return; t60 = 19.2 / Math.max(1, Math.abs(e)); }
         const pk = peakAt(f);
         const prom = pk ? pk.prominence.toFixed(1) : '';
-        const conf = pk ? pk.confidence : '';
+        // A value over the physical ceiling is a non-decaying-tail artifact, not a
+        // measurement — emit a blank T30 (the model skips it) flagged "unreliable",
+        // rather than feeding a fabricated number downstream.
+        if (!reliable && t60 > MAX_PHYSICAL_T60) {
+            t += `${f.toFixed(1)}\t\t${pk ? 'yes' : 'no'}\t${prom}\tunreliable\n`;
+            return;
+        }
+        const conf = pk ? pk.confidence : (reliable ? '' : 'low');
         t += `${f.toFixed(1)}\t${t60.toFixed(3)}\t${pk ? 'yes' : 'no'}\t${prom}\t${conf}\n`;
     });
     return t;
@@ -2992,6 +3002,27 @@ function downloadText(text, filename) {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
     a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(a.href);
+}
+
+// v9.1: export the raw (post-notch) impulse response as a 32-bit float mono WAV
+// for offline diagnosis — lets the actual decay/spectrum be inspected directly.
+function downloadIR(mode) {
+    const ir = lastIR[mode];
+    if (!ir) { alert(`No ${mode} impulse response yet — run that measurement first.`); return; }
+    const sr = SAMPLE_RATE, n = ir.length, bytes = 44 + n * 4;
+    const buf = new ArrayBuffer(bytes), dv = new DataView(buf);
+    const ws = (o, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); };
+    ws(0, 'RIFF'); dv.setUint32(4, bytes - 8, true); ws(8, 'WAVE');
+    ws(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 3, true);     // IEEE float
+    dv.setUint16(22, 1, true); dv.setUint32(24, sr, true); dv.setUint32(28, sr * 4, true);
+    dv.setUint16(32, 4, true); dv.setUint16(34, 32, true);
+    ws(36, 'data'); dv.setUint32(40, n * 4, true);
+    for (let i = 0; i < n; i++) dv.setFloat32(44 + i * 4, ir[i], true);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+    a.download = `GC_IR_${mode}_${SAMPLE_RATE}Hz_${new Date().toISOString().slice(0, 10)}.wav`;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a); URL.revokeObjectURL(a.href);
 }
